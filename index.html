@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>โรงเรียนชุมชนบ้านกะมิยอ เทสสึ</title>
+    <title>โรงเรียนของเรา | หน้าแรก</title>
+    <!-- นำเข้าฟอนต์ Sarabun -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -18,11 +19,11 @@
         }
 
         :root {
-            --primary-color: #003366; /* สีน้ำเงินประจำโรงเรียน */
-            --accent-color: #ffcc00; /* สีเหลืองทองประจำโรงเรียน */
-            --light-bg: #f4f6f9; /* สีพื้นหลังอ่อน */
-            --dark-text: #333; /* สีตัวอักษรเข้ม */
-            --light-text: #fff; /* สีตัวอักษรอ่อน */
+            --primary-color: #003366; 
+            --accent-color: #ffcc00; 
+            --light-bg: #f4f6f9; 
+            --dark-text: #333; 
+            --light-text: #fff; 
         }
 
         body {
@@ -52,15 +53,20 @@
         }
 
         .admin-btn {
-            background-color: #d9534f;
+            background-color: var(--primary-color);
             color: white;
-            padding: 6px 15px;
+            padding: 6px 18px;
             border-radius: 5px;
             font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.3s;
         }
 
         .admin-btn:hover {
-            background-color: #c9302c;
+            background-color: #002244;
+            color: var(--accent-color);
         }
 
         /* --- ส่วนหัว (Header) --- */
@@ -70,7 +76,7 @@
             padding: 15px 30px;
             position: sticky;
             top: 0;
-            z-index: 1000;
+            z-index: 999;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
 
@@ -88,10 +94,14 @@
             gap: 15px;
         }
 
-        /* โลโก้ตามลิงก์ที่ให้มา */
+        /* ปรับสไตล์โลโก้ส่วนหัวให้เป็นวงกลม */
         .logo-img {
             height: 60px;
-            width: auto;
+            width: 60px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
         .logo-text h1 {
@@ -123,6 +133,111 @@
             border-bottom: 2px solid var(--accent-color);
         }
 
+        /* --- ระบบป๊อปอัพเข้าสู่ระบบ (Login Modal) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .login-box {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            position: relative;
+            transform: translateY(-50px);
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active .login-box {
+            transform: translateY(0);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #aaa;
+            transition: 0.2s;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        .login-box h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 5px rgba(0, 51, 102, 0.2);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background-color: #002244;
+        }
+
         /* --- ภาพเลื่อนแบนเนอร์ (Hero Slider) --- */
         .slider-container {
             position: relative;
@@ -149,7 +264,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            opacity: 0.7; /* ทำภาพให้มืดลง */
+            opacity: 0.7;
         }
 
         .slide-content {
@@ -181,11 +296,6 @@
             border-radius: 50px;
             font-weight: 700;
             font-size: 1.1rem;
-        }
-
-        .slide-btn:hover {
-            background-color: white;
-            transform: scale(1.05);
         }
 
         /* --- ข่าวประชาสัมพันธ์ (News Section) --- */
@@ -255,9 +365,7 @@
             transition: transform 0.5s ease;
         }
 
-        .news-card:hover .card-img {
-            transform: scale(1.1);
-        }
+        .news-card:hover .card-img { transform: scale(1.1); }
 
         .card-date {
             position: absolute;
@@ -282,7 +390,7 @@
             font-size: 1.4rem;
             color: var(--primary-color);
             margin-bottom: 12px;
-            min-height: 66px; /* เพื่อให้ความสูงพาดหัวเท่ากัน */
+            min-height: 66px; 
         }
 
         .card-body p {
@@ -291,7 +399,7 @@
             margin-bottom: 25px;
             flex-grow: 1;
             display: -webkit-box;
-            -webkit-line-clamp: 3; /* ตัดข้อความที่เกิน 3 บรรทัด */
+            -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -306,11 +414,7 @@
             font-weight: 600;
         }
 
-        .card-btn:hover {
-            background-color: #002244;
-        }
-
-        /* --- ท้ายเว็บไซต์ (Footer) --- */
+        /* ท้ายเว็บไซต์ */
         footer {
             background-color: #1a1a1a;
             color: #ccc;
@@ -319,17 +423,16 @@
             text-align: center;
         }
 
-        footer p {
-            margin-bottom: 10px;
-            font-size: 0.95rem;
-        }
-
+        /* ปรับสไตล์โลโก้ส่วนท้ายให้เป็นวงกลม */
         .footer-logo {
             height: 50px;
+            width: 50px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid #555;
             margin-bottom: 15px;
         }
 
-        /* --- รองรับบนมือถือ (Responsive) --- */
         @media (max-width: 992px) {
             .header-container { flex-direction: column; gap: 15px; }
             .slider-container { height: 350px; }
@@ -341,17 +444,40 @@
 </head>
 <body>
 
+    <!-- แถบผู้ดูแลระบบด้านบนสุด -->
     <div class="admin-bar">
-        <span>🔒 พื้นที่ผู้ดูแลระบบ</span>
-        <a href="#" target="_blank" class="admin-btn">➕ เพิ่มข่าวประชาสัมพันธ์</a>
+        <span>🔒 พื้นที่เจ้าหน้าที่โรงเรียน</span>
+        <button class="admin-btn" onclick="openLoginModal()">🔑 Login เข้าสู่ระบบ</button>
     </div>
 
+    <!-- หน้าต่างป๊อปอัพเข้าสู่ระบบ (Login Modal) -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="login-box">
+            <span class="close-modal" onclick="closeLoginModal()">&times;</span>
+            <h2>ผู้ดูแลระบบ</h2>
+            <form onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label for="username">ชื่อผู้ใช้งาน (Username)</label>
+                    <input type="text" id="username" required placeholder="ใส่ชื่อผู้ใช้งาน">
+                </div>
+                <div class="input-group">
+                    <label for="password">รหัสผ่าน (Password)</label>
+                    <input type="password" id="password" required placeholder="ใส่รหัสผ่าน">
+                </div>
+                <button type="submit" class="submit-btn">เข้าสู่ระบบ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ส่วนหัวเว็บไซต์ -->
     <header>
         <div class="header-container">
             <div class="logo-container">
-                <img src="logo.png" alt="โลโก้โรงเรียน" class="logo-img">
+                <!-- ดึงจากไฟล์ logo.png (เปลี่ยนเป็น .png และเป็นทรงวงกลมแล้ว) -->
+                <img src="logo.png" alt="โลโก้โรงเรียน" class="logo-img" onerror="this.src='https://via.placeholder.com/60'">
                 <div class="logo-text">
-                    <h1>โรงเรียนชุมชนบ้านกะมิยอ</h1>
+                    <h1>โรงเรียนของเรา</h1>
+                    <p>มุ่งมั่นพัฒนาวิชาการ สร้างสรรค์คนดีสู่สังคม</p>
                 </div>
             </div>
             <nav>
@@ -365,12 +491,13 @@
         </div>
     </header>
 
+    <!-- ส่วนสไลด์ภาพเลื่อนอัตโนมัติ -->
     <section class="slider-container">
         <div class="slider" id="slider">
             <div class="slide">
                 <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?ixlib=rb-4.0.3" alt="บรรยากาศ">
                 <div class="slide-content">
-                    <h2>ยินดีต้อนรับสู่โรงเรียนชุมชนบ้านกะมิยอ</h2>
+                    <h2>ยินดีต้อนรับสู่โรงเรียนของเรา</h2>
                     <p>แหล่งเรียนรู้คุณภาพ เพื่ออนาคตที่ดีกว่าของบุตรหลานท่าน</p>
                     <a href="#" class="slide-btn">อ่านข่าวล่าสุด</a>
                 </div>
@@ -380,18 +507,19 @@
                 <div class="slide-content">
                     <h2>มุ่งเน้นความเป็นเลิศทางวิชาการ</h2>
                     <p>ส่งเสริมศักยภาพของผู้เรียนอย่างเต็มที่</p>
-                    <a href="#" class="slide-btn">กิจกรรมวิชาการ</a>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- ส่วนเนื้อหาข่าวประชาสัมพันธ์ -->
     <main class="main-content">
         <div class="section-header">
             <h2 class="section-title">📢 ข่าวประชาสัมพันธ์ล่าสุด</h2>
         </div>
         
         <div class="news-grid">
+            <!-- บล็อกข่าวที่ 1 -->
             <article class="news-card">
                 <div class="card-img-wrapper">
                     <span class="card-date">10 มี.ค. 69</span>
@@ -404,6 +532,7 @@
                 </div>
             </article>
 
+            <!-- บล็อกข่าวที่ 2 -->
             <article class="news-card">
                 <div class="card-img-wrapper">
                     <span class="card-date">8 มี.ค. 69</span>
@@ -411,35 +540,36 @@
                 </div>
                 <div class="card-body">
                     <h3>โครงการ Open Class เปิดชั้นเรียนเพื่อการเรียนรู้</h3>
-                    <p>กิจกรรมแลกเปลี่ยนเรียนรู้วิธีการสอนของครู เพื่อพัฒนาคุณภาพผู้เรียนตามแนวคิดการจัดการเรียนรู้เชิงรุก (Active Learning)</p>
+                    <p>กิจกรรมแลกเปลี่ยนเรียนรู้วิธีการสอนของครู เพื่อพัฒนาคุณภาพผู้เรียนตามแนวคิดการจัดการเรียนรู้เชิงรุก</p>
                     <a href="#" class="card-btn">อ่านเพิ่มเติม</a>
                 </div>
             </article>
 
+            <!-- บล็อกข่าวที่ 3 -->
             <article class="news-card">
                 <div class="card-img-wrapper">
                     <span class="card-date">5 มี.ค. 69</span>
                     <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-4.0.3" alt="วิชาการ" class="card-img">
                 </div>
                 <div class="card-body">
-                    <h3>นักเรียนโรงเรียนเราคว้าเหรียญทอง การแข่งขันหุ่นยนต์ระดับชาติ</h3>
-                    <p>ขอแสดงความยินดีกับทีม 'Robot Our School' ที่คว้าชัยชนะในการแข่งขันพัฒนาหุ่นยนต์ระดับมัธยมศึกษา...</p>
+                    <h3>นักเรียนโรงเรียนเราคว้าเหรียญทอง การแข่งขันระดับชาติ</h3>
+                    <p>ขอแสดงความยินดีกับทีมหุ่นยนต์โรงเรียนเราที่คว้าชัยชนะในการแข่งขันพัฒนาหุ่นยนต์ระดับภูมิภาค...</p>
                     <a href="#" class="card-btn">อ่านเพิ่มเติม</a>
                 </div>
             </article>
-            
-            </div>
+        </div>
     </main>
 
+    <!-- ท้ายเว็บไซต์ -->
     <footer>
-        <img src="logo.png" alt="โลโก้โรงเรียน" class="footer-logo">
-        <p>หมู่ที่ 2 ตำบลกะมิยอ อำเภอเมืองปัตตานี จังหวัดปัตตานี</p>
-        <p>โทร. 02-xxx-xxxx | Email: contact@ourschool.ac.th</p>
+        <!-- โลโก้ส่วนท้ายเปลี่ยนเป็น logo.png และวงกลมแล้ว -->
+        <img src="logo.png" alt="โลโก้โรงเรียน" class="footer-logo" onerror="this.src='https://via.placeholder.com/50'">
         <p>&copy; 2026 โรงเรียนของเรา. All Rights Reserved. | พัฒนาด้วย GitHub Pages</p>
     </footer>
 
+    <!-- ส่วนควบคุมระบบภาพเลื่อนและป๊อปอัพ Login -->
     <script>
-        // --- สคริปต์สไลด์ภาพเลื่อนอัตโนมัติ ---
+        // --- ฟังก์ชัน สไลด์ภาพเลื่อนอัตโนมัติ ---
         let currentSlideIndex = 0;
         const slides = document.querySelectorAll('.slide');
         const slider = document.getElementById('slider');
@@ -451,9 +581,40 @@
             }
             slider.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
         }
-
-        // ตั้งเวลาเลื่อนภาพอัตโนมัติทุกๆ 5 วินาที
         setInterval(moveSlide, 5000);
+
+        // --- ฟังก์ชันควบคุมป๊อปอัพ Login ---
+        const modal = document.getElementById('loginModal');
+
+        function openLoginModal() {
+            modal.classList.add('active');
+        }
+
+        function closeLoginModal() {
+            modal.classList.remove('active');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        function handleLogin(event) {
+            event.preventDefault(); 
+            
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            if (user === 'admin' && pass === '1234') {
+                alert('🎉 เข้าสู่ระบบสำเร็จ ยินดีต้อนรับคุณครูแอดมินค่ะ!');
+                closeLoginModal();
+            } else {
+                alert('❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้งนะคะ');
+            }
+        }
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                closeLoginModal();
+            }
+        }
     </script>
 </body>
 </html>
