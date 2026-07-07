@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
+        /* --- ตั้งค่าพื้นฐาน (Basic Setup) --- */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -16,18 +17,35 @@
             font-family: 'Sarabun', sans-serif;
         }
 
+        :root {
+            --primary-color: #003366; /* สีน้ำเงินประจำโรงเรียน */
+            --accent-color: #ffcc00; /* สีเหลืองทองประจำโรงเรียน */
+            --light-bg: #f4f6f9; /* สีพื้นหลังอ่อน */
+            --dark-text: #333; /* สีตัวอักษรเข้ม */
+            --light-text: #fff; /* สีตัวอักษรอ่อน */
+        }
+
         body {
-            background-color: #f4f6f9;
-            color: #333;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
             line-height: 1.6;
         }
 
-        /* แถบผู้ดูแลระบบ */
+        a {
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        /* --- แถบผู้ดูแลระบบ (Admin Bar) --- */
         .admin-bar {
             background-color: #222;
             color: #fff;
-            padding: 8px 20px;
-            font-size: 0.85rem;
+            padding: 10px 30px;
+            font-size: 0.9rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -36,65 +54,80 @@
         .admin-btn {
             background-color: #d9534f;
             color: white;
-            text-decoration: none;
-            padding: 4px 12px;
-            border-radius: 4px;
+            padding: 6px 15px;
+            border-radius: 5px;
             font-weight: 600;
-            transition: 0.3s;
         }
 
         .admin-btn:hover {
             background-color: #c9302c;
         }
 
-        /* ส่วนหัวและเมนู */
+        /* --- ส่วนหัว (Header) --- */
         header {
-            background-color: #003366;
-            color: white;
-            padding: 1rem 2rem;
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            padding: 15px 30px;
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
 
         .header-container {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            max-width: 1200px;
+            max-width: 1300px;
             margin: 0 auto;
         }
 
-        .logo h1 {
-            font-size: 1.5rem;
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* โลโก้ตามลิงก์ที่ให้มา */
+        .logo-img {
+            height: 60px;
+            width: auto;
+        }
+
+        .logo-text h1 {
+            font-size: 1.6rem;
             font-weight: 700;
+            color: var(--light-text);
+        }
+
+        .logo-text p {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
         }
 
         nav ul {
             display: flex;
-            list-style: none;
-        }
-
-        nav ul li {
-            margin-left: 20px;
+            gap: 25px;
         }
 
         nav ul li a {
-            color: white;
-            text-decoration: none;
+            color: var(--light-text);
             font-weight: 600;
+            font-size: 1rem;
+            padding-bottom: 5px;
+            border-bottom: 2px solid transparent;
         }
 
-        nav ul li a.active {
-            color: #ffcc00;
+        nav ul li a:hover, nav ul li a.active {
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--accent-color);
         }
 
-        /* ===== ระบบภาพเลื่อนสไลด์ (Slider / Carousel) ===== */
+        /* --- ภาพเลื่อนแบนเนอร์ (Hero Slider) --- */
         .slider-container {
             position: relative;
             max-width: 100%;
-            height: 450px;
+            height: 500px;
             overflow: hidden;
             background-color: #000;
         }
@@ -103,7 +136,7 @@
             display: flex;
             width: 100%;
             height: 100%;
-            transition: transform 0.5s ease-in-out;
+            transition: transform 0.6s ease-in-out;
         }
 
         .slide {
@@ -116,344 +149,312 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            opacity: 0.75; /* ทำภาพให้มืดลงนิดนึงเพื่อให้ตัวหนังสือเด่น */
+            opacity: 0.7; /* ทำภาพให้มืดลง */
         }
 
         .slide-content {
             position: absolute;
-            bottom: 20%;
+            bottom: 25%;
             left: 10%;
             right: 10%;
             color: white;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.9);
             text-align: center;
         }
 
         .slide-content h2 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+            font-size: 3rem;
+            margin-bottom: 15px;
+            font-weight: 700;
         }
 
         .slide-content p {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            font-weight: 300;
         }
 
-        /* ปุ่มกดเลื่อน สไลด์ */
-        .slider-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: rgba(0,0,0,0.5);
-            color: white;
-            border: none;
-            padding: 15px 20px;
-            cursor: pointer;
-            font-size: 1.5rem;
-            transition: 0.3s;
-            z-index: 10;
-            border-radius: 4px;
+        .slide-btn {
+            background-color: var(--accent-color);
+            color: var(--primary-color);
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
         }
 
-        .slider-btn:hover {
-            background-color: rgba(0, 0, 0, 0.8);
+        .slide-btn:hover {
+            background-color: white;
+            transform: scale(1.05);
         }
 
-        .prev { left: 20px; }
-        .next { right: 20px; }
-
-        /* จุดไข่ปลาบอกตำแหน่งสไลด์ */
-        .dots-container {
-            position: absolute;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            z-index: 10;
+        /* --- ข่าวประชาสัมพันธ์ (News Section) --- */
+        .main-content {
+            max-width: 1300px;
+            margin: 60px auto;
+            padding: 0 30px;
         }
 
-        .dot {
-            width: 12px;
-            height: 12px;
-            background-color: rgba(255,255,255,0.5);
-            border-radius: 50%;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .dot.active {
-            background-color: #ffcc00;
-            transform: scale(1.2);
-        }
-
-        /* ===== ส่วนเนื้อหาประชาสัมพันธ์ข่าว ===== */
-        .container {
-            max-width: 1200px;
-            margin: 50px auto;
-            padding: 0 20px;
+        .section-header {
+            text-align: center;
+            margin-bottom: 50px;
         }
 
         .section-title {
-            text-align: center;
-            margin-bottom: 40px;
-            color: #003366;
-            font-size: 2rem;
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            font-weight: 700;
+            position: relative;
+            display: inline-block;
+            padding-bottom: 15px;
         }
 
-        .grid {
+        .section-title::after {
+            content: '';
+            width: 80px;
+            height: 4px;
+            background-color: var(--accent-color);
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .news-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
         }
 
-        .card {
+        .news-card {
             background: white;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s;
+            transition: all 0.3s ease;
         }
 
-        .card:hover {
-            transform: translateY(-5px);
+        .news-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        }
+
+        .card-img-wrapper {
+            position: relative;
+            width: 100%;
+            height: 230px;
+            overflow: hidden;
         }
 
         .card-img {
             width: 100%;
-            height: 210px;
+            height: 100%;
             object-fit: cover;
-            background-color: #eee;
+            transition: transform 0.5s ease;
         }
 
-        .card-content {
-            padding: 20px;
+        .news-card:hover .card-img {
+            transform: scale(1.1);
+        }
+
+        .card-date {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: var(--accent-color);
+            color: var(--primary-color);
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .card-body {
+            padding: 25px;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
         }
 
-        .card-date {
-            font-size: 0.8rem;
-            color: #888;
-            margin-bottom: 8px;
+        .card-body h3 {
+            font-size: 1.4rem;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            min-height: 66px; /* เพื่อให้ความสูงพาดหัวเท่ากัน */
         }
 
-        .card-content h3 {
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-            color: #003366;
-            min-height: 56px;
-        }
-
-        .card-content p {
-            font-size: 0.95rem;
+        .card-body p {
+            font-size: 1rem;
             color: #555;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             flex-grow: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* ตัดข้อความที่เกิน 3 บรรทัด */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
-        .btn {
+        .card-btn {
             display: block;
             text-align: center;
-            background-color: #003366;
+            background-color: var(--primary-color);
             color: white;
-            padding: 10px;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 0.9rem;
+            padding: 12px;
+            border-radius: 8px;
             font-weight: 600;
         }
 
-        .loading {
-            text-align: center;
-            font-size: 1.2rem;
-            color: #666;
-            grid-column: 1 / -1;
-            padding: 50px 0;
+        .card-btn:hover {
+            background-color: #002244;
         }
 
+        /* --- ท้ายเว็บไซต์ (Footer) --- */
         footer {
-            background-color: #111;
+            background-color: #1a1a1a;
             color: #ccc;
+            padding: 40px 30px;
+            margin-top: 80px;
             text-align: center;
-            padding: 20px;
-            margin-top: 60px;
         }
 
-        @media (max-width: 768px) {
-            .slider-container { height: 300px; }
-            .slide-content h2 { font-size: 1.6rem; }
+        footer p {
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .footer-logo {
+            height: 50px;
+            margin-bottom: 15px;
+        }
+
+        /* --- รองรับบนมือถือ (Responsive) --- */
+        @media (max-width: 992px) {
+            .header-container { flex-direction: column; gap: 15px; }
+            .slider-container { height: 350px; }
+            .slide-content h2 { font-size: 2rem; }
             .slide-content p { font-size: 1rem; }
-            .slider-btn { padding: 10px 12px; font-size: 1rem; }
+            .news-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
         }
     </style>
 </head>
 <body>
 
-    <!-- แถบระบบแอดมิน -->
     <div class="admin-bar">
         <span>🔒 พื้นที่ผู้ดูแลระบบ</span>
-        <a href="#" target="_blank" class="admin-btn">➕ จัดการ/เพิ่มข่าวประชาสัมพันธ์</a>
+        <a href="#" target="_blank" class="admin-btn">➕ เพิ่มข่าวประชาสัมพันธ์</a>
     </div>
 
-    <!-- ส่วนหัวเว็บไซต์ -->
     <header>
         <div class="header-container">
-            <div class="logo">
-                <h1>โรงเรียนของเรา</h1>
+            <div class="logo-container">
+                <img src="https://img2.pic.in.th/pic/7a7c3ffe049bdec4d862ebcc07465a8b.jpg" alt="โลโก้โรงเรียน" class="logo-img">
+                <div class="logo-text">
+                    <h1>โรงเรียนของเรา</h1>
+                    <p>มุ่งมั่นพัฒนาวิชาการ สร้างสรรค์คนดีสู่สังคม</p>
+                </div>
             </div>
             <nav>
                 <ul>
                     <li><a href="#" class="active">หน้าแรก</a></li>
                     <li><a href="#">เกี่ยวกับโรงเรียน</a></li>
+                    <li><a href="#">ข่าวสาร</a></li>
                     <li><a href="#">ติดต่อเรา</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <!-- ===== ส่วนแบนเนอร์ภาพเลื่อนสไลด์อัตโนมัติ ===== -->
     <section class="slider-container">
-        <button class="slider-btn prev" onclick="moveSlide(-1)">&#10094;</button>
-        <button class="slider-btn next" onclick="moveSlide(1)">&#10095;</button>
-        
         <div class="slider" id="slider">
-            <!-- สไลด์ภาพที่ 1 -->
             <div class="slide">
-                <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?ixlib=rb-4.0.3" alt="บรรยากาศโรงเรียน">
+                <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?ixlib=rb-4.0.3" alt="บรรยากาศ">
                 <div class="slide-content">
                     <h2>ยินดีต้อนรับสู่โรงเรียนของเรา</h2>
-                    <p>แหล่งเรียนรู้คู่คุณธรรม นำเทคโนโลยี สู่สังคมอนาคต</p>
+                    <p>แหล่งเรียนรู้คุณภาพ เพื่ออนาคตที่ดีกว่าของบุตรหลานท่าน</p>
+                    <a href="#" class="slide-btn">อ่านข่าวล่าสุด</a>
                 </div>
             </div>
-            <!-- สไลด์ภาพที่ 2 -->
             <div class="slide">
-                <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?ixlib=rb-4.0.3" alt="ห้องเรียน">
+                <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?ixlib=rb-4.0.3" alt="วิชาการ">
                 <div class="slide-content">
                     <h2>มุ่งเน้นความเป็นเลิศทางวิชาการ</h2>
-                    <p>ส่งเสริมศักยภาพผู้เรียนตามความถนัดและความสนใจ</p>
+                    <p>ส่งเสริมศักยภาพของผู้เรียนอย่างเต็มที่</p>
+                    <a href="#" class="slide-btn">กิจกรรมวิชาการ</a>
                 </div>
             </div>
-            <!-- สไลด์ภาพที่ 3 -->
-            <div class="slide">
-                <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3" alt="กิจกรรม">
-                <div class="slide-content">
-                    <h2>กิจกรรมสร้างสรรค์และนวัตกรรม</h2>
-                    <p>พัฒนาทักษะชีวิตและเตรียมพร้อมก้าวสู่ศตวรรษที่ 21</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- จุดสไลด์ -->
-        <div class="dots-container">
-            <span class="dot active" onclick="currentSlide(0)"></span>
-            <span class="dot" onclick="currentSlide(1)"></span>
-            <span class="dot" onclick="currentSlide(2)"></span>
         </div>
     </section>
 
-    <!-- ส่วนแสดงการ์ดข่าว (6 อันล่าสุด) -->
-    <main class="container">
-        <h2 class="section-title">📢 ข่าวประชาสัมพันธ์ล่าสุด</h2>
-        
-        <div class="grid" id="news-grid">
-            <div class="loading">กำลังโหลดข้อมูลข่าวประชาสัมพันธ์ล่าสุด...</div>
+    <main class="main-content">
+        <div class="section-header">
+            <h2 class="section-title">📢 ข่าวประชาสัมพันธ์ล่าสุด</h2>
         </div>
+        
+        <div class="news-grid">
+            <article class="news-card">
+                <div class="card-img-wrapper">
+                    <span class="card-date">10 มี.ค. 69</span>
+                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3" alt="ข่าวสาร" class="card-img">
+                </div>
+                <div class="card-body">
+                    <h3>เปิดรับสมัครนักเรียนใหม่ ประจำปีการศึกษา 2569</h3>
+                    <p>ขอเชิญผู้ปกครองและนักเรียนที่สนใจ เข้าชมบรรยากาศโรงเรียนและรับฟังรายละเอียดการรับสมัครได้แล้ววันนี้...</p>
+                    <a href="#" class="card-btn">อ่านเพิ่มเติม</a>
+                </div>
+            </article>
+
+            <article class="news-card">
+                <div class="card-img-wrapper">
+                    <span class="card-date">8 มี.ค. 69</span>
+                    <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?ixlib=rb-4.0.3" alt="กิจกรรม" class="card-img">
+                </div>
+                <div class="card-body">
+                    <h3>โครงการ Open Class เปิดชั้นเรียนเพื่อการเรียนรู้</h3>
+                    <p>กิจกรรมแลกเปลี่ยนเรียนรู้วิธีการสอนของครู เพื่อพัฒนาคุณภาพผู้เรียนตามแนวคิดการจัดการเรียนรู้เชิงรุก (Active Learning)</p>
+                    <a href="#" class="card-btn">อ่านเพิ่มเติม</a>
+                </div>
+            </article>
+
+            <article class="news-card">
+                <div class="card-img-wrapper">
+                    <span class="card-date">5 มี.ค. 69</span>
+                    <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-4.0.3" alt="วิชาการ" class="card-img">
+                </div>
+                <div class="card-body">
+                    <h3>นักเรียนโรงเรียนเราคว้าเหรียญทอง การแข่งขันหุ่นยนต์ระดับชาติ</h3>
+                    <p>ขอแสดงความยินดีกับทีม 'Robot Our School' ที่คว้าชัยชนะในการแข่งขันพัฒนาหุ่นยนต์ระดับมัธยมศึกษา...</p>
+                    <a href="#" class="card-btn">อ่านเพิ่มเติม</a>
+                </div>
+            </article>
+            
+            </div>
     </main>
 
     <footer>
-        <p>&copy; 2026 โรงเรียนของเรา. All Rights Reserved. | พัฒนาด้วย GitHub Pages และ Google Sheets</p>
+        <img src="https://img2.pic.in.th/pic/7a7c3ffe049bdec4d862ebcc07465a8b.jpg" alt="โลโก้โรงเรียน" class="footer-logo">
+        <p>123 ถนนเพชรเกษม แขวงหนองค้างพลู เขตหนองแขม กรุงเทพฯ 10160</p>
+        <p>โทร. 02-xxx-xxxx | Email: contact@ourschool.ac.th</p>
+        <p>&copy; 2026 โรงเรียนของเรา. All Rights Reserved. | พัฒนาด้วย GitHub Pages</p>
     </footer>
 
     <script>
-        // ================= สคริปต์สไลด์ภาพเลื่อน =================
+        // --- สคริปต์สไลด์ภาพเลื่อนอัตโนมัติ ---
         let currentSlideIndex = 0;
         const slides = document.querySelectorAll('.slide');
-        const dots = document.querySelectorAll('.dot');
         const slider = document.getElementById('slider');
 
-        function updateSlider() {
-            slider.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
-            dots.forEach(dot => dot.classList.remove('active'));
-            dots[currentSlideIndex].classList.add('active');
-        }
-
-        function moveSlide(direction) {
-            currentSlideIndex += direction;
-            if (currentSlideIndex >= slides.length) currentSlideIndex = 0;
-            if (currentSlideIndex < 0) currentSlideIndex = slides.length - 1;
-            updateSlider();
-        }
-
-        function currentSlide(index) {
-            currentSlideIndex = index;
-            updateSlider();
-        }
-
-        // ตั้งเวลาให้สไลด์เลื่อนอัตโนมัติทุกๆ 4 วินาที
-        setInterval(() => {
-            moveSlide(1);
-        }, 4000);
-
-
-        // ================= สคริปต์ดึงข่าว (6 ข่าวล่าสุด) =================
-        // นำลิงก์ CSV จาก Google Sheets มาวางตรงนี้
-        const googleSheetCsvUrl = 'ใส่ลิงก์_CSV_ของพี่เกิร์ลตรงนี้';
-
-        async function loadNews() {
-            try {
-                const response = await fetch(googleSheetCsvUrl);
-                const data = await response.text();
-                
-                // แปลงข้อมูล CSV เป็น Array และข้ามหัวข้อแถวแรก
-                const rows = data.split('\n').slice(1); 
-                
-                // ดึงเฉพาะ 6 ข่าวแรก (6 อันล่าสุดที่อยู่บนสุดของ Sheets)
-                const latestRows = rows.slice(0, 6); 
-                
-                const newsGrid = document.getElementById('news-grid');
-                newsGrid.innerHTML = ''; 
-
-                let hasNews = false;
-
-                latestRows.forEach(row => {
-                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    
-                    if (columns.length >= 2 && columns[0].trim() !== '') {
-                        hasNews = true;
-                        const title = columns[0].replace(/"/g, '');
-                        const content = columns[1].replace(/"/g, '');
-                        const image = columns[2] ? columns[2].replace(/"/g, '').trim() : 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?ixlib=rb-4.0.3';
-                        const date = columns[3] ? columns[3].replace(/"/g, '') : '-';
-
-                        const cardHtml = `
-                            <div class="card">
-                                <img src="${image}" alt="${title}" class="card-img" onerror="this.src='https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?ixlib=rb-4.0.3'">
-                                <div class="card-content">
-                                    <div class="card-date">📅 วันที่ประกาศ: ${date}</div>
-                                    <h3>${title}</h3>
-                                    <p>${content}</p>
-                                    <a href="#" class="btn">อ่านรายละเอียด</a>
-                                </div>
-                            </div>
-                        `;
-                        newsGrid.innerHTML += cardHtml;
-                    }
-                });
-
-                if (!hasNews) {
-                    newsGrid.innerHTML = '<div class="loading">ยังไม่มีข่าวประชาสัมพันธ์ในขณะนี้</div>';
-                }
-
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('news-grid').innerHTML = '<div class="loading" style="color:red;">ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบการตั้งค่าลิงก์ในโค้ด</div>';
+        function moveSlide() {
+            currentSlideIndex++;
+            if (currentSlideIndex >= slides.length) {
+                currentSlideIndex = 0;
             }
+            slider.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
         }
 
-        window.onload = loadNews;
+        // ตั้งเวลาเลื่อนภาพอัตโนมัติทุกๆ 5 วินาที
+        setInterval(moveSlide, 5000);
     </script>
 </body>
 </html>
