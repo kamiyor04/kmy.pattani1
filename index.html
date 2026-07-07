@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>โรงเรียนของเรา | ข่าวประชาสัมพันธ์</title>
+    <title>โรงเรียนของเรา | หน้าแรก</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
             line-height: 1.6;
         }
 
-        /* แถบผู้ดูแลระบบ (Admin Bar) */
+        /* แถบผู้ดูแลระบบ */
         .admin-bar {
             background-color: #222;
             color: #fff;
@@ -90,10 +90,106 @@
             color: #ffcc00;
         }
 
-        /* ส่วนเนื้อหาข่าว */
+        /* ===== ระบบภาพเลื่อนสไลด์ (Slider / Carousel) ===== */
+        .slider-container {
+            position: relative;
+            max-width: 100%;
+            height: 450px;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        .slider {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .slide {
+            min-width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.75; /* ทำภาพให้มืดลงนิดนึงเพื่อให้ตัวหนังสือเด่น */
+        }
+
+        .slide-content {
+            position: absolute;
+            bottom: 20%;
+            left: 10%;
+            right: 10%;
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+
+        .slide-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .slide-content p {
+            font-size: 1.2rem;
+        }
+
+        /* ปุ่มกดเลื่อน สไลด์ */
+        .slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: 0.3s;
+            z-index: 10;
+            border-radius: 4px;
+        }
+
+        .slider-btn:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .prev { left: 20px; }
+        .next { right: 20px; }
+
+        /* จุดไข่ปลาบอกตำแหน่งสไลด์ */
+        .dots-container {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            background-color: rgba(255,255,255,0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .dot.active {
+            background-color: #ffcc00;
+            transform: scale(1.2);
+        }
+
+        /* ===== ส่วนเนื้อหาประชาสัมพันธ์ข่าว ===== */
         .container {
             max-width: 1200px;
-            margin: 40px auto;
+            margin: 50px auto;
             padding: 0 20px;
         }
 
@@ -101,9 +197,9 @@
             text-align: center;
             margin-bottom: 40px;
             color: #003366;
+            font-size: 2rem;
         }
 
-        /* โครงสร้างการ์ดข่าว */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -117,6 +213,11 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             display: flex;
             flex-direction: column;
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
         }
 
         .card-img {
@@ -165,7 +266,6 @@
             font-weight: 600;
         }
 
-        /* ข้อความแจ้งเตือนตอนโหลดข้อมูล */
         .loading {
             text-align: center;
             font-size: 1.2rem;
@@ -181,14 +281,20 @@
             padding: 20px;
             margin-top: 60px;
         }
+
+        @media (max-width: 768px) {
+            .slider-container { height: 300px; }
+            .slide-content h2 { font-size: 1.6rem; }
+            .slide-content p { font-size: 1rem; }
+            .slider-btn { padding: 10px 12px; font-size: 1rem; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- แถบระบบแอนมิน (จะแสดงลิงก์ให้แอดมินกดไปเพิ่มข่าว) -->
+    <!-- แถบระบบแอดมิน -->
     <div class="admin-bar">
         <span>🔒 พื้นที่ผู้ดูแลระบบ</span>
-        <!-- เปลี่ยนลิงก์ # ตรงนี้เป็น ลิงก์แก้ไข Google Sheets ของพี่เกิร์ล เพื่อให้กดไปพิมพ์เพิ่มข่าวได้ง่ายๆ -->
         <a href="#" target="_blank" class="admin-btn">➕ จัดการ/เพิ่มข่าวประชาสัมพันธ์</a>
     </div>
 
@@ -200,7 +306,7 @@
             </div>
             <nav>
                 <ul>
-                    <li><a href="#" class="active">ข่าวประชาสัมพันธ์</a></li>
+                    <li><a href="#" class="active">หน้าแรก</a></li>
                     <li><a href="#">เกี่ยวกับโรงเรียน</a></li>
                     <li><a href="#">ติดต่อเรา</a></li>
                 </ul>
@@ -208,50 +314,120 @@
         </div>
     </header>
 
-    <!-- ส่วนแสดงการ์ดข่าว -->
-    <main class="container">
-        <h2 class="section-title">ข่าวประชาสัมพันธ์ล่าสุด</h2>
+    <!-- ===== ส่วนแบนเนอร์ภาพเลื่อนสไลด์อัตโนมัติ ===== -->
+    <section class="slider-container">
+        <button class="slider-btn prev" onclick="moveSlide(-1)">&#10094;</button>
+        <button class="slider-btn next" onclick="moveSlide(1)">&#10095;</button>
         
-        <!-- ข้อมูลข่าวจาก Google Sheets จะมาแสดงในนี้อัตโนมัติ -->
+        <div class="slider" id="slider">
+            <!-- สไลด์ภาพที่ 1 -->
+            <div class="slide">
+                <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?ixlib=rb-4.0.3" alt="บรรยากาศโรงเรียน">
+                <div class="slide-content">
+                    <h2>ยินดีต้อนรับสู่โรงเรียนของเรา</h2>
+                    <p>แหล่งเรียนรู้คู่คุณธรรม นำเทคโนโลยี สู่สังคมอนาคต</p>
+                </div>
+            </div>
+            <!-- สไลด์ภาพที่ 2 -->
+            <div class="slide">
+                <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?ixlib=rb-4.0.3" alt="ห้องเรียน">
+                <div class="slide-content">
+                    <h2>มุ่งเน้นความเป็นเลิศทางวิชาการ</h2>
+                    <p>ส่งเสริมศักยภาพผู้เรียนตามความถนัดและความสนใจ</p>
+                </div>
+            </div>
+            <!-- สไลด์ภาพที่ 3 -->
+            <div class="slide">
+                <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3" alt="กิจกรรม">
+                <div class="slide-content">
+                    <h2>กิจกรรมสร้างสรรค์และนวัตกรรม</h2>
+                    <p>พัฒนาทักษะชีวิตและเตรียมพร้อมก้าวสู่ศตวรรษที่ 21</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- จุดสไลด์ -->
+        <div class="dots-container">
+            <span class="dot active" onclick="currentSlide(0)"></span>
+            <span class="dot" onclick="currentSlide(1)"></span>
+            <span class="dot" onclick="currentSlide(2)"></span>
+        </div>
+    </section>
+
+    <!-- ส่วนแสดงการ์ดข่าว (6 อันล่าสุด) -->
+    <main class="container">
+        <h2 class="section-title">📢 ข่าวประชาสัมพันธ์ล่าสุด</h2>
+        
         <div class="grid" id="news-grid">
-            <div class="loading">กำลังโหลดข้อมูลข่าวประชาสัมพันธ์...</div>
+            <div class="loading">กำลังโหลดข้อมูลข่าวประชาสัมพันธ์ล่าสุด...</div>
         </div>
     </main>
 
     <footer>
-        <p>&copy; 2026 โรงเรียนของเรา. All Rights Reserved. | ข้อมูลอัปเดตอัตโนมัติจาก Google Sheets</p>
+        <p>&copy; 2026 โรงเรียนของเรา. All Rights Reserved. | พัฒนาด้วย GitHub Pages และ Google Sheets</p>
     </footer>
 
-    <!-- ส่วนสคริปต์ดึงข้อมูลอัตโนมัติ -->
     <script>
-        // สำคัญมาก: เอาลิงก์ CSV จาก Google Sheets ขั้นตอนที่ 1 มาวางแทนที่ในเครื่องหมายคำพูดด้านล่างนี้ค่ะ
-        const googleSheetCsvUrl = '1BEL2RjP2aBzWqHHiIEPgfbWk4NpuNSfcpFq8vBEXs2Y';
+        // ================= สคริปต์สไลด์ภาพเลื่อน =================
+        let currentSlideIndex = 0;
+        const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.dot');
+        const slider = document.getElementById('slider');
+
+        function updateSlider() {
+            slider.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+            dots.forEach(dot => dot.classList.remove('active'));
+            dots[currentSlideIndex].classList.add('active');
+        }
+
+        function moveSlide(direction) {
+            currentSlideIndex += direction;
+            if (currentSlideIndex >= slides.length) currentSlideIndex = 0;
+            if (currentSlideIndex < 0) currentSlideIndex = slides.length - 1;
+            updateSlider();
+        }
+
+        function currentSlide(index) {
+            currentSlideIndex = index;
+            updateSlider();
+        }
+
+        // ตั้งเวลาให้สไลด์เลื่อนอัตโนมัติทุกๆ 4 วินาที
+        setInterval(() => {
+            moveSlide(1);
+        }, 4000);
+
+
+        // ================= สคริปต์ดึงข่าว (6 ข่าวล่าสุด) =================
+        // นำลิงก์ CSV จาก Google Sheets มาวางตรงนี้
+        const googleSheetCsvUrl = 'ใส่ลิงก์_CSV_ของพี่เกิร์ลตรงนี้';
 
         async function loadNews() {
             try {
                 const response = await fetch(googleSheetCsvUrl);
                 const data = await response.text();
                 
-                // แปลงข้อมูล CSV เป็น Array
-                const rows = data.split('\n').slice(1); // ข้ามแถวหัวข้อแรก
+                // แปลงข้อมูล CSV เป็น Array และข้ามหัวข้อแถวแรก
+                const rows = data.split('\n').slice(1); 
+                
+                // ดึงเฉพาะ 6 ข่าวแรก (6 อันล่าสุดที่อยู่บนสุดของ Sheets)
+                const latestRows = rows.slice(0, 6); 
+                
                 const newsGrid = document.getElementById('news-grid');
-                newsGrid.innerHTML = ''; // ล้างข้อความ Loading
+                newsGrid.innerHTML = ''; 
 
                 let hasNews = false;
 
-                rows.forEach(row => {
-                    // แยกคอลัมน์ด้วยเครื่องหมายจุลภาค (,)
+                latestRows.forEach(row => {
                     const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                     
                     if (columns.length >= 2 && columns[0].trim() !== '') {
                         hasNews = true;
                         const title = columns[0].replace(/"/g, '');
                         const content = columns[1].replace(/"/g, '');
-                        // ถ้ารูปภาพว่าง ให้ใช้รูปภาพจำลองแทน
                         const image = columns[2] ? columns[2].replace(/"/g, '').trim() : 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?ixlib=rb-4.0.3';
                         const date = columns[3] ? columns[3].replace(/"/g, '') : '-';
 
-                        // สร้างโครงสร้างการ์ดข่าว HTML
                         const cardHtml = `
                             <div class="card">
                                 <img src="${image}" alt="${title}" class="card-img" onerror="this.src='https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?ixlib=rb-4.0.3'">
@@ -272,12 +448,11 @@
                 }
 
             } catch (error) {
-                console.error('Error fetching data:', error);
-                document.getElementById('news-grid').innerHTML = '<div class="loading" style="color:red;">ไม่สามารถโหลดข้อมูลข่าวได้ กรุณาตรวจสอบการตั้งค่า Google Sheets</div>';
+                console.error('Error:', error);
+                document.getElementById('news-grid').innerHTML = '<div class="loading" style="color:red;">ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบการตั้งค่าลิงก์ในโค้ด</div>';
             }
         }
 
-        // เรียกใช้งานฟังก์ชันเมื่อเปิดหน้าเว็บ
         window.onload = loadNews;
     </script>
 </body>
