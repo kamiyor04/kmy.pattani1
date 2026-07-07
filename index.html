@@ -32,53 +32,13 @@
             line-height: 1.6;
         }
 
-        a {
+        a, button {
             text-decoration: none;
             transition: all 0.3s ease;
         }
 
         ul {
             list-style: none;
-        }
-
-        /* --- แถบควบคุมผู้ดูแลระบบด้านบน (Admin Bar) --- */
-        .admin-bar {
-            background-color: #222;
-            color: #fff;
-            padding: 10px 30px;
-            font-size: 0.9rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            min-height: 50px;
-        }
-
-        .admin-btn {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 6px 18px;
-            border-radius: 5px;
-            font-weight: 600;
-            border: 1px solid rgba(255,255,255,0.2);
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: 0.3s;
-            margin-left: 10px;
-        }
-
-        .admin-btn:hover {
-            background-color: #002244;
-            color: var(--accent-color);
-        }
-
-        .btn-danger { background-color: #d9534f; }
-        .btn-danger:hover { background-color: #c9302c; color: white; }
-        .btn-success { background-color: #5cb85c; }
-        .btn-success:hover { background-color: #4cae4c; color: white; }
-
-        /* ซ่อนเมนูแอดมินไว้ก่อนล็อกอิน */
-        .admin-mode-only {
-            display: none !important;
         }
 
         /* --- ส่วนหัว (Header) --- */
@@ -126,25 +86,64 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
+        /* ปรับแต่งแถบเมนูหลัก */
         nav ul {
             display: flex;
+            align-items: center;
             gap: 25px;
         }
 
-        nav ul li a {
+        nav ul li a, nav ul li button {
             color: var(--light-text);
             font-weight: 600;
             font-size: 1rem;
             padding-bottom: 5px;
+            border: none;
+            background: none;
+            cursor: pointer;
             border-bottom: 2px solid transparent;
         }
 
-        nav ul li a:hover, nav ul li a.active {
+        nav ul li a:hover, nav ul li a.active, nav ul li button:hover {
             color: var(--accent-color);
             border-bottom: 2px solid var(--accent-color);
         }
 
-        /* --- ระบบป๊อปอัพทั้งหมด (Modals Overlay) --- */
+        /* สไตล์พิเศษสำหรับปุ่มเมนูแอดมิน เพื่อความเด่นและสวยงาม */
+        .nav-admin-btn {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            padding: 6px 14px !important;
+            border-radius: 20px !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            font-size: 0.95rem !important;
+        }
+
+        .nav-admin-btn:hover {
+            background-color: var(--accent-color) !important;
+            color: var(--primary-color) !important;
+            border-color: var(--accent-color) !important;
+        }
+
+        .nav-logout-btn {
+            background-color: rgba(217, 83, 79, 0.2) !important;
+            padding: 6px 14px !important;
+            border-radius: 20px !important;
+            border: 1px solid rgba(217, 83, 79, 0.4) !important;
+            font-size: 0.95rem !important;
+        }
+
+        .nav-logout-btn:hover {
+            background-color: #d9534f !important;
+            color: white !important;
+            border-color: #d9534f !important;
+        }
+
+        /* ซ่อนเมนูแอดมินเริ่มต้น */
+        .admin-menu-item {
+            display: none;
+        }
+
+        /* --- ระบบป๊อปอัพทั้งหมด (Modals) --- */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -434,29 +433,12 @@
             .slider-container { height: 350px; }
             .slide-content h2 { font-size: 2rem; }
             .slide-content p { font-size: 1rem; }
+            nav ul { gap: 15px; }
             .news-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
         }
     </style>
 </head>
 <body>
-
-    <!-- แถบระบบแอดมินด้านบน (เปลี่ยนสถานะอัตโนมัติเมื่อ Login) -->
-    <div class="admin-bar" id="adminBar">
-        <!-- สถานะปกติก่อนล็อกอิน -->
-        <div id="guestMode">
-            <span>🔒 พื้นที่เจ้าหน้าที่โรงเรียน</span>
-            <button class="admin-btn" onclick="openModal('loginModal')">🔑 Login เข้าสู่ระบบ</button>
-        </div>
-        
-        <!-- เมนูแอดมินที่จะแสดงขึ้นมาหลังจากล็อกอินสำเร็จ -->
-        <div id="adminMode" class="admin-mode-only" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-            <span>🛠️ เมนูผู้ดูแลระบบ: สวัสดีคุณครูแอดมิน</span>
-            <div>
-                <button class="admin-btn btn-success" onclick="openModal('addNewsModal')">➕ เพิ่มข่าวประชาสัมพันธ์</button>
-                <button class="admin-btn btn-danger" onclick="handleLogout()">¼ ออกจากระบบ</button>
-            </div>
-        </div>
-    </div>
 
     <!-- 1. หน้าต่างป๊อปอัพเข้าสู่ระบบ (Login Modal) -->
     <div class="modal-overlay" id="loginModal">
@@ -500,7 +482,7 @@
         </div>
     </div>
 
-    <!-- ส่วนหัวเว็บไซต์ -->
+    <!-- ส่วนหัวเว็บไซต์พร้อมแถบเมนูหลัก -->
     <header>
         <div class="header-container">
             <div class="logo-container">
@@ -510,12 +492,20 @@
                     <p>มุ่งมั่นพัฒนาวิชาการ สร้างสรรค์คนดีสู่สังคม</p>
                 </div>
             </div>
+            <!-- เมนูหลัก ย้าย Login มาไว้ที่นี่แล้วค่ะ -->
             <nav>
-                <ul>
+                <ul id="navMenu">
                     <li><a href="#" class="active">หน้าแรก</a></li>
                     <li><a href="#">เกี่ยวกับโรงเรียน</a></li>
                     <li><a href="#">ข่าวสาร</a></li>
                     <li><a href="#">ติดต่อเรา</a></li>
+                    
+                    <!-- ปุ่มสำหรับสถานะปกติ (Guest) -->
+                    <li id="menuGuest"><button onclick="openModal('loginModal')">🔑 Login</button></li>
+                    
+                    <!-- ปุ่มสำหรับแอดมิน (จะถูกเปิดใช้งานผ่าน JavaScript หลังล็อกอินสำเร็จ) -->
+                    <li id="menuAdminAdd" class="admin-menu-item"><button class="nav-admin-btn" onclick="openModal('addNewsModal')">➕ เพิ่มข่าว</button></li>
+                    <li id="menuAdminLogout" class="admin-menu-item"><button class="nav-logout-btn" onclick="handleLogout()">🚪 ออกจากระบบ</button></li>
                 </ul>
             </nav>
         </div>
@@ -548,7 +538,6 @@
             <h2 class="section-title">📢 ข่าวประชาสัมพันธ์ล่าสุด</h2>
         </div>
         
-        <!-- กล่องตารางข่าวประชาสัมพันธ์ -->
         <div class="news-grid" id="newsGrid">
             <!-- ข่าวระบบเริ่มต้น 1 -->
             <article class="news-card">
@@ -572,19 +561,6 @@
                 <div class="card-body">
                     <h3>โครงการ Open Class เปิดชั้นเรียนเพื่อการเรียนรู้</h3>
                     <p>กิจกรรมแลกเปลี่ยนเรียนรู้วิธีการสอนของครู เพื่อพัฒนาคุณภาพผู้เรียนตามแนวคิดการจัดการเรียนรู้เชิงรุก</p>
-                    <a href="#" class="card-btn">อ่านเพิ่มเติม</a>
-                </div>
-            </article>
-
-            <!-- ข่าวระบบเริ่มต้น 3 -->
-            <article class="news-card">
-                <div class="card-img-wrapper">
-                    <span class="card-date">5 มี.ค. 69</span>
-                    <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-4.0.3" alt="วิชาการ" class="card-img">
-                </div>
-                <div class="card-body">
-                    <h3>นักเรียนโรงเรียนเราคว้าเหรียญทอง การแข่งขันระดับชาติ</h3>
-                    <p>ขอแสดงความยินดีกับทีมหุ่นยนต์โรงเรียนเราที่คว้าชัยชนะในการแข่งขันพัฒนาหุ่นยนต์ระดับภูมิภาค...</p>
                     <a href="#" class="card-btn">อ่านเพิ่มเติม</a>
                 </div>
             </article>
@@ -629,14 +605,14 @@
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
 
-            // ตรวจสอบข้อมูลรหัสผ่าน (Username: admin / Password: 1234)
+            // ตรวจสอบรหัสผ่าน (Username: admin / Password: 1234)
             if (user === 'admin' && pass === '1234') {
-                alert('🎉 เข้าสู่ระบบสำเร็จ! เข้าสู่หน้าควบคุมเมนูแอดมินค่ะ');
+                alert('🎉 เข้าสู่ระบบสำเร็จ! เปิดใช้งานเมนูแอดมินเรียบร้อยค่ะ');
                 
-                // เปลี่ยนการแสดงผลแถบแอดมินบาร์ด้านบน
-                document.getElementById('guestMode').style.display = 'none';
-                document.getElementById('adminMode').style.style = 'display: flex !important;';
-                document.getElementById('adminMode').classList.remove('admin-mode-only');
+                // ซ่อนปุ่ม Login ปกติ และสลับไปแสดงเมนูจัดการของแอดมินแทน
+                document.getElementById('menuGuest').style.display = 'none';
+                document.getElementById('menuAdminAdd').style.display = 'block';
+                document.getElementById('menuAdminLogout').style.display = 'block';
                 
                 closeModal('loginModal');
             } else {
@@ -647,9 +623,10 @@
         // --- 4. ฟังก์ชันออกจากระบบ ---
         function handleLogout() {
             alert('🚪 ออกจากระบบแอดมินเรียบร้อยแล้วค่ะ');
-            document.getElementById('guestMode').style.display = 'block';
-            document.getElementById('adminMode').style.display = 'none';
-            document.getElementById('adminMode').classList.add('admin-mode-only');
+            // สลับเมนูกลับมาเป็นหน้าตาปกติสำหรับบุคคลทั่วไป
+            document.getElementById('menuGuest').style.display = 'block';
+            document.getElementById('menuAdminAdd').style.display = 'none';
+            document.getElementById('menuAdminLogout').style.display = 'none';
         }
 
         // --- 5. ฟังก์ชันสำหรับเมนูแอดมิน: เพิ่มข่าวประชาสัมพันธ์จริงบนหน้าเว็บ ---
@@ -660,17 +637,14 @@
             const detail = document.getElementById('newsDetail').value;
             let imgUrl = document.getElementById('newsImg').value;
 
-            // หากไม่มีการระบุลิงก์รูปภาพ ให้ดึงภาพตัวอย่างจาก unsplash
             if(!imgUrl) {
                 imgUrl = 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?ixlib=rb-4.0.3';
             }
 
-            // คำนวณวันที่ปัจจุบันมาแสดงผลในบล็อกข่าว
             const now = new Date();
             const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
             const dateString = `${now.getDate()} ${thaiMonths[now.getMonth()]} ${String(now.getFullYear() + 543).substring(2)}`;
 
-            // สร้างโครงสร้างบล็อกการ์ดข่าวใหม่ (HTML DOM)
             const newsGrid = document.getElementById('newsGrid');
             const newCard = document.createElement('article');
             newCard.className = 'news-card';
@@ -686,10 +660,8 @@
                 </div>
             `;
 
-            // เพิ่มการ์ดข่าวใหม่เข้าไปที่หน้าแรกสุดของตารางข่าว
             newsGrid.insertBefore(newCard, newsGrid.firstChild);
 
-            // แจ้งเตือนและรีเซ็ตเคลียร์ข้อมูลในฟอร์ม
             alert('📢 โพสต์ข่าวประชาสัมพันธ์ใหม่สำเร็จแล้วค่ะ!');
             document.getElementById('newsTitle').value = '';
             document.getElementById('newsDetail').value = '';
