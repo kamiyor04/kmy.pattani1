@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>โรงเรียนของเรา | หน้าแรก</title>
+    <title>โรงเรียนชุมชนบ้านกะมิยอ | หน้าแรก</title>
     <!-- นำเข้าฟอนต์ Sarabun -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,7 +41,7 @@
             list-style: none;
         }
 
-        /* --- แถบผู้ดูแลระบบ (Admin Bar) --- */
+        /* --- แถบควบคุมผู้ดูแลระบบด้านบน (Admin Bar) --- */
         .admin-bar {
             background-color: #222;
             color: #fff;
@@ -50,6 +50,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            min-height: 50px;
         }
 
         .admin-btn {
@@ -62,11 +63,22 @@
             cursor: pointer;
             font-size: 0.85rem;
             transition: 0.3s;
+            margin-left: 10px;
         }
 
         .admin-btn:hover {
             background-color: #002244;
             color: var(--accent-color);
+        }
+
+        .btn-danger { background-color: #d9534f; }
+        .btn-danger:hover { background-color: #c9302c; color: white; }
+        .btn-success { background-color: #5cb85c; }
+        .btn-success:hover { background-color: #4cae4c; color: white; }
+
+        /* ซ่อนเมนูแอดมินไว้ก่อนล็อกอิน */
+        .admin-mode-only {
+            display: none !important;
         }
 
         /* --- ส่วนหัว (Header) --- */
@@ -94,7 +106,6 @@
             gap: 15px;
         }
 
-        /* ปรับสไตล์โลโก้ส่วนหัวให้เป็นวงกลม */
         .logo-img {
             height: 60px;
             width: 60px;
@@ -133,7 +144,7 @@
             border-bottom: 2px solid var(--accent-color);
         }
 
-        /* --- ระบบป๊อปอัพเข้าสู่ระบบ (Login Modal) --- */
+        /* --- ระบบป๊อปอัพทั้งหมด (Modals Overlay) --- */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -161,7 +172,7 @@
             padding: 40px;
             border-radius: 12px;
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.25);
             position: relative;
             transform: translateY(-50px);
@@ -182,9 +193,7 @@
             transition: 0.2s;
         }
 
-        .close-modal:hover {
-            color: #333;
-        }
+        .close-modal:hover { color: #333; }
 
         .login-box h2 {
             text-align: center;
@@ -205,7 +214,7 @@
             font-size: 0.95rem;
         }
 
-        .input-group input {
+        .input-group input, .input-group textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid #ccc;
@@ -215,7 +224,7 @@
             transition: 0.3s;
         }
 
-        .input-group input:focus {
+        .input-group input:focus, .input-group textarea:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 5px rgba(0, 51, 102, 0.2);
         }
@@ -234,9 +243,7 @@
             margin-top: 10px;
         }
 
-        .submit-btn:hover {
-            background-color: #002244;
-        }
+        .submit-btn:hover { background-color: #002244; }
 
         /* --- ภาพเลื่อนแบนเนอร์ (Hero Slider) --- */
         .slider-container {
@@ -277,18 +284,8 @@
             text-align: center;
         }
 
-        .slide-content h2 {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            font-weight: 700;
-        }
-
-        .slide-content p {
-            font-size: 1.4rem;
-            margin-bottom: 25px;
-            font-weight: 300;
-        }
-
+        .slide-content h2 { font-size: 3rem; margin-bottom: 15px; font-weight: 700; }
+        .slide-content p { font-size: 1.4rem; margin-bottom: 25px; font-weight: 300; }
         .slide-btn {
             background-color: var(--accent-color);
             color: var(--primary-color);
@@ -423,7 +420,6 @@
             text-align: center;
         }
 
-        /* ปรับสไตล์โลโก้ส่วนท้ายให้เป็นวงกลม */
         .footer-logo {
             height: 50px;
             width: 50px;
@@ -444,17 +440,29 @@
 </head>
 <body>
 
-    <!-- แถบผู้ดูแลระบบด้านบนสุด -->
-    <div class="admin-bar">
-        <span>🔒 พื้นที่เจ้าหน้าที่โรงเรียน</span>
-        <button class="admin-btn" onclick="openLoginModal()">🔑 Login เข้าสู่ระบบ</button>
+    <!-- แถบระบบแอดมินด้านบน (เปลี่ยนสถานะอัตโนมัติเมื่อ Login) -->
+    <div class="admin-bar" id="adminBar">
+        <!-- สถานะปกติก่อนล็อกอิน -->
+        <div id="guestMode">
+            <span>🔒 พื้นที่เจ้าหน้าที่โรงเรียน</span>
+            <button class="admin-btn" onclick="openModal('loginModal')">🔑 Login เข้าสู่ระบบ</button>
+        </div>
+        
+        <!-- เมนูแอดมินที่จะแสดงขึ้นมาหลังจากล็อกอินสำเร็จ -->
+        <div id="adminMode" class="admin-mode-only" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+            <span>🛠️ เมนูผู้ดูแลระบบ: สวัสดีคุณครูแอดมิน</span>
+            <div>
+                <button class="admin-btn btn-success" onclick="openModal('addNewsModal')">➕ เพิ่มข่าวประชาสัมพันธ์</button>
+                <button class="admin-btn btn-danger" onclick="handleLogout()">¼ ออกจากระบบ</button>
+            </div>
+        </div>
     </div>
 
-    <!-- หน้าต่างป๊อปอัพเข้าสู่ระบบ (Login Modal) -->
+    <!-- 1. หน้าต่างป๊อปอัพเข้าสู่ระบบ (Login Modal) -->
     <div class="modal-overlay" id="loginModal">
         <div class="login-box">
-            <span class="close-modal" onclick="closeLoginModal()">&times;</span>
-            <h2>ผู้ดูแลระบบ</h2>
+            <span class="close-modal" onclick="closeModal('loginModal')">&times;</span>
+            <h2>เข้าสู่ระบบผู้ดูแลระบบ</h2>
             <form onsubmit="handleLogin(event)">
                 <div class="input-group">
                     <label for="username">ชื่อผู้ใช้งาน (Username)</label>
@@ -464,7 +472,30 @@
                     <label for="password">รหัสผ่าน (Password)</label>
                     <input type="password" id="password" required placeholder="ใส่รหัสผ่าน">
                 </div>
-                <button type="submit" class="submit-btn">เข้าสู่ระบบ</button>
+                <button type="submit" class="submit-btn">ยืนยันเข้าสู่ระบบ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. หน้าต่างป๊อปอัพสำหรับเพิ่มข่าว (Add News Modal) -->
+    <div class="modal-overlay" id="addNewsModal">
+        <div class="login-box">
+            <span class="close-modal" onclick="closeModal('addNewsModal')">&times;</span>
+            <h2>➕ เพิ่มข่าวประชาสัมพันธ์ใหม่</h2>
+            <form onsubmit="addNewNews(event)">
+                <div class="input-group">
+                    <label for="newsTitle">หัวข้อข่าวสาร</label>
+                    <input type="text" id="newsTitle" required placeholder="ตัวอย่าง: กิจกรรมวันเด็กแห่งชาติ ประจำปี 2569">
+                </div>
+                <div class="input-group">
+                    <label for="newsDetail">เนื้อหาข่าวโดยย่อ</label>
+                    <textarea id="newsDetail" rows="4" required placeholder="ใส่รายละเอียดข่าวประชาสัมพันธ์ที่นี่..."></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="newsImg">ลิงก์รูปภาพประกอบข่าว (เว้นว่างไว้ได้เพื่อใช้รูปเริ่มต้น)</label>
+                    <input type="url" id="newsImg" placeholder="https://example.com/image.jpg">
+                </div>
+                <button type="submit" class="submit-btn">📢 บันทึกและโพสต์ประชาสัมพันธ์</button>
             </form>
         </div>
     </div>
@@ -473,10 +504,9 @@
     <header>
         <div class="header-container">
             <div class="logo-container">
-                <!-- ดึงจากไฟล์ logo.png (เปลี่ยนเป็น .png และเป็นทรงวงกลมแล้ว) -->
                 <img src="logo.png" alt="โลโก้โรงเรียน" class="logo-img" onerror="this.src='https://via.placeholder.com/60'">
                 <div class="logo-text">
-                    <h1>โรงเรียนของเรา</h1>
+                    <h1>โรงเรียนชุมชนบ้านกะมิยอ</h1>
                     <p>มุ่งมั่นพัฒนาวิชาการ สร้างสรรค์คนดีสู่สังคม</p>
                 </div>
             </div>
@@ -497,7 +527,7 @@
             <div class="slide">
                 <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?ixlib=rb-4.0.3" alt="บรรยากาศ">
                 <div class="slide-content">
-                    <h2>ยินดีต้อนรับสู่โรงเรียนของเรา</h2>
+                    <h2>ยินดีต้อนรับสู่โรงเรียนชุมชนบ้านกะมิยอ</h2>
                     <p>แหล่งเรียนรู้คุณภาพ เพื่ออนาคตที่ดีกว่าของบุตรหลานท่าน</p>
                     <a href="#" class="slide-btn">อ่านข่าวล่าสุด</a>
                 </div>
@@ -518,8 +548,9 @@
             <h2 class="section-title">📢 ข่าวประชาสัมพันธ์ล่าสุด</h2>
         </div>
         
-        <div class="news-grid">
-            <!-- บล็อกข่าวที่ 1 -->
+        <!-- กล่องตารางข่าวประชาสัมพันธ์ -->
+        <div class="news-grid" id="newsGrid">
+            <!-- ข่าวระบบเริ่มต้น 1 -->
             <article class="news-card">
                 <div class="card-img-wrapper">
                     <span class="card-date">10 มี.ค. 69</span>
@@ -532,7 +563,7 @@
                 </div>
             </article>
 
-            <!-- บล็อกข่าวที่ 2 -->
+            <!-- ข่าวระบบเริ่มต้น 2 -->
             <article class="news-card">
                 <div class="card-img-wrapper">
                     <span class="card-date">8 มี.ค. 69</span>
@@ -545,7 +576,7 @@
                 </div>
             </article>
 
-            <!-- บล็อกข่าวที่ 3 -->
+            <!-- ข่าวระบบเริ่มต้น 3 -->
             <article class="news-card">
                 <div class="card-img-wrapper">
                     <span class="card-date">5 มี.ค. 69</span>
@@ -562,58 +593,116 @@
 
     <!-- ท้ายเว็บไซต์ -->
     <footer>
-        <!-- โลโก้ส่วนท้ายเปลี่ยนเป็น logo.png และวงกลมแล้ว -->
         <img src="logo.png" alt="โลโก้โรงเรียน" class="footer-logo" onerror="this.src='https://via.placeholder.com/50'">
-        <p>&copy; 2026 โรงเรียนของเรา. All Rights Reserved. | พัฒนาด้วย GitHub Pages</p>
+        <p>&copy; 2026 โรงเรียนชุมชนบ้านกะมิยอ. All Rights Reserved. | พัฒนาด้วย GitHub Pages</p>
     </footer>
 
-    <!-- ส่วนควบคุมระบบภาพเลื่อนและป๊อปอัพ Login -->
+    <!-- ส่วนสคริปต์ควบคุมระบบ -->
     <script>
-        // --- ฟังก์ชัน สไลด์ภาพเลื่อนอัตโนมัติ ---
+        // --- 1. ระบบภาพเลื่อนแบนเนอร์อัตโนมัติ ---
         let currentSlideIndex = 0;
         const slides = document.querySelectorAll('.slide');
         const slider = document.getElementById('slider');
 
         function moveSlide() {
-            currentSlideIndex++;
-            if (currentSlideIndex >= slides.length) {
-                currentSlideIndex = 0;
-            }
+            currentSlideIndex = (currentSlideIndex + 1) % slides.length;
             slider.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
         }
         setInterval(moveSlide, 5000);
 
-        // --- ฟังก์ชันควบคุมป๊อปอัพ Login ---
-        const modal = document.getElementById('loginModal');
-
-        function openLoginModal() {
-            modal.classList.add('active');
+        // --- 2. ฟังก์ชัน ควบคุม การเปิด-ปิด ป๊อปอัพ ---
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
         }
 
-        function closeLoginModal() {
-            modal.classList.remove('active');
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            if(modalId === 'loginModal') {
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+            }
         }
 
+        // --- 3. ระบบยืนยันตรวจสอบการล็อกอิน ---
         function handleLogin(event) {
-            event.preventDefault(); 
-            
+            event.preventDefault();
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
 
+            // ตรวจสอบข้อมูลรหัสผ่าน (Username: admin / Password: 1234)
             if (user === 'admin' && pass === '1234') {
-                alert('🎉 เข้าสู่ระบบสำเร็จ ยินดีต้อนรับคุณครูแอดมินค่ะ!');
-                closeLoginModal();
+                alert('🎉 เข้าสู่ระบบสำเร็จ! เข้าสู่หน้าควบคุมเมนูแอดมินค่ะ');
+                
+                // เปลี่ยนการแสดงผลแถบแอดมินบาร์ด้านบน
+                document.getElementById('guestMode').style.display = 'none';
+                document.getElementById('adminMode').style.style = 'display: flex !important;';
+                document.getElementById('adminMode').classList.remove('admin-mode-only');
+                
+                closeModal('loginModal');
             } else {
-                alert('❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้งนะคะ');
+                alert('❌ รหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้งค่ะ');
             }
         }
 
-        window.onclick = function(event) {
-            if (event.target === modal) {
-                closeLoginModal();
+        // --- 4. ฟังก์ชันออกจากระบบ ---
+        function handleLogout() {
+            alert('🚪 ออกจากระบบแอดมินเรียบร้อยแล้วค่ะ');
+            document.getElementById('guestMode').style.display = 'block';
+            document.getElementById('adminMode').style.display = 'none';
+            document.getElementById('adminMode').classList.add('admin-mode-only');
+        }
+
+        // --- 5. ฟังก์ชันสำหรับเมนูแอดมิน: เพิ่มข่าวประชาสัมพันธ์จริงบนหน้าเว็บ ---
+        function addNewNews(event) {
+            event.preventDefault();
+            
+            const title = document.getElementById('newsTitle').value;
+            const detail = document.getElementById('newsDetail').value;
+            let imgUrl = document.getElementById('newsImg').value;
+
+            // หากไม่มีการระบุลิงก์รูปภาพ ให้ดึงภาพตัวอย่างจาก unsplash
+            if(!imgUrl) {
+                imgUrl = 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?ixlib=rb-4.0.3';
             }
+
+            // คำนวณวันที่ปัจจุบันมาแสดงผลในบล็อกข่าว
+            const now = new Date();
+            const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            const dateString = `${now.getDate()} ${thaiMonths[now.getMonth()]} ${String(now.getFullYear() + 543).substring(2)}`;
+
+            // สร้างโครงสร้างบล็อกการ์ดข่าวใหม่ (HTML DOM)
+            const newsGrid = document.getElementById('newsGrid');
+            const newCard = document.createElement('article');
+            newCard.className = 'news-card';
+            newCard.innerHTML = `
+                <div class="card-img-wrapper">
+                    <span class="card-date">${dateString}</span>
+                    <img src="${imgUrl}" alt="ข่าวสาร" class="card-img" onerror="this.src='https://via.placeholder.com/350x230'">
+                </div>
+                <div class="card-body">
+                    <h3>${title}</h3>
+                    <p>${detail}</p>
+                    <a href="#" class="card-btn">อ่านเพิ่มเติม</a>
+                </div>
+            `;
+
+            // เพิ่มการ์ดข่าวใหม่เข้าไปที่หน้าแรกสุดของตารางข่าว
+            newsGrid.insertBefore(newCard, newsGrid.firstChild);
+
+            // แจ้งเตือนและรีเซ็ตเคลียร์ข้อมูลในฟอร์ม
+            alert('📢 โพสต์ข่าวประชาสัมพันธ์ใหม่สำเร็จแล้วค่ะ!');
+            document.getElementById('newsTitle').value = '';
+            document.getElementById('newsDetail').value = '';
+            document.getElementById('newsImg').value = '';
+            closeModal('addNewsModal');
+        }
+
+        // คลิกพื้นที่รอบนอกป๊อปอัพเพื่อปิด
+        window.onclick = function(event) {
+            const loginModal = document.getElementById('loginModal');
+            const addNewsModal = document.getElementById('addNewsModal');
+            if (event.target === loginModal) closeModal('loginModal');
+            if (event.target === addNewsModal) closeModal('addNewsModal');
         }
     </script>
 </body>
