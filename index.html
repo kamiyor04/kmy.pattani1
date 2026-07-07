@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โรงเรียนของเรา | ข่าวประชาสัมพันธ์</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Sarabun', sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* แถบผู้ดูแลระบบ (Admin Bar) */
+        .admin-bar {
+            background-color: #222;
+            color: #fff;
+            padding: 8px 20px;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-btn {
+            background-color: #d9534f;
+            color: white;
+            text-decoration: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .admin-btn:hover {
+            background-color: #c9302c;
+        }
+
+        /* ส่วนหัวและเมนู */
+        header {
+            background-color: #003366;
+            color: white;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        nav ul li a.active {
+            color: #ffcc00;
+        }
+
+        /* ส่วนเนื้อหาข่าว */
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #003366;
+        }
+
+        /* โครงสร้างการ์ดข่าว */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-img {
+            width: 100%;
+            height: 210px;
+            object-fit: cover;
+            background-color: #eee;
+        }
+
+        .card-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .card-date {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .card-content h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #003366;
+            min-height: 56px;
+        }
+
+        .card-content p {
+            font-size: 0.95rem;
+            color: #555;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .btn {
+            display: block;
+            text-align: center;
+            background-color: #003366;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* ข้อความแจ้งเตือนตอนโหลดข้อมูล */
+        .loading {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            grid-column: 1 / -1;
+            padding: 50px 0;
+        }
+
+        footer {
+            background-color: #111;
+            color: #ccc;
+            text-align: center;
+            padding: 20px;
+            margin-top: 60px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- แถบระบบแอนมิน (จะแสดงลิงก์ให้แอดมินกดไปเพิ่มข่าว) -->
+    <div class="admin-bar">
+        <span>🔒 พื้นที่ผู้ดูแลระบบ</span>
+        <!-- เปลี่ยนลิงก์ # ตรงนี้เป็น ลิงก์แก้ไข Google Sheets ของพี่เกิร์ล เพื่อให้กดไปพิมพ์เพิ่มข่าวได้ง่ายๆ -->
+        <a href="#" target="_blank" class="admin-btn">➕ จัดการ/เพิ่มข่าวประชาสัมพันธ์</a>
+    </div>
+
+    <!-- ส่วนหัวเว็บไซต์ -->
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <h1>โรงเรียนของเรา</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">ข่าวประชาสัมพันธ์</a></li>
+                    <li><a href="#">เกี่ยวกับโรงเรียน</a></li>
+                    <li><a href="#">ติดต่อเรา</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ส่วนแสดงการ์ดข่าว -->
+    <main class="container">
+        <h2 class="section-title">ข่าวประชาสัมพันธ์ล่าสุด</h2>
+        
+        <!-- ข้อมูลข่าวจาก Google Sheets จะมาแสดงในนี้อัตโนมัติ -->
+        <div class="grid" id="news-grid">
+            <div class="loading">กำลังโหลดข้อมูลข่าวประชาสัมพันธ์...</div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 โรงเรียนของเรา. All Rights Reserved. | ข้อมูลอัปเดตอัตโนมัติจาก Google Sheets</p>
+    </footer>
+
+    <!-- ส่วนสคริปต์ดึงข้อมูลอัตโนมัติ -->
+    <script>
+        // สำคัญมาก: เอาลิงก์ CSV จาก Google Sheets ขั้นตอนที่ 1 มาวางแทนที่ในเครื่องหมายคำพูดด้านล่างนี้ค่ะ
+        const googleSheetCsvUrl = '1BEL2RjP2aBzWqHHiIEPgfbWk4NpuNSfcpFq8vBEXs2Y';
+
+        async function loadNews() {
+            try {
+                const response = await fetch(googleSheetCsvUrl);
+                const data = await response.text();
+                
+                // แปลงข้อมูล CSV เป็น Array
+                const rows = data.split('\n').slice(1); // ข้ามแถวหัวข้อแรก
+                const newsGrid = document.getElementById('news-grid');
+                newsGrid.innerHTML = ''; // ล้างข้อความ Loading
+
+                let hasNews = false;
+
+                rows.forEach(row => {
+                    // แยกคอลัมน์ด้วยเครื่องหมายจุลภาค (,)
+                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    
+                    if (columns.length >= 2 && columns[0].trim() !== '') {
+                        hasNews = true;
+                        const title = columns[0].replace(/"/g, '');
+                        const content = columns[1].replace(/"/g, '');
+                        // ถ้ารูปภาพว่าง ให้ใช้รูปภาพจำลองแทน
+                        const image = columns[2] ? columns[2].replace(/"/g, '').trim() : 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?ixlib=rb-4.0.3';
+                        const date = columns[3] ? columns[3].replace(/"/g, '') : '-';
+
+                        // สร้างโครงสร้างการ์ดข่าว HTML
+                        const cardHtml = `
+                            <div class="card">
+                                <img src="${image}" alt="${title}" class="card-img" onerror="this.src='https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?ixlib=rb-4.0.3'">
+                                <div class="card-content">
+                                    <div class="card-date">📅 วันที่ประกาศ: ${date}</div>
+                                    <h3>${title}</h3>
+                                    <p>${content}</p>
+                                    <a href="#" class="btn">อ่านรายละเอียด</a>
+                                </div>
+                            </div>
+                        `;
+                        newsGrid.innerHTML += cardHtml;
+                    }
+                });
+
+                if (!hasNews) {
+                    newsGrid.innerHTML = '<div class="loading">ยังไม่มีข่าวประชาสัมพันธ์ในขณะนี้</div>';
+                }
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('news-grid').innerHTML = '<div class="loading" style="color:red;">ไม่สามารถโหลดข้อมูลข่าวได้ กรุณาตรวจสอบการตั้งค่า Google Sheets</div>';
+            }
+        }
+
+        // เรียกใช้งานฟังก์ชันเมื่อเปิดหน้าเว็บ
+        window.onload = loadNews;
+    </script>
+</body>
+</html>
