@@ -1,11 +1,13 @@
 // ⚠️ ใส่ Web App URL ของคุณตรงนี้
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
 
+
 document.addEventListener("DOMContentLoaded", () => {
   const dateInput = document.getElementById('attendanceDate');
   if (dateInput) dateInput.valueAsDate = new Date();
 });
 
+// 1. ฟังก์ชันดึงรายชื่อนักเรียน
 function loadStudentList() {
   const className = document.getElementById('classSelect').value;
   const tbody = document.getElementById('studentTableBody');
@@ -29,7 +31,7 @@ function loadStudentList() {
     Swal.fire({
       icon: 'error',
       title: 'เชื่อมต่อล้มเหลว',
-      text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้',
+      text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ กรุณาเช็กการเชื่อมต่อเน็ตหรือ Web App URL',
       confirmButtonColor: '#4f46e5'
     });
     tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-4">❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ได้</td></tr>`;
@@ -38,6 +40,7 @@ function loadStudentList() {
   document.body.appendChild(script);
 }
 
+// 2. ฟังก์ชันวาดตารางและสร้างปุ่มเลือกสถานะ 3 แบบ (ไม่มาเรียน = Default)
 function renderStudentTable(response) {
   const tbody = document.getElementById('studentTableBody');
 
@@ -66,7 +69,7 @@ function renderStudentTable(response) {
 
   let html = '';
   students.forEach((student, index) => {
-    // กำหนดให้ปุ่ม "ไม่มาเรียน" มี attribute checked ล่วงหน้า (Auto Select)
+    // กำหนดให้ "ไม่มาเรียน" มีคำว่า checked เพื่อออโต้เลือกทันที
     html += `
       <tr>
         <td class="text-center fw-bold text-secondary">${student.no}</td>
@@ -108,6 +111,7 @@ function renderStudentTable(response) {
   });
 }
 
+// 3. ฟังก์ชันส่งข้อมูลบันทึก
 async function submitAttendance() {
   const date = document.getElementById('attendanceDate').value;
   const className = document.getElementById('classSelect').value;
