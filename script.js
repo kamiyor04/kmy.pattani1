@@ -6,25 +6,21 @@ document.addEventListener("DOMContentLoaded", () => {
   if (dateInput) dateInput.valueAsDate = new Date();
 });
 
-// 1. ฟังก์ชันดึงรายชื่อนักเรียน
 function loadStudentList() {
   const className = document.getElementById('classSelect').value;
   const tbody = document.getElementById('studentTableBody');
 
-  // โชว์หมุนโหลดในตาราง
   tbody.innerHTML = `
     <tr>
-      <td colspan="4" class="text-center py-5">
+      <td colspan="3" class="text-center py-5">
         <div class="spinner-border text-primary me-2" role="status"></div>
         <span class="fs-6 text-secondary">กำลังดึงข้อมูลรายชื่อนักเรียน...</span>
       </td>
     </tr>`;
 
-  // ลบ script tag เก่าออก
   const oldScript = document.getElementById('jsonp-script');
   if (oldScript) oldScript.remove();
 
-  // สร้าง script tag ใหม่ ยิงดึงข้อมูล JSONP
   const script = document.createElement('script');
   script.id = 'jsonp-script';
   script.src = `${WEB_APP_URL}?action=getStudents&className=${encodeURIComponent(className)}&callback=renderStudentTable`;
@@ -33,16 +29,15 @@ function loadStudentList() {
     Swal.fire({
       icon: 'error',
       title: 'เชื่อมต่อล้มเหลว',
-      text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ กรุณาเช็กการเชื่อมต่อเน็ตหรือ Web App URL',
+      text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้',
       confirmButtonColor: '#4f46e5'
     });
-    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ได้</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-4">❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ได้</td></tr>`;
   };
 
   document.body.appendChild(script);
 }
 
-// 2. ฟังก์ชันแสดงตาราง
 function renderStudentTable(response) {
   const tbody = document.getElementById('studentTableBody');
 
@@ -53,7 +48,7 @@ function renderStudentTable(response) {
       text: response ? response.message : 'ไม่ได้รับข้อมูลจากเซิร์ฟเวอร์',
       confirmButtonColor: '#4f46e5'
     });
-    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">❌ เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-4">❌ เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
     return;
   }
 
@@ -65,33 +60,34 @@ function renderStudentTable(response) {
       text: 'ไม่พบรายชื่อนักเรียนในระดับชั้นนี้',
       confirmButtonColor: '#4f46e5'
     });
-    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-warning">⚠️ ไม่พบรายชื่อนักเรียนในระดับชั้นนี้</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-warning">⚠️ ไม่พบรายชื่อนักเรียนในระดับชั้นนี้</td></tr>`;
     return;
   }
 
   let html = '';
   students.forEach((student, index) => {
+    // กำหนดให้ปุ่ม "ไม่มาเรียน" มี attribute checked ล่วงหน้า (Auto Select)
     html += `
       <tr>
         <td class="text-center fw-bold text-secondary">${student.no}</td>
         <td class="fw-medium">${student.name}</td>
         <td class="text-center">
           <div class="btn-group w-100 status-group" role="group">
-            <input type="radio" class="btn-check" name="status_${index}" id="present_${index}" value="มา" checked>
-            <label class="btn btn-outline-success" for="present_${index}">มา</label>
+            <input type="radio" class="btn-check" name="status_${index}" id="present_${index}" value="เข้าร่วม/มาเรียน">
+            <label class="btn btn-outline-success" for="present_${index}">
+              <i class="fa-solid fa-circle-check me-1"></i>เข้าร่วม/มาเรียน
+            </label>
 
-            <input type="radio" class="btn-check" name="status_${index}" id="late_${index}" value="สาย">
-            <label class="btn btn-outline-warning" for="late_${index}">สาย</label>
+            <input type="radio" class="btn-check" name="status_${index}" id="late_${index}" value="ไม่เข้าร่วม/มาเรียน (สาย)">
+            <label class="btn btn-outline-warning" for="late_${index}">
+              <i class="fa-solid fa-clock me-1"></i>ไม่เข้าร่วม/มาเรียน (สาย)
+            </label>
 
-            <input type="radio" class="btn-check" name="status_${index}" id="absent_${index}" value="ขาด">
-            <label class="btn btn-outline-danger" for="absent_${index}">ขาด</label>
-
-            <input type="radio" class="btn-check" name="status_${index}" id="leave_${index}" value="ลา">
-            <label class="btn btn-outline-secondary" for="leave_${index}">ลา</label>
+            <input type="radio" class="btn-check" name="status_${index}" id="absent_${index}" value="ไม่มาเรียน" checked>
+            <label class="btn btn-outline-danger" for="absent_${index}">
+              <i class="fa-solid fa-circle-xmark me-1"></i>ไม่มาเรียน
+            </label>
           </div>
-        </td>
-        <td class="text-center">
-           <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2">พร้อม</span>
         </td>
       </tr>
     `;
@@ -99,7 +95,6 @@ function renderStudentTable(response) {
 
   tbody.innerHTML = html;
 
-  // แจ้งเตือน Toast เล็กๆ มุมขวาบนว่าโหลดสำเร็จ
   const Toast = Swal.mixin({
     toast: true,
     position: 'top-end',
@@ -113,7 +108,6 @@ function renderStudentTable(response) {
   });
 }
 
-// 3. ฟังก์ชันส่งข้อมูลไปบันทึก
 async function submitAttendance() {
   const date = document.getElementById('attendanceDate').value;
   const className = document.getElementById('classSelect').value;
@@ -142,12 +136,11 @@ async function submitAttendance() {
         no: no,
         name: name,
         className: className,
-        status: statusRadio ? statusRadio.value : "มา"
+        status: statusRadio ? statusRadio.value : "ไม่มาเรียน"
       });
     }
   });
 
-  // ถามยืนยันด้วย Pop-up สวยๆ
   const result = await Swal.fire({
     title: 'ยืนยันการบันทึก?',
     text: `ต้องการบันทึกข้อมูลการเช็คชื่อ ${className} จำนวน ${attendanceData.length} คนใช่หรือไม่?`,
@@ -160,7 +153,6 @@ async function submitAttendance() {
   });
 
   if (result.isConfirmed) {
-    // แสดงป๊อปอัปกำลังบันทึก (ล็อกหน้าจอไว้กันกดซ้ำ)
     Swal.fire({
       title: 'กำลังบันทึกข้อมูล...',
       text: 'กรุณารอสักครู่ ระบบกำลังส่งข้อมูลลง Google Sheets',
