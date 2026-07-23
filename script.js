@@ -423,30 +423,62 @@ async function saveStudentData(action, payload) {
     });
   }
 }
-// ฟังก์ชันสำหรับพิมพ์รายชื่อนักเรียนแบบเอกสารทางการ
+// ฟังก์ชันสำหรับพิมพ์รายชื่อนักเรียนแบบเอกสารทางการ (ปรับปรุงรองรับการดึงข้อมูลทุกรูปแบบ)
 function printStudentList() {
-  // ดึงชั้นเรียนที่เลือกอยู่ปัจจุบัน
-  const classSelect = document.getElementById('select-class') || document.getElementById('swal-class');
-  const selectedClass = classSelect ? classSelect.value : 'ป.1';
+  // 1. ดึงระดับชั้นที่เลือกอยู่ปัจจุบัน
+  const classSelect = document.getElementById('select-class') || document.getElementById('swal-class') || document.getElementById('classSelect');
+  const selectedClass = classSelect ? classSelect.value.trim() : 'ป.1';
 
-  // ดึงข้อมูลนักเรียนทั้งหมดในระบบ (หรือเฉพาะห้องที่เลือก)
-  const allStudents = window.studentData || []; 
-  const classStudents = allStudents.filter(s => String(s.className || s.class).trim() === String(selectedClass).trim());
+  let classStudents = [];
 
-  // เรียงลำดับตามเลขที่จากน้อยไปมาก
-  classStudents.sort((a, b) => Number(a.no) - Number(b.no));
+  // 2. วิธีที่ 1: ลองดึงจากตัวแปร Global ในระบบ
+  const rawData = window.studentData || window.studentList || window.allStudents || [];
+  if (Array.isArray(rawData) && rawData.length > 0) {
+    classStudents = rawData.filter(s => {
+      const studentClass = String(s.className || s.class || s.grade || s.room || s[2] || '').trim();
+      return studentClass === selectedClass;
+    }).map(s => ({
+      no: s.no || s.number || s[0] || '',
+      name: s.name || s.fullName || s[1] || ''
+    }));
+  }
 
+  // 3. วิธีที่ 2: ถ้าดึงจากตัวแปรไม่เจอ ให้ดึงรายชื่อจาก "ตาราง HTML" บนหน้าเว็บตรงๆ
+  if (classStudents.length === 0) {
+    const tableRows = document.querySelectorAll('table tbody tr');
+    tableRows.forEach(row => {
+      const cols = row.querySelectorAll('td');
+      if (cols.length >= 2) {
+        // ดึงข้อความจากคอลัมน์ในตาราง
+        const noText = cols[0].innerText.trim();
+        const nameText = cols[1].innerText.trim();
+        
+        // ตรวจสอบว่าไม่ใช่แถวว่างหรือข้อความแจ้งเตือน
+        if (noText && nameText && !isNaN(noText)) {
+          classStudents.push({
+            no: noText,
+            name: nameText
+          });
+        }
+      }
+    });
+  }
+
+  // 4. ถ้ายังไม่พบข้อมูล ให้แจ้งเตือน
   if (classStudents.length === 0) {
     Swal.fire({
       icon: 'warning',
-      title: 'ไม่พบข้อมูล',
-      text: `ไม่มีรายชื่อนักเรียนในชั้น ${selectedClass} ให้พิมพ์ครับ`
+      title: 'ไม่พบข้อมูลนักเรียน',
+      text: `กรุณากด "ดึงรายชื่อ" หรือเลือกชั้น ${selectedClass} ให้ตารางแสดงรายชื่อก่อนสั่งพิมพ์ครับ`
     });
     return;
   }
 
-  // สร้างแถวตารางรายชื่อ
-  let tableRows = classStudents.map((s, index) => `
+  // 5. เรียงลำดับตามเลขที่จากน้อยไปมาก
+  classStudents.sort((a, b) => Number(a.no) - Number(b.no));
+
+  // สร้างแถวตารางสำหรับพิมพ์
+  let rowsHtml = classStudents.map((s, index) => `
     <tr>
       <td style="text-align: center;">${s.no || (index + 1)}</td>
       <td style="text-align: left; padding-left: 15px;">${s.name}</td>
@@ -455,7 +487,7 @@ function printStudentList() {
     </tr>
   `).join('');
 
-  // เปิดหน้าต่างใหม่สำหรับพิมพ์เอกสาร
+  // 6. เปิดหน้าต่างใหม่สั่งพิมพ์เอกสารทางการ
   const printWindow = window.open('', '_blank');
   
   printWindow.document.write(`
@@ -543,7 +575,6 @@ function printStudentList() {
     <body>
 
       <div class="header">
-        <!-- ตราครุฑทางการ -->
         <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Garuda_Thailande.png" class="garuda-img" alt="ตราครุฑ"><br>
         <div class="title">บัญชีรายชื่อนักเรียน</div>
         <div class="subtitle">โรงเรียนบ้านกะมิยอ | ระดับชั้น ${selectedClass}</div>
@@ -559,11 +590,10 @@ function printStudentList() {
           </tr>
         </thead>
         <tbody>
-          ${tableRows}
+          ${rowsHtml}
         </tbody>
       </table>
 
-      <!-- ส่วนท้ายสำหรับเซ็นชื่อกำกับเอกสารทางการ -->
       <div class="footer-sign">
         <div class="sign-box">
           <p>ลงชื่อ......................................................ครูประจำชั้น<br>
@@ -578,7 +608,6 @@ function printStudentList() {
       </div>
 
       <script>
-        // สั่งเปิดหน้าต่างพิมพ์อัตโนมัติเมื่อโหลดหน้าเสร็จ
         window.onload = function() {
           window.print();
         }
