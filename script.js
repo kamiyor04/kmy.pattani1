@@ -424,10 +424,10 @@ async function saveStudentData(action, payload) {
   }
 }
 
-// ฟังก์ชันสั่งพิมพ์รายชื่อนักเรียน (รองรับ JSONP)
+// ฟังก์ชันพิมพ์รายชื่อนักเรียน (อ่านข้อมูลจากตารางบนหน้าเว็บทันที - ไม่หมุนค้าง)
 function printStudentList() {
+  // 1. หาชื่อชั้นเรียนที่เลือกอยู่ปัจจุบัน
   let selectedClass = 'ป.1';
-  
   const classElement = document.getElementById('classSelect') || 
                        document.getElementById('manageClassSelect') || 
                        document.getElementById('swal-class') ||
@@ -435,117 +435,113 @@ function printStudentList() {
   if (classElement && classElement.value) {
     selectedClass = classElement.value.trim();
   }
+  if (selectedClass === 'all' || selectedClass === '') selectedClass = 'ป.1';
+
+  // 2. ดึงข้อมูลนักเรียนจากตาราง HTML ที่แสดงอยู่บนหน้าเว็บโดยตรง
+  let classStudents = [];
   
-  if (selectedClass === 'all' || selectedClass === '') {
-    selectedClass = 'ป.1';
-  }
-
-  Swal.fire({
-    title: 'กำลังเตรียมเอกสาร...',
-    text: `กำลังดึงข้อมูลชั้น ${selectedClass} จากระบบ`,
-    allowOutsideClick: false,
-    didOpen: () => Swal.showLoading()
-  });
-
-  // เรียกผ่าน $.ajax แบบ jsonp เพื่อให้ผ่าน CORS เหมือนระบบเดิม
-  $.ajax({
-    url: WEB_APP_URL,
-    dataType: 'jsonp',
-    data: {
-      action: 'getStudentsByClass',
-      className: selectedClass
-    },
-    success: function(resData) {
-      Swal.close();
-
-      const classStudents = (resData && resData.data && Array.isArray(resData.data)) ? resData.data : [];
-
-      if (classStudents.length === 0) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'ไม่พบข้อมูลนักเรียน',
-          text: `ไม่พบรายชื่อนักเรียนในชั้น ${selectedClass} ในชีท Student_List ครับ`
-        });
-        return;
-      }
-
-      // สร้างแบบฟอร์มเอกสารทางการสำหรับพิมพ์
-      let rowsHtml = classStudents.map((s, index) => `
-        <tr>
-          <td style="text-align: center;">${s.no || (index + 1)}</td>
-          <td style="text-align: left; padding-left: 15px;">${s.name}</td>
-          <td style="text-align: center;">${selectedClass}</td>
-          <td></td>
-        </tr>
-      `).join('');
-
-      const printWindow = window.open('', '_blank');
+  // ค้นหาราว (tr) ทั้งหมดในตาราง
+  const rows = document.querySelectorAll('table tbody tr');
+  
+  rows.forEach(row => {
+    const cols = row.querySelectorAll('td');
+    // ตรวจสอบว่ามีคอลัมน์ข้อมูลเพียงพอ (อย่างน้อย 2 คอลัมน์: เลขที่, ชื่อ-สกุล)
+    if (cols.length >= 2) {
+      const noText = cols[0].innerText.trim();
+      const nameText = cols[1].innerText.trim();
       
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html lang="th">
-        <head>
-          <meta charset="UTF-8">
-          <title>บัญชีรายชื่อนักเรียน ชั้น ${selectedClass}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
-            body { font-family: 'Sarabun', sans-serif; font-size: 16pt; line-height: 1.6; margin: 0; padding: 20px; color: #000; }
-            .header { text-align: center; margin-bottom: 20px; }
-            .garuda-img { width: 80px; height: auto; margin-bottom: 10px; }
-            .title { font-weight: bold; font-size: 18pt; margin-bottom: 5px; }
-            .subtitle { font-size: 16pt; margin-bottom: 15px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th, td { border: 1px solid #000; padding: 8px 5px; font-size: 15pt; }
-            th { background-color: #f2f2f2; font-weight: bold; text-align: center; }
-            .footer-sign { margin-top: 40px; width: 100%; display: table; }
-            .sign-box { display: table-cell; width: 50%; text-align: center; vertical-align: top; }
-            @media print { @page { size: A4 portrait; margin: 2cm 1.5cm 2cm 2cm; } body { padding: 0; } }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Garuda_Thailande.png" class="garuda-img" alt="ตราครุฑ"><br>
-            <div class="title">บัญชีรายชื่อนักเรียน</div>
-            <div class="subtitle">โรงเรียนชุมชนบ้านกะมิยอ | ระดับชั้น ${selectedClass}</div>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 12%;">เลขที่</th>
-                <th style="width: 50%;">ชื่อ - นามสกุล</th>
-                <th style="width: 18%;">ระดับชั้น</th>
-                <th style="width: 20%;">หมายเหตุ</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml}
-            </tbody>
-          </table>
-          <div class="footer-sign">
-            <div class="sign-box">
-              <p>ลงชื่อ......................................................ครูประจำชั้น<br>
-              (......................................................)<br>
-              ตำแหน่ง ......................................................</p>
-            </div>
-            <div class="sign-box">
-              <p>ลงชื่อ......................................................ผู้รับรอง<br>
-              (นางสาววรรณพิตตยา มุสตาฟา)<br>
-              ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</p>
-            </div>
-          </div>
-          <script>window.onload = function() { window.print(); }<\/script>
-        </body>
-        </html>
-      `);
-
-      printWindow.document.close();
-    },
-    error: function() {
-      Swal.fire({
-        icon: 'error',
-        title: 'เกิดข้อผิดพลาด',
-        text: 'ไม่สามารถดึงข้อมูลจาก Google Sheets ได้'
-      });
+      // กรองเอาเฉพาะแถวที่มีข้อมูลตัวเลขเลขที่ และมีชื่อนักเรียนจริงๆ (ข้ามแถว "ไม่พบข้อมูล")
+      if (noText && nameText && !isNaN(noText)) {
+        classStudents.push({
+          no: noText,
+          name: nameText
+        });
+      }
     }
   });
+
+  // 3. ถ้าบนหน้าจอยังไม่มีรายชื่อ ให้แจ้งเตือนทันที
+  if (classStudents.length === 0) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'ไม่พบข้อมูลนักเรียน',
+      text: `กรุณากดเลือกชั้น ${selectedClass} หรือกดดึงรายชื่อให้ตารางบนหน้าเว็บขึ้นรายชื่อเด็กก่อนนะครับ`
+    });
+    return;
+  }
+
+  // 4. เรียงลำดับตามเลขที่
+  classStudents.sort((a, b) => Number(a.no) - Number(b.no));
+
+  // 5. สร้างแถวสำหรับตารางเอกสารทางการ
+  let rowsHtml = classStudents.map((s, index) => `
+    <tr>
+      <td style="text-align: center;">${s.no || (index + 1)}</td>
+      <td style="text-align: left; padding-left: 15px;">${s.name}</td>
+      <td style="text-align: center;">${selectedClass}</td>
+      <td></td>
+    </tr>
+  `).join('');
+
+  // 6. เปิดหน้าต่างพิมพ์ทันที (ไม่ค้างแน่นอน)
+  const printWindow = window.open('', '_blank');
+  
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="th">
+    <head>
+      <meta charset="UTF-8">
+      <title>บัญชีรายชื่อนักเรียน ชั้น ${selectedClass}</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; font-size: 16pt; line-height: 1.6; margin: 0; padding: 20px; color: #000; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .garuda-img { width: 80px; height: auto; margin-bottom: 10px; }
+        .title { font-weight: bold; font-size: 18pt; margin-bottom: 5px; }
+        .subtitle { font-size: 16pt; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #000; padding: 8px 5px; font-size: 15pt; }
+        th { background-color: #f2f2f2; font-weight: bold; text-align: center; }
+        .footer-sign { margin-top: 40px; width: 100%; display: table; }
+        .sign-box { display: table-cell; width: 50%; text-align: center; vertical-align: top; }
+        @media print { @page { size: A4 portrait; margin: 2cm 1.5cm 2cm 2cm; } body { padding: 0; } }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Garuda_Thailande.png" class="garuda-img" alt="ตราครุฑ"><br>
+        <div class="title">บัญชีรายชื่อนักเรียน</div>
+        <div class="subtitle">โรงเรียนชุมชนบ้านกะมิยอ | ระดับชั้น ${selectedClass}</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 12%;">เลขที่</th>
+            <th style="width: 50%;">ชื่อ - นามสกุล</th>
+            <th style="width: 18%;">ระดับชั้น</th>
+            <th style="width: 20%;">หมายเหตุ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+      <div class="footer-sign">
+        <div class="sign-box">
+          <p>ลงชื่อ......................................................ครูประจำชั้น<br>
+          (......................................................)<br>
+          ตำแหน่ง ......................................................</p>
+        </div>
+        <div class="sign-box">
+          <p>ลงชื่อ......................................................ผู้รับรอง<br>
+          (นางสาววรรณพิตตยา มุสตาฟา)<br>
+          ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</p>
+        </div>
+      </div>
+      <script>window.onload = function() { window.print(); }<\/script>
+    </body>
+    </html>
+  `);
+
+  printWindow.document.close();
 }
