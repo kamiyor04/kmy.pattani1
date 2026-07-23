@@ -271,37 +271,75 @@ function renderManageStudentTable(response) {
   tbody.innerHTML = html;
 }
 
-// ป๊อปอัปเพิ่มนักเรียนใหม่ (SweetAlert2)
+// ฟังก์ชันเปิด Modal เพิ่มนักเรียนใหม่ + เช็คเลขที่/ชื่อ ซ้ำในห้อง
 function openAddStudentModal() {
   Swal.fire({
-    title: 'เพิ่มนักเรียนใหม่',
+    title: '➕ เพิ่มนักเรียนใหม่',
     html: `
-      <input id="swal-no" class="swal2-input" placeholder="เลขที่ (เช่น 1)">
-      <input id="swal-name" class="swal2-input" placeholder="ชื่อ - นามสกุล">
-      <select id="swal-class" class="swal2-select">
-        <option value="ป.1">ป.1</option>
-        <option value="ป.2">ป.2</option>
-        <option value="ป.3">ป.3</option>
-        <option value="ป.4">ป.4</option>
-        <option value="ป.5">ป.5</option>
-        <option value="ป.6">ป.6</option>
+      <div class="text-start mb-2"><small class="fw-bold">เลือกระดับชั้น:</small></div>
+      <select id="swal-class" class="swal2-select w-100 m-0 mb-3">
+        <optgroup label="ระดับประถมศึกษา">
+          <option value="ป.1">ประถมศึกษาปีที่ 1 (ป.1)</option>
+          <option value="ป.2">ประถมศึกษาปีที่ 2 (ป.2)</option>
+          <option value="ป.3">ประถมศึกษาปีที่ 3 (ป.3)</option>
+          <option value="ป.4">ประถมศึกษาปีที่ 4 (ป.4)</option>
+          <option value="ป.5">ประถมศึกษาปีที่ 5 (ป.5)</option>
+          <option value="ป.6">ประถมศึกษาปีที่ 6 (ป.6)</option>
+        </optgroup>
+        <optgroup label="ระดับมัธยมศึกษาตอนต้น">
+          <option value="ม.1">มัธยมศึกษาปีที่ 1 (ม.1)</option>
+          <option value="ม.2">ม.2</option>
+          <option value="ม.3">ม.3</option>
+        </optgroup>
       </select>
+
+      <div class="text-start mb-2"><small class="fw-bold">เลขที่:</small></div>
+      <input id="swal-no" type="number" class="swal2-input w-100 m-0 mb-3" placeholder="เช่น 1, 2, 3">
+
+      <div class="text-start mb-2"><small class="fw-bold">ชื่อ - นามสกุล:</small></div>
+      <input id="swal-name" class="swal2-input w-100 m-0" placeholder="เช่น เด็กชายเด็กดี มีวินัย">
     `,
     focusConfirm: false,
     showCancelButton: true,
-    confirmButtonText: 'บันทึก',
+    confirmButtonText: 'บันทึกข้อมูล',
     cancelButtonText: 'ยกเลิก',
     preConfirm: () => {
-      const no = document.getElementById('swal-no').value;
-      const name = document.getElementById('swal-name').value;
       const className = document.getElementById('swal-class').value;
+      const no = document.getElementById('swal-no').value.trim();
+      const name = document.getElementById('swal-name').value.trim();
+
+      // 1. ตรวจสอบว่ากรอกข้อมูลครบถ้วนหรือไม่
       if (!no || !name) {
-        Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
+        Swal.showValidationMessage('กรุณากรอกเลขที่และชื่อ-นามสกุลให้ครบถ้วนครับ');
+        return false;
       }
+
+      // 2. ดึงข้อมูลนักเรียนทั้งหมดในระบบมาตรวจสอบ (สมมติว่าเกิร์ลเก็บไว้อยู่ในตัวแปร global หรือ localStorage)
+      // หากเก็บใน localStorage หรือดึงมาจาก Google Sheets ให้ปรับชื่อตัวแปรที่เก็บข้อมูลนักเรียน
+      const allStudents = window.studentData || []; // หรือดึงจากแหล่งข้อมูลนักเรียนในโปรเจกต์
+
+      // กรองเฉพาะนักเรียนในห้องเดียวกัน
+      const sameClassStudents = allStudents.filter(s => s.className === className);
+
+      // 3. เช็คว่าเลขที่ซ้ำหรือไม่
+      const isDuplicateNo = sameClassStudents.some(s => String(s.no) === String(no));
+      if (isDuplicateNo) {
+        Swal.showValidationMessage(`เลขที่ ${no} ในชั้น ${className} มีในระบบแล้วครับ`);
+        return false;
+      }
+
+      // 4. เช็คว่าชื่อ-นามสกุล ซ้ำหรือไม่
+      const isDuplicateName = sameClassStudents.some(s => s.name.trim() === name);
+      if (isDuplicateName) {
+        Swal.showValidationMessage(`นักเรียนชื่อ "${name}" มีอยู่ในชั้น ${className} แล้วครับ`);
+        return false;
+      }
+
       return { no, name, className };
     }
   }).then(async (result) => {
     if (result.isConfirmed) {
+      // ส่งข้อมูลไปบันทึกยัง Google Apps Script หรือ Database
       saveStudentData('addStudent', { student: result.value });
     }
   });
@@ -342,5 +380,46 @@ async function saveStudentData(action, bodyData) {
     }
   } catch (err) {
     Swal.fire('ผิดพลาด', err.message, 'error');
+  }
+}
+// ฟังก์ชันบันทึกข้อมูลนักเรียนใหม่
+async function saveStudentData(action, payload) {
+  Swal.fire({
+    title: 'กำลังบันทึกข้อมูล...',
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
+
+  try {
+    const response = await fetch(WEB_APP_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: action, ...payload })
+    });
+    const result = await response.json();
+
+    if (result.success) {
+      Swal.fire({
+        icon: 'success',
+        title: 'สำเร็จ!',
+        text: result.message || 'บันทึกข้อมูลเรียบร้อยแล้ว',
+        timer: 1500,
+        showConfirmButton: false
+      });
+      // โหลดตารางนักเรียนใหม่
+      fetchStudentManageList();
+    } else {
+      // ถ้า Apps Script ตรวจพบว่าซ้ำ จะเด้งเตือนตรงนี้ทันที
+      Swal.fire({
+        icon: 'error',
+        title: 'ไม่สามารถบันทึกได้',
+        text: result.message
+      });
+    }
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'เกิดข้อผิดพลาด',
+      text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้'
+    });
   }
 }
