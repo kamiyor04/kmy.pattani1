@@ -2,7 +2,7 @@
 <div class="card p-4">
   <div class="row g-3">
     <div class="col-md-4">
-      <label class="form-label">วันที่บันทึกกิจกรรม:</label>
+      <label class="form-label">วันที่บันทึกกิจกรรม: เทส1</label>
       <input type="date" id="attendanceDate" class="form-control">
     </div>
     <div class="col-md-5">
@@ -52,18 +52,16 @@
 </div>
 
 <script>
-  // ⚠️ วาง Web App URL ที่ได้จากการ Deploy Google Apps Script ตรงนี้ครับ
+  // ⚠️ นำ Web App URL ของคุณมาวางตรงนี้
   const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
 
-  // ตั้งค่าวันที่ปัจจุบันลงในช่อง Date Picker อัตโนมัติ
   document.getElementById('attendanceDate').valueAsDate = new Date();
 
-  // ฟังก์ชันดึงรายชื่อนักเรียน (ปรับใช้ fetch API)
-  async function loadStudentList() {
+  // 1. ฟังก์ชันดึงรายชื่อ (ใช้ JSONP Technique ป้องกันการโดนบล็อก CORS)
+  function loadStudentList() {
     const className = document.getElementById('classSelect').value;
     const tbody = document.getElementById('studentTableBody');
     
-    // แสดงสถานะกำลังโหลด
     tbody.innerHTML = `
       <tr>
         <td colspan="4" class="text-center py-4">
@@ -71,25 +69,29 @@
         </td>
       </tr>`;
 
-    try {
-      // ยิงคำสั่งดึงข้อมูลไปยัง Apps Script Web App
-      const response = await fetch(`${WEB_APP_URL}?action=getStudents&className=${encodeURIComponent(className)}`);
-      
-      if (!response.ok) throw new Error("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้");
-      
-      const result = await response.json();
-      renderStudentTable(result);
-    } catch (error) {
-      handleError(error);
-    }
+    // ลบ script tag เก่าออก (ถ้ามี)
+    const oldScript = document.getElementById('jsonp-script');
+    if (oldScript) oldScript.remove();
+
+    // สร้าง script tag ใหม่เพื่อยิงขอข้อมูลแบบ JSONP
+    const script = document.createElement('script');
+    script.id = 'jsonp-script';
+    script.src = `${WEB_APP_URL}?action=getStudents&className=${encodeURIComponent(className)}&callback=renderStudentTable`;
+    
+    // ดักจับถ้า URL เสีย หรือเซิร์ฟเวอร์ล่ม
+    script.onerror = function() {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ กรุณาเช็ก Web App URL</td></tr>`;
+    };
+
+    document.body.appendChild(script);
   }
 
-  // ฟังก์ชันแสดงตารางรายชื่อนักเรียน
+  // 2. ฟังก์ชันแสดงตาราง (รับข้อมูลมาจาก Callback)
   function renderStudentTable(response) {
     const tbody = document.getElementById('studentTableBody');
     
-    if (response.status === "error") {
-      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">❌ เกิดข้อผิดพลาด: ${response.message}</td></tr>`;
+    if (!response || response.status === "error") {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">❌ เกิดข้อผิดพลาด: ${response ? response.message : 'ไม่ได้รับข้อมูล'}</td></tr>`;
       return;
     }
 
@@ -130,7 +132,7 @@
     tbody.innerHTML = html;
   }
 
-  // ฟังก์ชันส่งข้อมูลไปบันทึก (ปรับใช้ fetch API แบบ POST)
+  // 3. ฟังก์ชันส่งข้อมูลไปบันทึก (ส่งผ่าน FormData แบบ text/plain)
   async function submitAttendance() {
     const date = document.getElementById('attendanceDate').value;
     const className = document.getElementById('classSelect').value;
@@ -161,6 +163,7 @@
 
     if (confirm(`ยืนยันการบันทึกข้อมูลการเช็คชื่อ ${className} จำนวน ${attendanceData.length} คน?`)) {
       try {
+        // ใช้ text/plain เพื่อไม่ให้ส่ง Preflight Options ไปยัง Google Apps Script (หลีกเลี่ยง CORS)
         const response = await fetch(WEB_APP_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -177,15 +180,8 @@
           alert("❌ บันทึกไม่สำเร็จ: " + res.message);
         }
       } catch (error) {
-        handleError(error);
+        alert("❌ เกิดข้อผิดพลาดในการบันทึก: " + error.message);
       }
     }
-  }
-
-  // ฟังก์ชันดักจับ Error กรณีการเชื่อมต่อล้มเหลว
-  function handleError(error) {
-    const tbody = document.getElementById('studentTableBody');
-    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">❌ เชื่อมต่อระบบไม่สำเร็จ: ${error.message}</td></tr>`;
-    alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อระบบ: " + error.message);
   }
 </script>
