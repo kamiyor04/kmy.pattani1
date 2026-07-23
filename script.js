@@ -225,3 +225,122 @@ async function submitAttendance() {
     }
   }
 }
+// ดึงรายชื่อมาแสดงในหน้าจัดการ
+function fetchStudentManageList() {
+  const selectedClass = document.getElementById('manageClassSelect').value;
+  const tbody = document.getElementById('manageStudentTableBody');
+
+  tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>`;
+
+  const script = document.createElement('script');
+  script.src = `${WEB_APP_URL}?action=getAllStudents&className=${encodeURIComponent(selectedClass)}&callback=renderManageStudentTable`;
+  document.body.appendChild(script);
+}
+
+function renderManageStudentTable(response) {
+  const tbody = document.getElementById('manageStudentTableBody');
+  if (!response || response.status !== "success") {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
+    return;
+  }
+
+  const students = response.data;
+  if (students.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">ไม่พบข้อมูลนักเรียน</td></tr>`;
+    return;
+  }
+
+  let html = '';
+  students.forEach(std => {
+    html += `
+      <tr>
+        <td><span class="badge bg-info text-dark">${std.className}</span></td>
+        <td class="fw-bold">${std.no}</td>
+        <td>${std.name}</td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-warning me-1" onclick="editStudent('${std.no}', '${std.name}', '${std.className}')">
+            <i class="fa-solid fa-pen-to-square"></i> แก้ไข
+          </button>
+          <button class="btn btn-sm btn-outline-danger" onclick="confirmDeleteStudent('${std.no}', '${std.className}', '${std.name}')">
+            <i class="fa-solid fa-trash"></i> ลบ
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  tbody.innerHTML = html;
+}
+
+// ป๊อปอัปเพิ่มนักเรียนใหม่ (SweetAlert2)
+function openAddStudentModal() {
+  Swal.fire({
+    title: 'เพิ่มนักเรียนใหม่',
+    html: `
+      <input id="swal-no" class="swal2-input" placeholder="เลขที่ (เช่น 1)">
+      <input id="swal-name" class="swal2-input" placeholder="ชื่อ - นามสกุล">
+      <select id="swal-class" class="swal2-select">
+        <option value="ป.1">ป.1</option>
+        <option value="ป.2">ป.2</option>
+        <option value="ป.3">ป.3</option>
+        <option value="ป.4">ป.4</option>
+        <option value="ป.5">ป.5</option>
+        <option value="ป.6">ป.6</option>
+      </select>
+    `,
+    focusConfirm: false,
+    showCancelButton: true,
+    confirmButtonText: 'บันทึก',
+    cancelButtonText: 'ยกเลิก',
+    preConfirm: () => {
+      const no = document.getElementById('swal-no').value;
+      const name = document.getElementById('swal-name').value;
+      const className = document.getElementById('swal-class').value;
+      if (!no || !name) {
+        Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
+      }
+      return { no, name, className };
+    }
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      saveStudentData('addStudent', { student: result.value });
+    }
+  });
+}
+
+// ยืนยันลบน้องนักเรียน
+function confirmDeleteStudent(no, className, name) {
+  Swal.fire({
+    title: 'ยืนยันการลบ?',
+    text: `ต้องการลบ ${name} (${className} เลขที่ ${no}) ออกจากระบบหรือไม่?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    confirmButtonText: 'ใช่, ลบเลย',
+    cancelButtonText: 'ยกเลิก'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      saveStudentData('deleteStudent', { studentNo: no, className: className });
+    }
+  });
+}
+
+// ฟังก์ชันส่งข้อมูลไปยัง Apps Script
+async function saveStudentData(action, bodyData) {
+  Swal.showLoading();
+  try {
+    const res = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: action, ...bodyData })
+    });
+    const data = await res.json();
+    if (data.status === "success") {
+      Swal.fire('สำเร็จ!', data.message, 'success');
+      fetchStudentManageList(); // โหลดตารางใหม่
+    } else {
+      Swal.fire('ผิดพลาด', data.message, 'error');
+    }
+  } catch (err) {
+    Swal.fire('ผิดพลาด', err.message, 'error');
+  }
+}

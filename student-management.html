@@ -1,0 +1,43 @@
+<div class="card card-custom p-3 p-md-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold mb-0"><i class="fa-solid fa-users-gear text-primary me-2"></i>จัดการรายชื่อนักเรียน</h4>
+    <button class="btn btn-primary" onclick="openAddStudentModal()">
+      <i class="fa-solid fa-user-plus me-2"></i>เพิ่มนักเรียนใหม่
+    </button>
+  </div>
+
+  <!-- กรองตามชั้นเรียน -->
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <label class="form-label fw-medium">เลือกระดับชั้นเพื่อดูรายชื่อ:</label>
+      <select id="manageClassSelect" class="form-select" onchange="fetchStudentManageList()">
+        <option value="all">-- แสดงทุกชั้นเรียน --</option>
+        <option value="ป.1">ประถมศึกษาปีที่ 1</option>
+        <option value="ป.2">ประถมศึกษาปีที่ 2</option>
+        <option value="ป.3">ประถมศึกษาปีที่ 3</option>
+        <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+        <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+        <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ตารางรายชื่อ -->
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 15%;">ระดับชั้น</th>
+          <th style="width: 15%;">เลขที่</th>
+          <th>ชื่อ - นามสกุล</th>
+          <th style="width: 20%;" class="text-center">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody id="manageStudentTableBody">
+        <tr>
+          <td colspan="4" class="text-center py-4 text-muted">กำลังโหลดข้อมูล...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
