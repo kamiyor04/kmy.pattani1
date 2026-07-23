@@ -52,11 +52,14 @@
 </div>
 
 <script>
+  // ⚠️ วาง Web App URL ที่ได้จากการ Deploy Google Apps Script ตรงนี้ครับ
+  const WEB_APP_URL = "YOUR_WEB_APP_URL_HERE";
+
   // ตั้งค่าวันที่ปัจจุบันลงในช่อง Date Picker อัตโนมัติ
   document.getElementById('attendanceDate').valueAsDate = new Date();
 
-  // ฟังก์ชันดึงรายชื่อนักเรียน
-  function loadStudentList() {
+  // ฟังก์ชันดึงรายชื่อนักเรียน (ปรับใช้ fetch API)
+  async function loadStudentList() {
     const className = document.getElementById('classSelect').value;
     const tbody = document.getElementById('studentTableBody');
     
@@ -68,11 +71,17 @@
         </td>
       </tr>`;
 
-    // เรียกใช้ Google Apps Script พร้อมใส่การจับ Error
-    google.script.run
-      .withSuccessHandler(renderStudentTable)
-      .withFailureHandler(handleError)
-      .getStudentsByClass(className);
+    try {
+      // ยิงคำสั่งดึงข้อมูลไปยัง Apps Script Web App
+      const response = await fetch(`${WEB_APP_URL}?action=getStudents&className=${encodeURIComponent(className)}`);
+      
+      if (!response.ok) throw new Error("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้");
+      
+      const result = await response.json();
+      renderStudentTable(result);
+    } catch (error) {
+      handleError(error);
+    }
   }
 
   // ฟังก์ชันแสดงตารางรายชื่อนักเรียน
@@ -85,7 +94,7 @@
     }
 
     const students = response.data;
-    if (students.length === 0) {
+    if (!students || students.length === 0) {
       tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-warning">⚠️ ไม่พบรายชื่อนักเรียนในระดับชั้นนี้</td></tr>`;
       return;
     }
@@ -121,8 +130,8 @@
     tbody.innerHTML = html;
   }
 
-  // ฟังก์ชันส่งข้อมูลไปบันทึก
-  function submitAttendance() {
+  // ฟังก์ชันส่งข้อมูลไปบันทึก (ปรับใช้ fetch API แบบ POST)
+  async function submitAttendance() {
     const date = document.getElementById('attendanceDate').value;
     const className = document.getElementById('classSelect').value;
     const tbody = document.getElementById('studentTableBody');
@@ -134,41 +143,49 @@
     }
 
     let attendanceData = [];
-    
     rows.forEach((row, index) => {
-      const no = row.cells[0].innerText;
-      const name = row.cells[1].innerText;
+      const no = row.cells[0]?.innerText;
+      const name = row.cells[1]?.innerText;
       const statusRadio = document.querySelector(`input[name="status_${index}"]:checked`);
-      const status = statusRadio ? statusRadio.value : "มา";
-
-      attendanceData.push({
-        date: date,
-        no: no,
-        name: name,
-        className: className,
-        status: status
-      });
+      
+      if (no && name) {
+        attendanceData.push({
+          date: date,
+          no: no,
+          name: name,
+          className: className,
+          status: statusRadio ? statusRadio.value : "มา"
+        });
+      }
     });
 
     if (confirm(`ยืนยันการบันทึกข้อมูลการเช็คชื่อ ${className} จำนวน ${attendanceData.length} คน?`)) {
-      // แจ้งสถานะกำลังบันทึก
-      alert('⏳ กำลังบันทึกข้อมูล กรุณารอสักครู่...');
-      
-      google.script.run
-        .withSuccessHandler(function(res) {
-          if (res.status === "success") {
-            alert("✅ " + res.message);
-          } else {
-            alert("❌ บันทึกไม่สำเร็จ: " + res.message);
-          }
-        })
-        .withFailureHandler(handleError)
-        .saveAttendance(attendanceData);
+      try {
+        const response = await fetch(WEB_APP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "saveAttendance",
+            records: attendanceData
+          })
+        });
+
+        const res = await response.json();
+        if (res.status === "success") {
+          alert("✅ " + res.message);
+        } else {
+          alert("❌ บันทึกไม่สำเร็จ: " + res.message);
+        }
+      } catch (error) {
+        handleError(error);
+      }
     }
   }
 
-  // ฟังก์ชันดักจับ Error กรณีพังฝั่ง Server
+  // ฟังก์ชันดักจับ Error กรณีการเชื่อมต่อล้มเหลว
   function handleError(error) {
+    const tbody = document.getElementById('studentTableBody');
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">❌ เชื่อมต่อระบบไม่สำเร็จ: ${error.message}</td></tr>`;
     alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อระบบ: " + error.message);
   }
 </script>

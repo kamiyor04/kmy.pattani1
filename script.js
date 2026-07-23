@@ -1,192 +1,125 @@
-// 🔗 วาง Web App URL ที่ได้จากการ Deploy ของ Google Apps Script ที่นี่ค่ะ
-const API_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
+// ⚠️ ใส่ Web App URL ของคุณที่ได้จากการ Deploy Google Apps Script ตรงนี้
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
 
-// 🚀 1. ฟังก์ชันดึงรายชื่อนักเรียนและเช็กวันหยุด
-async function handleLoadStudents() {
-  const dateVal = document.getElementById('date-select').value;
-  const classVal = document.getElementById('class-select').value;
-  const tbody = document.getElementById('student-list-body');
-  const holidayBanner = document.getElementById('holiday-banner');
-  const holidayReason = document.getElementById('holiday-reason');
-  const countBadge = document.getElementById('student-count-badge');
+document.addEventListener("DOMContentLoaded", () => {
+  const dateInput = document.getElementById('attendanceDate');
+  if (dateInput) dateInput.valueAsDate = new Date();
+});
 
-  if (!dateVal) {
-    alert("กรุณาเลือกวันที่ก่อนทำรายการค่ะ");
-    return;
-  }
+// 1. ฟังก์ชันดึงรายชื่อนักเรียน
+async function loadStudentList() {
+  const className = document.getElementById('classSelect').value;
+  const tbody = document.getElementById('studentTableBody');
 
-  tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:30px; color:#64748b;">⏳ กำลังตรวจสอบปฏิทินวันหยุดและโหลดรายชื่อ...</td></tr>';
-  holidayBanner.style.display = 'none';
-
-  try {
-    // เช็กวันหยุด
-    const resHoliday = await fetch(`${API_URL}?action=checkHoliday&date=${dateVal}`);
-    const holidayData = await resHoliday.json();
-
-    if (holidayData.isHoliday) {
-      holidayReason.textContent = `วันนี้เป็นวันหยุด: ${holidayData.reason}`;
-      holidayBanner.style.display = 'block';
-    }
-
-    // ดึงรายชื่อนักเรียน
-    const resStudents = await fetch(`${API_URL}?action=getStudents&cls=${encodeURIComponent(classVal)}&date=${dateVal}`);
-    const students = await resStudents.json();
-
-    if (!students || students.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:30px; color:#ef4444;">❌ ไม่พบข้อมูลนักเรียนในชั้นเรียนนี้</td></tr>';
-      countBadge.textContent = '0 คน';
-      return;
-    }
-
-    countBadge.textContent = `${students.length} คน`;
-
-    let html = '';
-    students.forEach((s) => {
-      const isPresent = s.savedStatus === 'เข้าร่วม/มาเรียน' || s.savedStatus === 'มาเรียน';
-      const isLate = s.savedStatus.indexOf('สาย') !== -1;
-      const isAbsent = s.savedStatus === 'ไม่มาเรียน';
-
-      html += `
-        <tr>
-          <td style="text-align:center; font-weight:600;">${s.id}</td>
-          <td>${s.name}</td>
-          <td style="text-align:center;">
-            <div class="status-options" style="justify-content:center;">
-              <label class="status-btn ${isPresent ? 'checked-present' : ''}">
-                <input type="radio" name="status_${s.id}" value="เข้าร่วม/มาเรียน" ${isPresent ? 'checked' : ''} style="display:none;" onchange="updateBtnStyle(this)"> มาเรียน
-              </label>
-              <label class="status-btn ${isLate ? 'checked-late' : ''}">
-                <input type="radio" name="status_${s.id}" value="ไม่เข้าร่วม/มาเรียน (สาย)" ${isLate ? 'checked' : ''} style="display:none;" onchange="updateBtnStyle(this)"> สาย
-              </label>
-              <label class="status-btn ${isAbsent ? 'checked-absent' : ''}">
-                <input type="radio" name="status_${s.id}" value="ไม่มาเรียน" ${isAbsent ? 'checked' : ''} style="display:none;" onchange="updateBtnStyle(this)"> ขาด
-              </label>
-            </div>
-          </td>
-        </tr>
-      `;
-    });
-
-    tbody.innerHTML = html;
-
-  } catch (error) {
-    console.error(error);
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:30px; color:#dc2626;">❌ เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์</td></tr>';
-  }
-}
-
-// 🎨 เปลี่ยนสีปุ่มสถานะ
-function updateBtnStyle(radioBtn) {
-  const container = radioBtn.closest('.status-options');
-  container.querySelectorAll('.status-btn').forEach(btn => {
-    btn.classList.remove('checked-present', 'checked-late', 'checked-absent');
-  });
-
-  const parentLabel = radioBtn.closest('.status-btn');
-  if (radioBtn.value.includes('มาเรียน') && !radioBtn.value.includes('สาย')) {
-    parentLabel.classList.add('checked-present');
-  } else if (radioBtn.value.includes('สาย')) {
-    parentLabel.classList.add('checked-late');
-  } else if (radioBtn.value.includes('ไม่มาเรียน')) {
-    parentLabel.classList.add('checked-absent');
-  }
-}
-
-// 💾 2. ฟังก์ชันบันทึกข้อมูลการเช็กชื่อ
-async function handleSaveAttendance() {
-  const dateVal = document.getElementById('date-select').value;
-  const classVal = document.getElementById('class-select').value;
-  const records = {};
-
-  const rows = document.querySelectorAll('#student-list-body tr');
-  rows.forEach(row => {
-    const radioChecked = row.querySelector('input[type="radio"]:checked');
-    if (radioChecked) {
-      const studentId = radioChecked.name.replace('status_', '');
-      records[studentId] = radioChecked.value;
-    }
-  });
-
-  if (Object.keys(records).length === 0) {
-    alert("กรุณาเลือกสถานะของนักเรียนอย่างน้อย 1 คนค่ะ");
-    return;
-  }
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="4" class="text-center py-4">
+        ⏳ กำลังดึงข้อมูลรายชื่อนักเรียน...
+      </td>
+    </tr>`;
 
   try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({
-        action: "saveAttendance",
-        cls: classVal,
-        recs: records,
-        dateSelected: dateVal
-      })
-    });
+    const response = await fetch(`${WEB_APP_URL}?action=getStudents&className=${encodeURIComponent(className)}`);
     const result = await response.json();
-    alert(result.message);
-  } catch (error) {
-    console.error(error);
-    alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล");
-  }
-}
 
-// 🚨 3. ฟังก์ชันดึงรายงานเด็กมาสายสะสม (4 ครั้งขึ้นไป)
-async function triggerRealtimeStrictReport() {
-  const monthEl = document.getElementById('dash-month-input') || document.getElementById('dashboard-month-select');
-  const currentMonth = monthEl ? monthEl.value : "";
-  const targetContainer = document.getElementById('late-students-rooms-container');
-  
-  if (!targetContainer) return;
-  targetContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">⏳ กำลังโหลดตาราง...</div>';
-
-  try {
-    const response = await fetch(`${API_URL}?action=getRealtimeLate&targetMonth=${currentMonth}`);
-    const data = await response.json();
-
-    if (!data.success || !data.reportData || Object.keys(data.reportData).length === 0) {
-      targetContainer.innerHTML = '<div style="text-align:center; color:#16a34a; font-weight:bold; padding:20px;">🎉 เดือนนี้ไม่มีรายชื่อนักเรียนมาสายเกินเกณฑ์ค่ะ</div>';
+    if (result.status === "error") {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">❌ ${result.message}</td></tr>`;
       return;
     }
 
-    const report = data.reportData;
-    let htmlContent = '<div style="display:flex; flex-direction:column; align-items:center; width:100%;">';
-    htmlContent += '<h4 style="color:#b91c1c; margin-bottom:15px; text-align:center;">🚨 รายชื่อนักเรียนไม่เข้าร่วม/สาย (สะสม 4+ ครั้ง)</h4>';
-    
-    Object.keys(report).sort().forEach(function(roomName) {
-      htmlContent += `
-        <div style="width: 95%; max-width: 600px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow:hidden; margin-left: auto; margin-right: auto;">
-          <div style="background:#334155; color:#fff; padding:10px; font-weight:bold; text-align:center;">ระดับชั้น ${roomName}</div>
-          <table style="width:100%; border-collapse:collapse; font-size:12px;">
-            <thead>
-              <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
-                <th style="padding:10px; text-align:center;">เลขที่</th>
-                <th style="padding:10px; text-align:left;">ชื่อ - นามสกุล</th>
-                <th style="padding:10px; text-align:center;">ครั้ง</th>
-                <th style="padding:10px; text-align:center;">วันที่มาสาย</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${report[roomName].map(s => `
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                  <td style="padding:8px; text-align:center;">${s.id || '-'}</td>
-                  <td style="padding:8px; font-weight:600;">${s.name}</td>
-                  <td style="padding:8px; text-align:center; color:#dc2626; font-weight:bold;">${s.totalCount}</td>
-                  <td style="padding:8px; text-align:center;">
-                    ${s.lateDates.map(d => `<span style="background:#fef3c7; padding:2px 5px; border-radius:3px; margin:1px; display:inline-block;">${d}</span>`).join('')}
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    });
-    
-    htmlContent += '</div>';
-    targetContainer.innerHTML = htmlContent;
+    renderStudentTable(result.data);
   } catch (error) {
-    console.error(error);
-    targetContainer.innerHTML = '<div style="text-align:center; color:#ef4444; padding:20px;">❌ เกิดข้อผิดพลาดในการดึงรายงาน</div>';
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">❌ ไม่สามารถเชื่อมต่อระบบได้: ${error.message}</td></tr>`;
+  }
+}
+
+// 2. ฟังก์ชันแสดงตาราง
+function renderStudentTable(students) {
+  const tbody = document.getElementById('studentTableBody');
+
+  if (!students || students.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-warning">⚠️ ไม่พบรายชื่อนักเรียนในระดับชั้นนี้</td></tr>`;
+    return;
+  }
+
+  let html = '';
+  students.forEach((student, index) => {
+    html += `
+      <tr>
+        <td class="text-center">${student.no}</td>
+        <td>${student.name}</td>
+        <td class="text-center">
+          <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" name="status_${index}" id="present_${index}" value="มา" checked>
+            <label class="btn btn-outline-success btn-sm" for="present_${index}">มา</label>
+
+            <input type="radio" class="btn-check" name="status_${index}" id="late_${index}" value="สาย">
+            <label class="btn btn-outline-warning btn-sm" for="late_${index}">สาย</label>
+
+            <input type="radio" class="btn-check" name="status_${index}" id="absent_${index}" value="ขาด">
+            <label class="btn btn-outline-danger btn-sm" for="absent_${index}">ขาด</label>
+
+            <input type="radio" class="btn-check" name="status_${index}" id="leave_${index}" value="ลา">
+            <label class="btn btn-outline-secondary btn-sm" for="leave_${index}">ลา</label>
+          </div>
+        </td>
+        <td class="text-center">
+           <span class="badge bg-light text-dark border">พร้อมบันทึก</span>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+}
+
+// 3. ฟังก์ชันบันทึกข้อมูล
+async function submitAttendance() {
+  const date = document.getElementById('attendanceDate').value;
+  const className = document.getElementById('classSelect').value;
+  const tbody = document.getElementById('studentTableBody');
+  const rows = tbody.querySelectorAll('tr');
+
+  if (rows.length === 0 || document.getElementById('statusMessage')) {
+    alert('กรุณากดดึงรายชื่อนักเรียนก่อนครับ');
+    return;
+  }
+
+  let attendanceData = [];
+  rows.forEach((row, index) => {
+    const no = row.cells[0]?.innerText;
+    const name = row.cells[1]?.innerText;
+    const statusRadio = document.querySelector(`input[name="status_${index}"]:checked`);
+    
+    if (no && name) {
+      attendanceData.push({
+        date: date,
+        no: no,
+        name: name,
+        className: className,
+        status: statusRadio ? statusRadio.value : "มา"
+      });
+    }
+  });
+
+  if (confirm(`ยืนยันบันทึกเช็คชื่อ ${className} จำนวน ${attendanceData.length} คน?`)) {
+    try {
+      const response = await fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "saveAttendance",
+          records: attendanceData
+        })
+      });
+
+      const result = await response.json();
+      if (result.status === "success") {
+        alert("✅ " + result.message);
+      } else {
+        alert("❌ เกิดข้อผิดพลาด: " + result.message);
+      }
+    } catch (error) {
+      alert("❌ บันทึกไม่สำเร็จ: " + error.message);
+    }
   }
 }
