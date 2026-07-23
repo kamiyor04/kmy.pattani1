@@ -423,3 +423,169 @@ async function saveStudentData(action, payload) {
     });
   }
 }
+// ฟังก์ชันสำหรับพิมพ์รายชื่อนักเรียนแบบเอกสารทางการ
+function printStudentList() {
+  // ดึงชั้นเรียนที่เลือกอยู่ปัจจุบัน
+  const classSelect = document.getElementById('select-class') || document.getElementById('swal-class');
+  const selectedClass = classSelect ? classSelect.value : 'ป.1';
+
+  // ดึงข้อมูลนักเรียนทั้งหมดในระบบ (หรือเฉพาะห้องที่เลือก)
+  const allStudents = window.studentData || []; 
+  const classStudents = allStudents.filter(s => String(s.className || s.class).trim() === String(selectedClass).trim());
+
+  // เรียงลำดับตามเลขที่จากน้อยไปมาก
+  classStudents.sort((a, b) => Number(a.no) - Number(b.no));
+
+  if (classStudents.length === 0) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'ไม่พบข้อมูล',
+      text: `ไม่มีรายชื่อนักเรียนในชั้น ${selectedClass} ให้พิมพ์ครับ`
+    });
+    return;
+  }
+
+  // สร้างแถวตารางรายชื่อ
+  let tableRows = classStudents.map((s, index) => `
+    <tr>
+      <td style="text-align: center;">${s.no || (index + 1)}</td>
+      <td style="text-align: left; padding-left: 15px;">${s.name}</td>
+      <td style="text-align: center;">${selectedClass}</td>
+      <td></td>
+    </tr>
+  `).join('');
+
+  // เปิดหน้าต่างใหม่สำหรับพิมพ์เอกสาร
+  const printWindow = window.open('', '_blank');
+  
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="th">
+    <head>
+      <meta charset="UTF-8">
+      <title>บัญชีรายชื่อนักเรียน ชั้น ${selectedClass}</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+        
+        body {
+          font-family: 'Sarabun', sans-serif;
+          font-size: 16pt;
+          line-height: 1.6;
+          margin: 0;
+          padding: 20px;
+          color: #000;
+        }
+
+        .header {
+          text-align: center;
+          margin-bottom: 20px;
+        }
+
+        .garuda-img {
+          width: 80px;
+          height: auto;
+          margin-bottom: 10px;
+        }
+
+        .title {
+          font-weight: bold;
+          font-size: 18pt;
+          margin-bottom: 5px;
+        }
+
+        .subtitle {
+          font-size: 16pt;
+          margin-bottom: 15px;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 10px;
+        }
+
+        th, td {
+          border: 1px solid #000;
+          padding: 8px 5px;
+          font-size: 15pt;
+        }
+
+        th {
+          background-color: #f2f2f2;
+          font-weight: bold;
+          text-align: center;
+        }
+
+        .footer-sign {
+          margin-top: 40px;
+          width: 100%;
+          display: table;
+        }
+
+        .sign-box {
+          display: table-cell;
+          width: 50%;
+          text-align: center;
+          vertical-align: top;
+        }
+
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 2cm 1.5cm 2cm 2cm;
+          }
+          body {
+            padding: 0;
+          }
+        }
+      </style>
+    </head>
+    <body>
+
+      <div class="header">
+        <!-- ตราครุฑทางการ -->
+        <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Garuda_Thailande.png" class="garuda-img" alt="ตราครุฑ"><br>
+        <div class="title">บัญชีรายชื่อนักเรียน</div>
+        <div class="subtitle">โรงเรียนบ้านกะมิยอ | ระดับชั้น ${selectedClass}</div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 12%;">เลขที่</th>
+            <th style="width: 50%;">ชื่อ - นามสกุล</th>
+            <th style="width: 18%;">ระดับชั้น</th>
+            <th style="width: 20%;">หมายเหตุ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+
+      <!-- ส่วนท้ายสำหรับเซ็นชื่อกำกับเอกสารทางการ -->
+      <div class="footer-sign">
+        <div class="sign-box">
+          <p>ลงชื่อ......................................................ครูประจำชั้น<br>
+          (......................................................)<br>
+          ตำแหน่ง ......................................................</p>
+        </div>
+        <div class="sign-box">
+          <p>ลงชื่อ......................................................ผู้รับรอง<br>
+          (นางสาววรรณพิตตยา มุสตาฟา)<br>
+          ผู้อำนวยการโรงเรียนบ้านกะมิยอ</p>
+        </div>
+      </div>
+
+      <script>
+        // สั่งเปิดหน้าต่างพิมพ์อัตโนมัติเมื่อโหลดหน้าเสร็จ
+        window.onload = function() {
+          window.print();
+        }
+      <\/script>
+    </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+}
