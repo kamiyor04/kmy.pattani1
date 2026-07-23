@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบเช็คชื่อนักเรียน เทส</title>
+  <title>ระบบเช็คชื่อนักเรียนเทส</title>
   
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- SweetAlert2 (สำหรับ Pop-up บนมือถือสวยๆ) -->
+  <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
@@ -21,28 +21,19 @@
       color: #333;
     }
 
-    /* Card ตกแต่งฟอร์ม */
     .card-custom {
       border: none;
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
       background: #ffffff;
-      transition: all 0.3s ease;
     }
 
     .form-control, .form-select {
       border-radius: 10px;
       padding: 10px 14px;
       border: 1px solid #e2e8f0;
-      font-size: 0.95rem;
     }
 
-    .form-control:focus, .form-select:focus {
-      border-color: #4f46e5;
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
-    }
-
-    /* ปุ่มกด */
     .btn-gradient-primary {
       background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
       color: white;
@@ -51,13 +42,6 @@
       padding: 10px 20px;
       font-weight: 500;
       box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
-      transition: all 0.2s ease;
-    }
-
-    .btn-gradient-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
-      color: white;
     }
 
     .btn-gradient-success {
@@ -69,19 +53,6 @@
       font-weight: 600;
       font-size: 1.05rem;
       box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-      transition: all 0.2s ease;
-    }
-
-    .btn-gradient-success:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
-      color: white;
-    }
-
-    /* ตาราง */
-    .table-custom {
-      border-collapse: separate;
-      border-spacing: 0;
     }
 
     .table-custom thead th {
@@ -92,15 +63,7 @@
       padding: 14px;
     }
 
-    .table-custom tbody tr {
-      transition: background-color 0.2s;
-    }
-
-    .table-custom tbody tr:hover {
-      background-color: #f1f5f9;
-    }
-
-    /* ตกแต่ง Radio Buttons เช็คชื่อ */
+    /* ตกแต่ง Radio Buttons เช็คชื่อใหม่ */
     .btn-check:checked + .btn-outline-success {
       background-color: #10b981 !important;
       border-color: #10b981 !important;
@@ -119,26 +82,17 @@
       color: white !important;
     }
 
-    .btn-check:checked + .btn-outline-secondary {
-      background-color: #6b7280 !important;
-      border-color: #6b7280 !important;
-      color: white !important;
-    }
-
     .status-group .btn {
       border-radius: 8px !important;
-      font-size: 0.88rem;
+      font-size: 0.82rem;
       font-weight: 500;
-      padding: 6px 10px;
+      padding: 8px 6px;
     }
 
-    /* รองรับการแสดงผลบนมือถือ */
     @media (max-width: 768px) {
-      .table-responsive {
-        font-size: 0.9rem;
-      }
-      .btn-gradient-success {
-        width: 100%;
+      .status-group .btn {
+        font-size: 0.75rem;
+        padding: 6px 4px;
       }
     }
   </style>
@@ -146,7 +100,6 @@
 <body class="p-3 p-md-4">
 
   <div class="container-fluid max-width-lg">
-    <!-- ฟอร์มเลือกข้อมูล -->
     <div class="card card-custom p-3 p-md-4 mb-4">
       <div class="row g-3 align-items-end">
         <div class="col-md-4">
@@ -173,21 +126,19 @@
       </div>
     </div>
 
-    <!-- ตารางแสดงรายชื่อนักเรียน -->
     <div class="card card-custom p-2 p-md-3">
       <div class="table-responsive">
         <table class="table table-custom align-middle mb-0">
           <thead>
             <tr class="text-center">
-              <th style="width: 12%;">เลขที่</th>
-              <th style="width: 38%; text-align: left;">ชื่อ - นามสกุล</th>
-              <th style="width: 35%;">สถานะการเข้าเรียน</th>
-              <th style="width: 15%;">สถานะ</th>
+              <th style="width: 10%;">เลขที่</th>
+              <th style="width: 30%; text-align: left;">ชื่อ - นามสกุล</th>
+              <th style="width: 60%;">สถานะการเข้าเรียน</th>
             </tr>
           </thead>
           <tbody id="studentTableBody">
             <tr>
-              <td colspan="4" class="text-center py-5 text-muted" id="statusMessage">
+              <td colspan="3" class="text-center py-5 text-muted" id="statusMessage">
                 <i class="fa-solid fa-clipboard-user fa-3x mb-3 d-block text-secondary opacity-50"></i>
                 กรุณากดปุ่ม <b>"ดึงรายชื่อนักเรียน"</b> ด้านบนเพื่อเริ่มเช็คชื่อ
               </td>
@@ -197,9 +148,8 @@
       </div>
     </div>
 
-    <!-- ปุ่มบันทึกข้อมูล -->
     <div class="text-end mt-4">
-      <button class="btn btn-gradient-success" onclick="submitAttendance()">
+      <button class="btn btn-gradient-success w-100 w-md-auto" onclick="submitAttendance()">
         <i class="fa-solid fa-floppy-disk me-2"></i>ยืนยันบันทึกข้อมูลวันนี้
       </button>
     </div>
