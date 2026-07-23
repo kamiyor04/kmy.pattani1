@@ -20,7 +20,6 @@
       --sidebar-active: #5046e5;
       --sidebar-hover: #263353;
       --body-bg: #f3f4f6;
-      --text-muted: #94a3b8;
     }
 
     body {
@@ -28,23 +27,43 @@
       background-color: var(--body-bg);
       margin: 0;
       padding: 0;
+      overflow-x: hidden;
     }
 
-    /* Sidebar Styling */
-    .sidebar {
-      width: 280px;
-      height: 100vh;
-      position: fixed;
-      top: 0;
-      left: 0;
+    /* Navbar บนมือถือ */
+    .mobile-header {
       background-color: var(--sidebar-bg);
-      color: #ffffff;
-      padding: 24px 16px;
+      color: white;
+      padding: 12px 20px;
       display: flex;
-      flex-direction: column;
-      z-index: 1000;
-      box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1050;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .mobile-header .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .mobile-header img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+
+    /* Offcanvas / Sidebar อยู่ฝั่งขวา */
+    .offcanvas-end {
+      background-color: var(--sidebar-bg);
+      color: white;
+      width: 280px !important;
+      border-left: none;
     }
 
     .school-logo-container {
@@ -55,16 +74,16 @@
     }
 
     .school-logo {
-      width: 90px;
-      height: 90px;
+      width: 85px;
+      height: 85px;
       object-fit: contain;
       filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.3));
     }
 
     .school-title {
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
-      margin-top: 12px;
+      margin-top: 10px;
       line-height: 1.4;
       color: #f1f5f9;
     }
@@ -100,9 +119,8 @@
 
     /* Main Content Area */
     .main-content {
-      margin-left: 280px;
-      padding: 30px;
-      min-height: 100vh;
+      padding: 20px 15px;
+      min-height: calc(100vh - 65px);
     }
 
     /* Cards */
@@ -113,7 +131,24 @@
       background-color: #ffffff;
     }
 
-    /* Status Buttons Styling */
+    /* Status Buttons Styling สำหรับมือถือ */
+    .status-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    @media (min-width: 768px) {
+      .status-group {
+        flex-direction: row;
+      }
+      .main-content {
+        padding: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+    }
+
     .status-group .btn-outline-success {
       border-color: #10b981;
       color: #10b981;
@@ -143,66 +178,67 @@
       border-color: #ef4444;
       color: #fff;
     }
-
-    /* Responsive Design */
-    @media (max-width: 991px) {
-      .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-      }
-      .main-content {
-        margin-left: 0;
-        padding: 15px;
-      }
-    }
   </style>
 </head>
 <body>
 
-  <!-- Sidebar Menu -->
-  <div class="sidebar">
-    <div class="school-logo-container">
-      <!-- โลโก้โรงเรียน -->
-      <img src="https://via.placeholder.com/100" alt="ตราโรงเรียน" class="school-logo" id="schoolLogo">
-      <div class="school-title">
-        ระบบเช็คชื่อนักเรียน<br>เข้าร่วมกิจกรรมหน้าเสาธง
-      </div>
+  <!-- Header บนมือถือ มีปุ่มเมนูอยู่ทางขวา -->
+  <header class="mobile-header">
+    <div class="brand">
+      <img src="logo.png" alt="โลโก้โรงเรียน" onerror="this.src='https://via.placeholder.com/40?text=Logo'">
+      <span>ระบบเช็คชื่อนักเรียน</span>
     </div>
+    <!-- ปุ่มเปิดเมนูฝั่งขวา -->
+    <button class="btn btn-outline-light btn-sm border-0 fs-5" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </header>
 
-    <!-- รายการเมนูตามรูปภาพ -->
-    <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
-      
-      <!-- เมนู 1: บันทึกเช็คชื่อรายวัน -->
-      <button class="nav-link active" id="menu-attendance" onclick="switchTab('attendance-section', this)">
-        <i class="fa-solid fa-file-pen me-2"></i> บันทึกเช็คชื่อรายวัน
-      </button>
+  <!-- Sidebar เลื่อนออกจากฝั่งขวา (Right Offcanvas Menu) -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
+    <div class="offcanvas-header border-bottom border-secondary">
+      <h5 class="offcanvas-title text-white fs-6" id="sidebarMenuLabel">เมนูหลัก</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    
+    <div class="offcanvas-body p-3">
+      <div class="school-logo-container">
+        <!-- รูปโลโก้ logo.png -->
+        <img src="logo.png" alt="ตราโรงเรียน" class="school-logo" onerror="this.src='https://via.placeholder.com/85?text=Logo'">
+        <div class="school-title">
+          โรงเรียนชุมชนบ้านกะมิยอ<br>
+          <small class="text-muted fw-normal" style="font-size:0.8rem;">ระบบเช็คชื่อหน้าเสาธง</small>
+        </div>
+      </div>
 
-      <!-- เมนู 2: จัดการรายชื่อนักเรียน -->
-      <button class="nav-link" id="menu-students" onclick="switchTab('students-section', this)">
-        <i class="fa-solid fa-users me-2"></i> จัดการรายชื่อนักเรียน
-      </button>
+      <!-- รายการเมนู -->
+      <div class="nav flex-column nav-pills" role="tablist">
+        
+        <button class="nav-link active" id="menu-attendance" onclick="switchTab('attendance-section', this)">
+          <i class="fa-solid fa-file-pen me-2"></i> บันทึกเช็คชื่อรายวัน
+        </button>
 
-      <!-- เมนู 3: แดชบอร์ด -->
-      <button class="nav-link" id="menu-dashboard" onclick="switchTab('dashboard-section', this)">
-        <i class="fa-solid fa-chart-column me-2"></i> แดชบอร์ด
-      </button>
+        <button class="nav-link" id="menu-students" onclick="switchTab('students-section', this)">
+          <i class="fa-solid fa-users me-2"></i> จัดการรายชื่อนักเรียน
+        </button>
 
-      <!-- เมนู 4: รายงานสถิติ -->
-      <button class="nav-link" id="menu-reports" onclick="switchTab('reports-section', this)">
-        <i class="fa-solid fa-clipboard-list me-2"></i> รายงานสถิติ
-      </button>
+        <button class="nav-link" id="menu-dashboard" onclick="switchTab('dashboard-section', this)">
+          <i class="fa-solid fa-chart-column me-2"></i> แดชบอร์ด
+        </button>
 
-      <!-- เมนู 5: ตารางปฏิบัติงานมาสาย -->
-      <button class="nav-link" id="menu-late-schedule" onclick="switchTab('late-section', this)">
-        <i class="fa-solid fa-stopwatch me-2"></i> ตารางปฏิบัติงานมาสาย
-      </button>
+        <button class="nav-link" id="menu-reports" onclick="switchTab('reports-section', this)">
+          <i class="fa-solid fa-clipboard-list me-2"></i> รายงานสถิติ
+        </button>
 
-      <!-- เมนู 6: ตั้งค่าระบบวันหยุด -->
-      <button class="nav-link" id="menu-settings" onclick="switchTab('settings-section', this)">
-        <i class="fa-solid fa-gear me-2"></i> ตั้งค่าระบบวันหยุด
-      </button>
+        <button class="nav-link" id="menu-late-schedule" onclick="switchTab('late-section', this)">
+          <i class="fa-solid fa-stopwatch me-2"></i> ตารางปฏิบัติงานมาสาย
+        </button>
 
+        <button class="nav-link" id="menu-settings" onclick="switchTab('settings-section', this)">
+          <i class="fa-solid fa-gear me-2"></i> ตั้งค่าระบบวันหยุด
+        </button>
+
+      </div>
     </div>
   </div>
 
@@ -211,17 +247,17 @@
     
     <!-- ================= 1. หน้าบันทึกเช็คชื่อรายวัน ================= -->
     <div id="attendance-section" class="content-section">
-      <div class="card card-custom p-4 mb-4">
-        <h4 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-circle-check me-2"></i>บันทึกเช็คชื่อรายวัน</h4>
+      <div class="card card-custom p-3 p-md-4 mb-4">
+        <h5 class="fw-bold mb-3 text-primary"><i class="fa-solid fa-circle-check me-2"></i>บันทึกเช็คชื่อรายวัน</h5>
         
-        <div class="row g-3 align-items-end mb-4">
-          <div class="col-md-4">
-            <label class="form-label fw-medium">📅 วันที่บันทึกกิจกรรม:</label>
-            <input type="date" class="form-control form-control-lg" id="attendanceDate">
+        <div class="row g-2 align-items-end mb-3">
+          <div class="col-12 col-md-4">
+            <label class="form-label fw-medium mb-1"><small>📅 วันที่บันทึก:</small></label>
+            <input type="date" class="form-control" id="attendanceDate">
           </div>
-          <div class="col-md-5">
-            <label class="form-label fw-medium">🏫 เลือกระดับชั้น:</label>
-            <select class="form-select form-select-lg" id="classSelect">
+          <div class="col-12 col-md-5">
+            <label class="form-label fw-medium mb-1"><small>🏫 เลือกระดับชั้น:</small></label>
+            <select class="form-select" id="classSelect">
               <option value="ป.1">ประถมศึกษาปีที่ 1</option>
               <option value="ป.2">ประถมศึกษาปีที่ 2</option>
               <option value="ป.3">ประถมศึกษาปีที่ 3</option>
@@ -230,9 +266,9 @@
               <option value="ป.6">ประถมศึกษาปีที่ 6</option>
             </select>
           </div>
-          <div class="col-md-3">
-            <button class="btn btn-primary btn-lg w-100" onclick="loadStudentList()">
-              <i class="fa-solid fa-rotate me-2"></i>ดึงรายชื่อ
+          <div class="col-12 col-md-3 mt-2 mt-md-0">
+            <button class="btn btn-primary w-100" onclick="loadStudentList()">
+              <i class="fa-solid fa-rotate me-1"></i>ดึงรายชื่อ
             </button>
           </div>
         </div>
@@ -241,23 +277,23 @@
           <table class="table table-bordered table-hover align-middle">
             <thead class="table-light">
               <tr>
-                <th style="width: 10%;" class="text-center">เลขที่</th>
-                <th style="width: 35%;">ชื่อ - นามสกุล</th>
-                <th style="width: 55%;" class="text-center">สถานะการมาเรียน</th>
+                <th style="width: 12%;" class="text-center">เลขที่</th>
+                <th style="width: 38%;">ชื่อ - นามสกุล</th>
+                <th style="width: 50%;" class="text-center">สถานะ</th>
               </tr>
             </thead>
             <tbody id="studentTableBody">
               <tr>
-                <td colspan="3" class="text-center py-5 text-muted" id="statusMessage">
-                  กรุณาเลือกชั้นเรียนและกด <b>"ดึงรายชื่อ"</b> เพื่อเริ่มต้นเช็คชื่อ
+                <td colspan="3" class="text-center py-4 text-muted" id="statusMessage">
+                  กรุณาเลือกชั้นเรียนและกด <b>"ดึงรายชื่อ"</b>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div class="text-end mt-4">
-          <button class="btn btn-success btn-lg px-5" onclick="submitAttendance()">
+        <div class="text-end mt-3">
+          <button class="btn btn-success btn-lg w-100 w-md-auto px-5" onclick="submitAttendance()">
             <i class="fa-solid fa-floppy-disk me-2"></i>บันทึกข้อมูล
           </button>
         </div>
@@ -266,18 +302,18 @@
 
     <!-- ================= 2. หน้าจัดการรายชื่อนักเรียน ================= -->
     <div id="students-section" class="content-section" style="display: none;">
-      <div class="card card-custom p-4 mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h4 class="fw-bold text-primary mb-0"><i class="fa-solid fa-users-gear me-2"></i>จัดการรายชื่อนักเรียน</h4>
-          <button class="btn btn-primary" onclick="openAddStudentModal()">
-            <i class="fa-solid fa-user-plus me-2"></i>เพิ่มนักเรียนใหม่
+      <div class="card card-custom p-3 p-md-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold text-primary mb-0"><i class="fa-solid fa-users-gear me-2"></i>จัดการรายชื่อนักเรียน</h5>
+          <button class="btn btn-primary btn-sm" onclick="openAddStudentModal()">
+            <i class="fa-solid fa-user-plus me-1"></i>เพิ่มนักเรียน
           </button>
         </div>
 
         <div class="row mb-3">
-          <div class="col-md-4">
-            <label class="form-label fw-medium">เลือกระดับชั้น:</label>
-            <select id="manageClassSelect" class="form-select" onchange="fetchStudentManageList()">
+          <div class="col-12 col-md-4">
+            <label class="form-label fw-medium"><small>เลือกระดับชั้น:</small></label>
+            <select id="manageClassSelect" class="form-select form-select-sm" onchange="fetchStudentManageList()">
               <option value="all">-- แสดงทุกระดับชั้น --</option>
               <option value="ป.1">ประถมศึกษาปีที่ 1</option>
               <option value="ป.2">ประถมศึกษาปีที่ 2</option>
@@ -296,7 +332,7 @@
                 <th style="width: 15%;">ระดับชั้น</th>
                 <th style="width: 15%;" class="text-center">เลขที่</th>
                 <th>ชื่อ - นามสกุล</th>
-                <th style="width: 20%;" class="text-center">จัดการ</th>
+                <th style="width: 25%;" class="text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody id="manageStudentTableBody">
@@ -309,36 +345,36 @@
       </div>
     </div>
 
-    <!-- ================= 3. เมนูอื่นๆ (กำลังพัฒนา) ================= -->
+    <!-- ================= 3. เมนูอื่นๆ ================= -->
     <div id="dashboard-section" class="content-section" style="display: none;">
-      <div class="card card-custom p-5 text-center">
-        <i class="fa-solid fa-chart-line text-primary display-1 mb-3"></i>
-        <h3>แดชบอร์ดสรุปผล</h3>
-        <p class="text-muted">กำลังพัฒนาเมนูนี้เตรียมพร้อมในขั้นตอนถัดไปครับ...</p>
+      <div class="card card-custom p-4 text-center">
+        <i class="fa-solid fa-chart-line text-primary display-3 mb-3"></i>
+        <h5>แดชบอร์ดสรุปผล</h5>
+        <p class="text-muted small">กำลังพัฒนาเมนูนี้เตรียมพร้อมในขั้นตอนถัดไปครับ...</p>
       </div>
     </div>
 
     <div id="reports-section" class="content-section" style="display: none;">
-      <div class="card card-custom p-5 text-center">
-        <i class="fa-solid fa-file-invoice text-warning display-1 mb-3"></i>
-        <h3>รายงานสถิติ</h3>
-        <p class="text-muted">กำลังพัฒนาเมนูนี้เตรียมพร้อมในขั้นตอนถัดไปครับ...</p>
+      <div class="card card-custom p-4 text-center">
+        <i class="fa-solid fa-file-invoice text-warning display-3 mb-3"></i>
+        <h5>รายงานสถิติ</h5>
+        <p class="text-muted small">กำลังพัฒนาเมนูนี้เตรียมพร้อมในขั้นตอนถัดไปครับ...</p>
       </div>
     </div>
 
     <div id="late-section" class="content-section" style="display: none;">
-      <div class="card card-custom p-5 text-center">
-        <i class="fa-solid fa-clock-rotate-left text-danger display-1 mb-3"></i>
-        <h3>ตารางปฏิบัติงานมาสาย</h3>
-        <p class="text-muted">กำลังพัฒนาเมนูนี้เตรียมพร้อมในขั้นตอนถัดไปครับ...</p>
+      <div class="card card-custom p-4 text-center">
+        <i class="fa-solid fa-clock-rotate-left text-danger display-3 mb-3"></i>
+        <h5>ตารางปฏิบัติงานมาสาย</h5>
+        <p class="text-muted small">กำลังพัฒนาเมนูนี้เตรียมพร้อมในขั้นตอนถัดไปครับ...</p>
       </div>
     </div>
 
     <div id="settings-section" class="content-section" style="display: none;">
-      <div class="card card-custom p-5 text-center">
-        <i class="fa-solid fa-calendar-xmark text-secondary display-1 mb-3"></i>
-        <h3>ตั้งค่าระบบวันหยุด</h3>
-        <p class="text-muted">กำลังพัฒนาเมนูนี้เตรียมพร้อมในขั้นตอนถัดไปครับ...</p>
+      <div class="card card-custom p-4 text-center">
+        <i class="fa-solid fa-calendar-xmark text-secondary display-3 mb-3"></i>
+        <h5>ตั้งค่าระบบวันหยุด</h5>
+        <p class="text-muted small">กำลังพัฒนาเมนูนี้เตรียมพร้อมในขั้นตอนถัดไปครับ...</p>
       </div>
     </div>
 
@@ -350,23 +386,25 @@
   <script src="script.js"></script>
 
   <script>
-    // ฟังก์ชันสลับเมนู (Single Page Navigation)
     function switchTab(sectionId, element) {
-      // ซ่อนทุก Section
       document.querySelectorAll('.content-section').forEach(sec => {
         sec.style.display = 'none';
       });
 
-      // ปลด Active จากทุกปุ่ม
       document.querySelectorAll('.nav-link').forEach(btn => {
         btn.classList.remove('active');
       });
 
-      // แสดง Section ที่เลือก
       document.getElementById(sectionId).style.display = 'block';
       element.classList.add('active');
 
-      // ถ้าเปิดหน้าจัดการนักเรียน ให้โหลดข้อมูลนักเรียนอัตโนมัติ
+      // ปิด Sidebar เมนูอัตโนมัติเมื่อกดเลือกเมนูบนมือถือ
+      const sidebarEl = document.getElementById('sidebarMenu');
+      const bsOffcanvas = bootstrap.Offcanvas.getInstance(sidebarEl);
+      if (bsOffcanvas) {
+        bsOffcanvas.hide();
+      }
+
       if (sectionId === 'students-section') {
         fetchStudentManageList();
       }
