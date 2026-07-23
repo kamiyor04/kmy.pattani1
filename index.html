@@ -58,12 +58,12 @@
       object-fit: contain;
     }
 
-    /* Offcanvas / Sidebar อยู่ฝั่งขวา */
-    .offcanvas-end {
+    /* Offcanvas / Sidebar อยู่ฝั่งซ้าย (offcanvas-start) */
+    .offcanvas-start {
       background-color: var(--sidebar-bg);
       color: white;
       width: 280px !important;
-      border-left: none;
+      border-right: none;
     }
 
     .school-logo-container {
@@ -182,20 +182,20 @@
 </head>
 <body>
 
-  <!-- Header บนมือถือ มีปุ่มเมนูอยู่ทางขวา -->
+  <!-- Header บนมือถือ ปุ่มเมนูอยู่ฝั่งซ้าย -->
   <header class="mobile-header">
+    <!-- ปุ่มเปิดเมนูฝั่งซ้าย -->
+    <button class="btn btn-outline-light btn-sm border-0 fs-5" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+      <i class="fa-solid fa-bars"></i>
+    </button>
     <div class="brand">
       <img src="logo.png" alt="โลโก้โรงเรียน" onerror="this.src='https://via.placeholder.com/40?text=Logo'">
       <span>ระบบเช็คชื่อนักเรียน</span>
     </div>
-    <!-- ปุ่มเปิดเมนูฝั่งขวา -->
-    <button class="btn btn-outline-light btn-sm border-0 fs-5" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
-      <i class="fa-solid fa-bars"></i>
-    </button>
   </header>
 
-  <!-- Sidebar เลื่อนออกจากฝั่งขวา (Right Offcanvas Menu) -->
-  <div class="offcanvas offcanvas-end" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
+  <!-- Sidebar เลื่อนออกจากฝั่งซ้าย (Left Offcanvas Menu) -->
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
     <div class="offcanvas-header border-bottom border-secondary">
       <h5 class="offcanvas-title text-white fs-6" id="sidebarMenuLabel">เมนูหลัก</h5>
       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
