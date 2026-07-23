@@ -1,6 +1,137 @@
 // 🔗 URL ที่ได้จากการ Deploy Web App บน Google Apps Script
 const API_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
 
+// 🚀 ฟังก์ชันดึงรายชื่อนักเรียนและเช็กวันหยุด
+async function handleLoadStudents() {
+  const dateVal = document.getElementById('date-select').value;
+  const classVal = document.getElementById('class-select').value;
+  const tbody = document.getElementById('student-list-body');
+  const holidayBanner = document.getElementById('holiday-banner');
+  const holidayReason = document.getElementById('holiday-reason');
+  const countBadge = document.getElementById('student-count-badge');
+
+  if (!dateVal) {
+    alert("กรุณาเลือกวันที่ก่อนทำรายการค่ะ");
+    return;
+  }
+
+  // แสดงข้อความกำลังโหลด
+  tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:30px; color:#64748b;">⏳ กำลังตรวจสอบปฏิทินวันหยุดและโหลดรายชื่อ...</td></tr>';
+  holidayBanner.style.display = 'none';
+
+  try {
+    // 1. ตรวจสอบวันหยุด
+    const resHoliday = await fetch(`${API_URL}?action=checkHoliday&date=${dateVal}`);
+    const holidayData = await resHoliday.json();
+
+    if (holidayData.isHoliday) {
+      holidayReason.textContent = `วันนี้เป็นวันหยุด: ${holidayData.reason}`;
+      holidayBanner.style.display = 'block';
+    }
+
+    // 2. ดึงรายชื่อนักเรียน
+    const resStudents = await fetch(`${API_URL}?action=getStudents&cls=${encodeURIComponent(classVal)}&date=${dateVal}`);
+    const students = await resStudents.json();
+
+    if (!students || students.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:30px; color:#ef4444;">❌ ไม่พบข้อมูลนักเรียนในชั้นเรียนนี้</td></tr>';
+      countBadge.textContent = '0 คน';
+      return;
+    }
+
+    countBadge.textContent = `${students.length} คน`;
+
+    // 3. แสดงผลตารางนักเรียน
+    let html = '';
+    students.forEach((s) => {
+      const isPresent = s.savedStatus === 'เข้าร่วม/มาเรียน' || s.savedStatus === 'มาเรียน' || s.savedStatus === 'เข้าร่วม';
+      const isLate = s.savedStatus.indexOf('สาย') !== -1;
+      const isAbsent = s.savedStatus === 'ไม่มาเรียน';
+
+      html += `
+        <tr>
+          <td style="text-align:center; font-weight:600;">${s.id}</td>
+          <td>${s.name}</td>
+          <td style="text-align:center;">
+            <div class="status-options" style="justify-content:center;">
+              <label class="status-btn ${isPresent ? 'checked-present' : ''}">
+                <input type="radio" name="status_${s.id}" value="เข้าร่วม/มาเรียน" ${isPresent ? 'checked' : ''} style="display:none;" onchange="updateBtnStyle(this)"> มาเรียน
+              </label>
+              <label class="status-btn ${isLate ? 'checked-late' : ''}">
+                <input type="radio" name="status_${s.id}" value="ไม่เข้าร่วม/มาเรียน (สาย)" ${isLate ? 'checked' : ''} style="display:none;" onchange="updateBtnStyle(this)"> สาย
+              </label>
+              <label class="status-btn ${isAbsent ? 'checked-absent' : ''}">
+                <input type="radio" name="status_${s.id}" value="ไม่มาเรียน" ${isAbsent ? 'checked' : ''} style="display:none;" onchange="updateBtnStyle(this)"> ขาด
+              </label>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+
+  } catch (error) {
+    console.error(error);
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:30px; color:#dc2626;">❌ เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์ กรุณาเช็ก API_URL หรือสิทธิ์การเข้าถึงค่ะ</td></tr>';
+  }
+}
+
+// 🎨 เปลี่ยนสีปุ่มเมื่อเลือกสถานะ
+function updateBtnStyle(radioBtn) {
+  const container = radioBtn.closest('.status-options');
+  container.querySelectorAll('.status-btn').forEach(btn => {
+    btn.classList.remove('checked-present', 'checked-late', 'checked-absent');
+  });
+
+  const parentLabel = radioBtn.closest('.status-btn');
+  if (radioBtn.value.includes('มาเรียน') && !radioBtn.value.includes('สาย')) {
+    parentLabel.classList.add('checked-present');
+  } else if (radioBtn.value.includes('สาย')) {
+    parentLabel.classList.add('checked-late');
+  } else if (radioBtn.value.includes('ไม่มาเรียน')) {
+    parentLabel.classList.add('checked-absent');
+  }
+}
+
+// 💾 ฟังก์ชันบันทึกข้อมูลการเช็กชื่อ
+async function handleSaveAttendance() {
+  const dateVal = document.getElementById('date-select').value;
+  const classVal = document.getElementById('class-select').value;
+  const records = {};
+
+  const rows = document.querySelectorAll('#student-list-body tr');
+  rows.forEach(row => {
+    const radioChecked = row.querySelector('input[type="radio"]:checked');
+    if (radioChecked) {
+      const studentId = radioChecked.name.replace('status_', '');
+      records[studentId] = radioChecked.value;
+    }
+  });
+
+  if (Object.keys(records).length === 0) {
+    alert("กรุณาเลือกสถานะของนักเรียนอย่างน้อย 1 คนค่ะ");
+    return;
+  }
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        action: "saveAttendance",
+        cls: classVal,
+        recs: records,
+        dateSelected: dateVal
+      })
+    });
+    const result = await response.json();
+    alert(result.message);
+  } catch (error) {
+    console.error(error);
+    alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+  }
+}
 // 🔎 ดึงรายชื่อนักเรียนผ่าน API
 async function loadStudents(cls, dateSelected) {
   try {
