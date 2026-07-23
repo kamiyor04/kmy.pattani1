@@ -58,7 +58,7 @@
       object-fit: contain;
     }
 
-    /* Offcanvas / Sidebar อยู่ฝั่งซ้าย (offcanvas-start) */
+    /* Offcanvas / Sidebar อยู่ฝั่งซ้าย */
     .offcanvas-start {
       background-color: var(--sidebar-bg);
       color: white;
@@ -184,7 +184,6 @@
 
   <!-- Header บนมือถือ ปุ่มเมนูอยู่ฝั่งซ้าย -->
   <header class="mobile-header">
-    <!-- ปุ่มเปิดเมนูฝั่งซ้าย -->
     <button class="btn btn-outline-light btn-sm border-0 fs-5" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
       <i class="fa-solid fa-bars"></i>
     </button>
@@ -203,7 +202,6 @@
     
     <div class="offcanvas-body p-3">
       <div class="school-logo-container">
-        <!-- รูปโลโก้ logo.png -->
         <img src="logo.png" alt="ตราโรงเรียน" class="school-logo" onerror="this.src='https://via.placeholder.com/85?text=Logo'">
         <div class="school-title">
           โรงเรียนชุมชนบ้านกะมิยอ<br>
@@ -213,7 +211,6 @@
 
       <!-- รายการเมนู -->
       <div class="nav flex-column nav-pills" role="tablist">
-        
         <button class="nav-link active" id="menu-attendance" onclick="switchTab('attendance-section', this)">
           <i class="fa-solid fa-file-pen me-2"></i> บันทึกเช็คชื่อรายวัน
         </button>
@@ -237,7 +234,6 @@
         <button class="nav-link" id="menu-settings" onclick="switchTab('settings-section', this)">
           <i class="fa-solid fa-gear me-2"></i> ตั้งค่าระบบวันหยุด
         </button>
-
       </div>
     </div>
   </div>
@@ -258,12 +254,19 @@
           <div class="col-12 col-md-5">
             <label class="form-label fw-medium mb-1"><small>🏫 เลือกระดับชั้น:</small></label>
             <select class="form-select" id="classSelect">
-              <option value="ป.1">ประถมศึกษาปีที่ 1</option>
-              <option value="ป.2">ประถมศึกษาปีที่ 2</option>
-              <option value="ป.3">ประถมศึกษาปีที่ 3</option>
-              <option value="ป.4">ประถมศึกษาปีที่ 4</option>
-              <option value="ป.5">ประถมศึกษาปีที่ 5</option>
-              <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+              <optgroup label="ระดับประถมศึกษา">
+                <option value="ป.1">ประถมศึกษาปีที่ 1</option>
+                <option value="ป.2">ประถมศึกษาปีที่ 2</option>
+                <option value="ป.3">ประถมศึกษาปีที่ 3</option>
+                <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+                <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+                <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+              </optgroup>
+              <optgroup label="ระดับมัธยมศึกษาตอนต้น">
+                <option value="ม.1">มัธยมศึกษาปีที่ 1</option>
+                <option value="ม.2">มัธยมศึกษาปีที่ 2</option>
+                <option value="ม.3">มัธยมศึกษาปีที่ 3</option>
+              </optgroup>
             </select>
           </div>
           <div class="col-12 col-md-3 mt-2 mt-md-0">
@@ -315,12 +318,19 @@
             <label class="form-label fw-medium"><small>เลือกระดับชั้น:</small></label>
             <select id="manageClassSelect" class="form-select form-select-sm" onchange="fetchStudentManageList()">
               <option value="all">-- แสดงทุกระดับชั้น --</option>
-              <option value="ป.1">ประถมศึกษาปีที่ 1</option>
-              <option value="ป.2">ประถมศึกษาปีที่ 2</option>
-              <option value="ป.3">ประถมศึกษาปีที่ 3</option>
-              <option value="ป.4">ประถมศึกษาปีที่ 4</option>
-              <option value="ป.5">ประถมศึกษาปีที่ 5</option>
-              <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+              <optgroup label="ระดับประถมศึกษา">
+                <option value="ป.1">ประถมศึกษาปีที่ 1</option>
+                <option value="ป.2">ประถมศึกษาปีที่ 2</option>
+                <option value="ป.3">ประถมศึกษาปีที่ 3</option>
+                <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+                <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+                <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+              </optgroup>
+              <optgroup label="ระดับมัธยมศึกษาตอนต้น">
+                <option value="ม.1">มัธยมศึกษาปีที่ 1</option>
+                <option value="ม.2">มัธยมศึกษาปีที่ 2</option>
+                <option value="ม.3">มัธยมศึกษาปีที่ 3</option>
+              </optgroup>
             </select>
           </div>
         </div>
@@ -398,7 +408,6 @@
       document.getElementById(sectionId).style.display = 'block';
       element.classList.add('active');
 
-      // ปิด Sidebar เมนูอัตโนมัติเมื่อกดเลือกเมนูบนมือถือ
       const sidebarEl = document.getElementById('sidebarMenu');
       const bsOffcanvas = bootstrap.Offcanvas.getInstance(sidebarEl);
       if (bsOffcanvas) {
