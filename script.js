@@ -423,38 +423,45 @@ async function saveStudentData(action, payload) {
     });
   }
 }
-// ฟังก์ชันพิมพ์รายชื่อนักเรียน (ดึงตรงจาก Google Sheets)
-async function printStudentList() {
-  // 1. หาค่าชั้นเรียนที่เลือกอยู่จาก Dropdown ต่างๆ ในหน้าเว็บ
-  const classSelect = document.getElementById('classSelect') || 
-                      document.getElementById('manageClassSelect') || 
-                      document.getElementById('swal-class');
-  
-  let selectedClass = classSelect ? classSelect.value.trim() : 'ป.1';
-  if (selectedClass === 'all') selectedClass = 'ป.1'; // ป้องกันกรณีเลือก "แสดงทุกระดับชั้น"
 
-  // 2. แสดงป๊อปอัปกำลังโหลด
+// ฟังก์ชันพิมพ์รายชื่อนักเรียน (ดึงจาก Google Sheets โดยตรง)
+async function printStudentList() {
+  // 1. หาค่าระดับชั้นจากตัวเลือกในหน้าเว็บ
+  let selectedClass = 'ป.1';
+  
+  // ค้นหา element ตัวเลือกห้องเรียนในหน้าเว็บ
+  const classElement = document.querySelector('select[id*="class"]') || document.querySelector('select');
+  if (classElement && classElement.value) {
+    selectedClass = classElement.value.trim();
+  }
+  
+  if (selectedClass === 'all' || selectedClass === '') {
+    selectedClass = 'ป.1';
+  }
+
+  // 2. แสดงสถานะกำลังโหลด
   Swal.fire({
     title: 'กำลังเตรียมเอกสาร...',
-    text: `ดึงรายชื่อนักเรียน ชั้น ${selectedClass}`,
+    text: `กำลังดึงข้อมูลชั้น ${selectedClass} จากระบบ`,
     allowOutsideClick: false,
     didOpen: () => Swal.showLoading()
   });
 
   try {
-    // 3. ดึงข้อมูลจาก Google Apps Script โดยตรง
-    const response = await fetch(`${WEB_APP_URL}?action=getStudentsByClass&className=${encodeURIComponent(selectedClass)}`);
+    // 3. ดึงข้อมูลตรงจาก Google Apps Script
+    const fetchUrl = `${WEB_APP_URL}?action=getStudentsByClass&className=${encodeURIComponent(selectedClass)}`;
+    const response = await fetch(fetchUrl);
     const resData = await response.json();
     
     Swal.close();
 
-    const classStudents = resData.data || [];
+    const classStudents = (resData && resData.data) ? resData.data : [];
 
     if (classStudents.length === 0) {
       Swal.fire({
         icon: 'warning',
         title: 'ไม่พบข้อมูลนักเรียน',
-        text: `ไม่มีรายชื่อนักเรียนในชั้น ${selectedClass} ในชีท Student_List ครับ`
+        text: `ไม่พบรายชื่อนักเรียนในชั้น ${selectedClass} ในชีท Student_List ครับ`
       });
       return;
     }
@@ -469,7 +476,7 @@ async function printStudentList() {
       </tr>
     `).join('');
 
-    // 5. เปิดหน้าต่างพิมพ์เอกสารทางการ
+    // 5. เปิดหน้าต่างสั่งพิมพ์แบบฟอร์มทางการ
     const printWindow = window.open('', '_blank');
     
     printWindow.document.write(`
@@ -604,7 +611,7 @@ async function printStudentList() {
     Swal.fire({
       icon: 'error',
       title: 'เกิดข้อผิดพลาด',
-      text: 'ไม่สามารถดึงข้อมูลจาก Google Sheets ได้'
+      text: 'ไม่สามารถเชื่อมต่อกับ Google Sheets ได้'
     });
   }
 }
