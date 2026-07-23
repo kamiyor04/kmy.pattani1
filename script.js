@@ -424,13 +424,13 @@ async function saveStudentData(action, payload) {
   }
 }
 
-// ฟังก์ชันพิมพ์รายชื่อนักเรียน (ดึงจาก Google Sheets โดยตรง)
 async function printStudentList() {
-  // 1. หาค่าระดับชั้นจากตัวเลือกในหน้าเว็บ
   let selectedClass = 'ป.1';
   
-  // ค้นหา element ตัวเลือกห้องเรียนในหน้าเว็บ
-  const classElement = document.querySelector('select[id*="class"]') || document.querySelector('select');
+  const classElement = document.getElementById('classSelect') || 
+                       document.getElementById('manageClassSelect') || 
+                       document.getElementById('swal-class') ||
+                       document.querySelector('select');
   if (classElement && classElement.value) {
     selectedClass = classElement.value.trim();
   }
@@ -439,7 +439,6 @@ async function printStudentList() {
     selectedClass = 'ป.1';
   }
 
-  // 2. แสดงสถานะกำลังโหลด
   Swal.fire({
     title: 'กำลังเตรียมเอกสาร...',
     text: `กำลังดึงข้อมูลชั้น ${selectedClass} จากระบบ`,
@@ -448,25 +447,26 @@ async function printStudentList() {
   });
 
   try {
-    // 3. ดึงข้อมูลตรงจาก Google Apps Script
+    // เรียกผ่าน Web App URL
     const fetchUrl = `${WEB_APP_URL}?action=getStudentsByClass&className=${encodeURIComponent(selectedClass)}`;
     const response = await fetch(fetchUrl);
     const resData = await response.json();
     
     Swal.close();
 
-    const classStudents = (resData && resData.data) ? resData.data : [];
+    // ดึงข้อมูลเด็กจาก resData.data
+    const classStudents = (resData && resData.data && Array.isArray(resData.data)) ? resData.data : [];
 
     if (classStudents.length === 0) {
       Swal.fire({
         icon: 'warning',
         title: 'ไม่พบข้อมูลนักเรียน',
-        text: `ไม่พบรายชื่อนักเรียนในชั้น ${selectedClass} ในชีท Student_List ครับ`
+        text: `ไม่พบรายชื่อนักเรียนในชั้น ${selectedClass} ในชีท Student_List ครับ\n(โปรดเช็คชื่อชีทและคอลัมน์ C ใน Google Sheets)`
       });
       return;
     }
 
-    // 4. สร้างแถวตารางรายชื่อ
+    // สร้างตารางพิมพ์เอกสาร
     let rowsHtml = classStudents.map((s, index) => `
       <tr>
         <td style="text-align: center;">${s.no || (index + 1)}</td>
@@ -476,7 +476,6 @@ async function printStudentList() {
       </tr>
     `).join('');
 
-    // 5. เปิดหน้าต่างสั่งพิมพ์แบบฟอร์มทางการ
     const printWindow = window.open('', '_blank');
     
     printWindow.document.write(`
@@ -487,88 +486,25 @@ async function printStudentList() {
         <title>บัญชีรายชื่อนักเรียน ชั้น ${selectedClass}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
-          
-          body {
-            font-family: 'Sarabun', sans-serif;
-            font-size: 16pt;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-            color: #000;
-          }
-
-          .header {
-            text-align: center;
-            margin-bottom: 20px;
-          }
-
-          .garuda-img {
-            width: 80px;
-            height: auto;
-            margin-bottom: 10px;
-          }
-
-          .title {
-            font-weight: bold;
-            font-size: 18pt;
-            margin-bottom: 5px;
-          }
-
-          .subtitle {
-            font-size: 16pt;
-            margin-bottom: 15px;
-          }
-
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-          }
-
-          th, td {
-            border: 1px solid #000;
-            padding: 8px 5px;
-            font-size: 15pt;
-          }
-
-          th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-            text-align: center;
-          }
-
-          .footer-sign {
-            margin-top: 40px;
-            width: 100%;
-            display: table;
-          }
-
-          .sign-box {
-            display: table-cell;
-            width: 50%;
-            text-align: center;
-            vertical-align: top;
-          }
-
-          @media print {
-            @page {
-              size: A4 portrait;
-              margin: 2cm 1.5cm 2cm 2cm;
-            }
-            body {
-              padding: 0;
-            }
-          }
+          body { font-family: 'Sarabun', sans-serif; font-size: 16pt; line-height: 1.6; margin: 0; padding: 20px; color: #000; }
+          .header { text-align: center; margin-bottom: 20px; }
+          .garuda-img { width: 80px; height: auto; margin-bottom: 10px; }
+          .title { font-weight: bold; font-size: 18pt; margin-bottom: 5px; }
+          .subtitle { font-size: 16pt; margin-bottom: 15px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th, td { border: 1px solid #000; padding: 8px 5px; font-size: 15pt; }
+          th { background-color: #f2f2f2; font-weight: bold; text-align: center; }
+          .footer-sign { margin-top: 40px; width: 100%; display: table; }
+          .sign-box { display: table-cell; width: 50%; text-align: center; vertical-align: top; }
+          @media print { @page { size: A4 portrait; margin: 2cm 1.5cm 2cm 2cm; } body { padding: 0; } }
         </style>
       </head>
       <body>
-
         <div class="header">
           <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Garuda_Thailande.png" class="garuda-img" alt="ตราครุฑ"><br>
           <div class="title">บัญชีรายชื่อนักเรียน</div>
           <div class="subtitle">โรงเรียนชุมชนบ้านกะมิยอ | ระดับชั้น ${selectedClass}</div>
         </div>
-
         <table>
           <thead>
             <tr>
@@ -582,7 +518,6 @@ async function printStudentList() {
             ${rowsHtml}
           </tbody>
         </table>
-
         <div class="footer-sign">
           <div class="sign-box">
             <p>ลงชื่อ......................................................ครูประจำชั้น<br>
@@ -595,12 +530,7 @@ async function printStudentList() {
             ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</p>
           </div>
         </div>
-
-        <script>
-          window.onload = function() {
-            window.print();
-          }
-        <\/script>
+        <script>window.onload = function() { window.print(); }<\/script>
       </body>
       </html>
     `);
@@ -611,7 +541,7 @@ async function printStudentList() {
     Swal.fire({
       icon: 'error',
       title: 'เกิดข้อผิดพลาด',
-      text: 'ไม่สามารถเชื่อมต่อกับ Google Sheets ได้'
+      text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้'
     });
   }
 }
