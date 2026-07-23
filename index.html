@@ -2,19 +2,20 @@
 <div class="card p-4">
   <div class="row g-3">
     <div class="col-md-4">
-      <label class="form-label">วันที่บันทึกกิจกรรม: เทส1</label>
+      <label class="form-label">วันที่บันทึกกิจกรรม: เทส2</label>
       <input type="date" id="attendanceDate" class="form-control">
     </div>
     <div class="col-md-5">
       <label class="form-label">เลือกระดับชั้นเรียน:</label>
       <select id="classSelect" class="form-select">
-        <option value="ป.1">ประถมศึกษาปีที่ 1</option>
-        <option value="ประถมศึกษาปีที่ 2">ประถมศึกษาปีที่ 2</option>
-        <option value="ประถมศึกษาปีที่ 3">ประถมศึกษาปีที่ 3</option>
-        <option value="ประถมศึกษาปีที่ 4">ประถมศึกษาปีที่ 4</option>
-        <option value="ประถมศึกษาปีที่ 5">ประถมศึกษาปีที่ 5</option>
-        <option value="ประถมศึกษาปีที่ 6">ประถมศึกษาปีที่ 6</option>
-      </select>
+  <!-- ถ้าในชีทพิมพ์ ป.1 ให้แก้ value="ป.1" แบบนี้ครับ -->
+  <option value="ป.1">ประถมศึกษาปีที่ 1</option>
+  <option value="ป.2">ประถมศึกษาปีที่ 2</option>
+  <option value="ป.3">ประถมศึกษาปีที่ 3</option>
+  <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+  <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+  <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+</select>
     </div>
     <div class="col-md-3 d-flex align-items-end">
       <button class="btn btn-primary w-100" onclick="loadStudentList()">
