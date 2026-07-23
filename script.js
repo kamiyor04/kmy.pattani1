@@ -1,12 +1,10 @@
-// ⚠️ ใส่ Web App URL ของคุณตรงนี้
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec"; // ⚠️ อย่าลืมใส่ URL จริงของคุณนะครับ
 
 document.addEventListener("DOMContentLoaded", () => {
   const dateInput = document.getElementById('attendanceDate');
   if (dateInput) dateInput.valueAsDate = new Date();
 });
 
-// 1. ดึงรายชื่อนักเรียน (ส่งวันที่ไปด้วย)
 function loadStudentList() {
   const className = document.getElementById('classSelect').value;
   const attendanceDate = document.getElementById('attendanceDate').value;
@@ -16,7 +14,7 @@ function loadStudentList() {
     Swal.fire({
       icon: 'warning',
       title: 'แจ้งเตือน',
-      text: 'กรุณาเลือกวันที่บันทึกกิจกรรมก่อนครับ',
+      text: 'กรุณาเลือกวันที่บันทึกกิจกรรมก่อนครับ 55',
       confirmButtonColor: '#4f46e5'
     });
     return;
@@ -33,16 +31,102 @@ function loadStudentList() {
   const oldScript = document.getElementById('jsonp-script');
   if (oldScript) oldScript.remove();
 
+  // ตั้ง Timeout 12 วินาที ถ้ายังไม่ตอบกลับให้ตัดการทำงานทันที
+  const timer = setTimeout(() => {
+    const s = document.getElementById('jsonp-script');
+    if (s) s.remove();
+    Swal.fire({
+      icon: 'error',
+      title: 'ดึงข้อมูลใช้เวลานานเกินไป',
+      text: 'กรุณาเช็กว่าได้กด Deploy ใน Apps Script เป็น "เวอร์ชันใหม่" แล้วหรือยังครับ',
+      confirmButtonColor: '#4f46e5'
+    });
+    tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-4">❌ ดึงข้อมูลล้มเหลว (Timeout)</td></tr>`;
+  }, 12000);
+
+  window.renderStudentTable = function(response) {
+    clearTimeout(timer); // ยกเลิกเวลาถ้าได้ข้อมูลแล้ว
+    
+    if (!response || response.status === "error") {
+      Swal.fire({
+        icon: 'error',
+        title: 'เกิดข้อผิดพลาด',
+        text: response ? response.message : 'ไม่ได้รับข้อมูลจากเซิร์ฟเวอร์',
+        confirmButtonColor: '#4f46e5'
+      });
+      tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-4">❌ เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
+      return;
+    }
+
+    const students = response.data;
+    if (!students || students.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'ไม่พบข้อมูล',
+        text: 'ไม่พบรายชื่อนักเรียนในระดับชั้นนี้',
+        confirmButtonColor: '#4f46e5'
+      });
+      tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-warning">⚠️ ไม่พบรายชื่อนักเรียนในระดับชั้นนี้</td></tr>`;
+      return;
+    }
+
+    let html = '';
+    students.forEach((student, index) => {
+      const isPresent = student.status === "เข้าร่วม/มาเรียน" ? "checked" : "";
+      const isLate = student.status === "ไม่เข้าร่วม/มาเรียน (สาย)" ? "checked" : "";
+      const isAbsent = (student.status === "ไม่มาเรียน" || !student.status) ? "checked" : "";
+
+      html += `
+        <tr>
+          <td class="text-center fw-bold text-secondary">${student.no}</td>
+          <td class="fw-medium">${student.name}</td>
+          <td class="text-center">
+            <div class="btn-group w-100 status-group" role="group">
+              <input type="radio" class="btn-check" name="status_${index}" id="present_${index}" value="เข้าร่วม/มาเรียน" ${isPresent}>
+              <label class="btn btn-outline-success" for="present_${index}">
+                <i class="fa-solid fa-circle-check me-1"></i>เข้าร่วม/มาเรียน
+              </label>
+
+              <input type="radio" class="btn-check" name="status_${index}" id="late_${index}" value="ไม่เข้าร่วม/มาเรียน (สาย)" ${isLate}>
+              <label class="btn btn-outline-warning" for="late_${index}">
+                <i class="fa-solid fa-clock me-1"></i>ไม่เข้าร่วม/มาเรียน (สาย)
+              </label>
+
+              <input type="radio" class="btn-check" name="status_${index}" id="absent_${index}" value="ไม่มาเรียน" ${isAbsent}>
+              <label class="btn btn-outline-danger" for="absent_${index}">
+                <i class="fa-solid fa-circle-xmark me-1"></i>ไม่มาเรียน
+              </label>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
+    Toast.fire({
+      icon: 'success',
+      title: `ดึงข้อมูลสำเร็จ ${students.length} รายการ`
+    });
+  };
+
   const script = document.createElement('script');
   script.id = 'jsonp-script';
-  // ส่งค่าทั้ง className และ date ไปฝั่ง Apps Script
   script.src = `${WEB_APP_URL}?action=getStudents&className=${encodeURIComponent(className)}&date=${encodeURIComponent(attendanceDate)}&callback=renderStudentTable`;
 
   script.onerror = function () {
+    clearTimeout(timer);
     Swal.fire({
       icon: 'error',
       title: 'เชื่อมต่อล้มเหลว',
-      text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ กรุณาเช็กเน็ตหรือ Web App URL',
+      text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้',
       confirmButtonColor: '#4f46e5'
     });
     tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-4">❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ได้</td></tr>`;
@@ -51,83 +135,6 @@ function loadStudentList() {
   document.body.appendChild(script);
 }
 
-// 2. แสดงตาราง (ถ้าเคยบันทึกแล้ว จะเลือกสถานะเดิมให้ออโต้)
-function renderStudentTable(response) {
-  const tbody = document.getElementById('studentTableBody');
-
-  if (!response || response.status === "error") {
-    Swal.fire({
-      icon: 'error',
-      title: 'เกิดข้อผิดพลาด',
-      text: response ? response.message : 'ไม่ได้รับข้อมูลจากเซิร์ฟเวอร์',
-      confirmButtonColor: '#4f46e5'
-    });
-    tbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-4">❌ เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
-    return;
-  }
-
-  const students = response.data;
-  if (!students || students.length === 0) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'ไม่พบข้อมูล',
-      text: 'ไม่พบรายชื่อนักเรียนในระดับชั้นนี้',
-      confirmButtonColor: '#4f46e5'
-    });
-    tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-warning">⚠️ ไม่พบรายชื่อนักเรียนในระดับชั้นนี้</td></tr>`;
-    return;
-  }
-
-  let html = '';
-  students.forEach((student, index) => {
-    // เช็กสถานะเดิมของนักเรียนแต่ละคน
-    const isPresent = student.status === "เข้าร่วม/มาเรียน" ? "checked" : "";
-    const isLate = student.status === "ไม่เข้าร่วม/มาเรียน (สาย)" ? "checked" : "";
-    // ถ้าไม่มีข้อมูล หรือเป็น ไม่มาเรียน ให้เลือก ไม่มาเรียน
-    const isAbsent = (student.status === "ไม่มาเรียน" || !student.status) ? "checked" : "";
-
-    html += `
-      <tr>
-        <td class="text-center fw-bold text-secondary">${student.no}</td>
-        <td class="fw-medium">${student.name}</td>
-        <td class="text-center">
-          <div class="btn-group w-100 status-group" role="group">
-            <input type="radio" class="btn-check" name="status_${index}" id="present_${index}" value="เข้าร่วม/มาเรียน" ${isPresent}>
-            <label class="btn btn-outline-success" for="present_${index}">
-              <i class="fa-solid fa-circle-check me-1"></i>เข้าร่วม/มาเรียน
-            </label>
-
-            <input type="radio" class="btn-check" name="status_${index}" id="late_${index}" value="ไม่เข้าร่วม/มาเรียน (สาย)" ${isLate}>
-            <label class="btn btn-outline-warning" for="late_${index}">
-              <i class="fa-solid fa-clock me-1"></i>ไม่เข้าร่วม/มาเรียน (สาย)
-            </label>
-
-            <input type="radio" class="btn-check" name="status_${index}" id="absent_${index}" value="ไม่มาเรียน" ${isAbsent}>
-            <label class="btn btn-outline-danger" for="absent_${index}">
-              <i class="fa-solid fa-circle-xmark me-1"></i>ไม่มาเรียน
-            </label>
-          </div>
-        </td>
-      </tr>
-    `;
-  });
-
-  tbody.innerHTML = html;
-
-  const Toast = Swal.mixin({
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: 2000,
-    timerProgressBar: true
-  });
-  Toast.fire({
-    icon: 'success',
-    title: `ดึงข้อมูลสำเร็จ ${students.length} รายการ`
-  });
-}
-
-// 3. ยืนยันบันทึก/อัปเดตข้อมูล
 async function submitAttendance() {
   const date = document.getElementById('attendanceDate').value;
   const className = document.getElementById('classSelect').value;
