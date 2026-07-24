@@ -178,6 +178,135 @@
       border-color: #ef4444;
       color: #fff;
     }
+    .dashboard-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .filter-controls {
+    display: flex;
+    gap: 10px;
+  }
+
+  .filter-controls select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 15px;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+
+  .kpi-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border-left: 5px solid #ccc;
+  }
+
+  .kpi-card.total { border-left-color: #2196F3; }
+  .kpi-card.present { border-left-color: #4CAF50; }
+  .kpi-card.late { border-left-color: #FF9800; }
+  .kpi-card.absent { border-left-color: #F44336; }
+
+  .kpi-icon {
+    font-size: 32px;
+    background: #f5f5f5;
+    width: 55px;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  .kpi-info .kpi-label {
+    font-size: 14px;
+    color: #666;
+    display: block;
+  }
+
+  .kpi-info h3 {
+    margin: 5px 0 0 0;
+    font-size: 26px;
+    color: #333;
+  }
+
+  .kpi-info h3 small {
+    font-size: 14px;
+    color: #888;
+    font-weight: normal;
+  }
+
+  .alert-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  .alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+  }
+
+  .badge-alert {
+    background: #ffebee;
+    color: #c62828;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 14px;
+  }
+
+  .dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .dashboard-table th, .dashboard-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+  }
+
+  .dashboard-table th {
+    background: #fafafa;
+    color: #555;
+  }
+
+  .late-tag {
+    display: inline-block;
+    background: #fff3e0;
+    color: #e65100;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    margin: 2px;
+  }
+
+  .absent-count-tag {
+    color: #d32f2f;
+    font-weight: bold;
+  }
   </style>
 </head>
 <body>
@@ -312,9 +441,9 @@
             <i class="fa-solid fa-user-plus me-1"></i>เพิ่มนักเรียน
           </button>
           <!-- ปุ่มพิมพ์รายชื่อนักเรียน -->
-<button type="button" class="btn btn-outline-secondary ms-2" onclick="printStudentList()">
-  🖨️ พิมพ์รายชื่อนักเรียน (เอกสารทางการ)
-</button>
+          <button type="button" class="btn btn-outline-secondary ms-2" onclick="printStudentList()">
+            🖨️ พิมพ์รายชื่อนักเรียน (เอกสารทางการ)
+          </button>
         </div>
 
         <div class="row mb-3">
@@ -391,8 +520,97 @@
         <p class="text-muted small">กำลังพัฒนาเมนูนี้เตรียมพร้อมในขั้นตอนถัดไปครับ...</p>
       </div>
     </div>
-
   </div>
+  <!-- แดชบอร์ดสรุปผลการมาเรียน -->
+<div id="dashboardSection" class="section-container">
+  
+  <!-- หัวข้อ & ตัวกรอง -->
+  <div class="dashboard-header-bar">
+    <h2>📊 แดชบอร์ดสรุปผลการมาเรียน</h2>
+    
+    <div class="filter-controls">
+      <!-- เลือกช่วงเวลา (รายวัน / รายเดือน) -->
+      <select id="dashPeriodSelect" onchange="updateDashboard()">
+        <option value="daily">📅 ยอดประจำวัน (วันนี้)</option>
+        <option value="monthly" selected>🗓️ ยอดสะสมประจำเดือนนี้</option>
+      </select>
+
+      <!-- เลือกห้องเรียน -->
+      <select id="dashClassSelect" onchange="updateDashboard()">
+        <option value="all">🏫 แสดงทุกระดับชั้น (ภาพรวมโรงเรียน)</option>
+        <option value="อ.2">อนุบาล 2</option>
+        <option value="อ.3">อนุบาล 3</option>
+        <option value="ป.1">ประถมศึกษาปีที่ 1</option>
+        <option value="ป.2">ประถมศึกษาปีที่ 2</option>
+        <option value="ป.3">ประถมศึกษาปีที่ 3</option>
+        <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+        <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+        <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- การ์ดสรุปยอด 4 ช่อง -->
+  <div class="kpi-grid">
+    <div class="kpi-card total">
+      <div class="kpi-icon">👥</div>
+      <div class="kpi-info">
+        <span class="kpi-label">นักเรียนทั้งหมด</span>
+        <h3 id="kpiTotal">0 <small>คน</small></h3>
+      </div>
+    </div>
+
+    <div class="kpi-card present">
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-info">
+        <span class="kpi-label">มาเรียน / เข้าร่วม</span>
+        <h3 id="kpiPresent">0 <small>คน</small></h3>
+      </div>
+    </div>
+
+    <div class="kpi-card late">
+      <div class="kpi-icon">⏰</div>
+      <div class="kpi-info">
+        <span class="kpi-label">มาสาย / ไม่เข้าร่วม</span>
+        <h3 id="kpiLate">0 <small>คน</small></h3>
+      </div>
+    </div>
+
+    <div class="kpi-card absent">
+      <div class="kpi-icon">❌</div>
+      <div class="kpi-info">
+        <span class="kpi-label">ขาด / ไม่มาเรียน</span>
+        <h3 id="kpiAbsent">0 <small>คน</small></h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- ตารางสรุปเรียลไทม์: นักเรียนเฝ้าระวัง (ขาดเกิน 4 ครั้ง / ประวัติวันมาสาย) -->
+  <div class="alert-section">
+    <div class="alert-header">
+      <h3>🚨 รายชื่อนักเรียนเฝ้าระวัง (ขาดเรียนเกิน 4 ครั้งในเดือนนี้)</h3>
+      <span class="badge-alert" id="alertCountBadge">พบ 0 คน</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th style="width: 8%;">ลำดับ</th>
+            <th style="width: 12%;">ระดับชั้น</th>
+            <th style="width: 25%;">ชื่อ - นามสกุล</th>
+            <th style="width: 15%;">จำนวนที่ขาด (เดือนนี้)</th>
+            <th style="width: 40%;">วันที่มาสาย (ในเดือนนี้)</th>
+          </tr>
+        </thead>
+        <tbody id="alertTableBody">
+          <!-- ข้อมูลจะถูกโหลดใส่ตรงนี้ด้วย JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

@@ -533,7 +533,6 @@ function printStudentList() {
     </head>
     <body>
       <div class="header">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Garuda_Thailande.png" class="garuda-img" alt="ตราครุฑ"><br>
         <div class="title">บัญชีรายชื่อนักเรียน</div>
         <div class="subtitle">โรงเรียนชุมชนบ้านกะมิยอ | ระดับชั้น ${displayClassName}</div>
       </div>
@@ -550,18 +549,6 @@ function printStudentList() {
           ${rowsHtml}
         </tbody>
       </table>
-      <div class="footer-sign">
-        <div class="sign-box">
-          <p>ลงชื่อ......................................................ครูประจำชั้น<br>
-          (......................................................)<br>
-          ตำแหน่ง ......................................................</p>
-        </div>
-        <div class="sign-box">
-          <p>ลงชื่อ......................................................ผู้รับรอง<br>
-          (นางสาววรรณพิตตยา มุสตาฟา)<br>
-          ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</p>
-        </div>
-      </div>
       <script>window.onload = function() { window.print(); }<\/script>
     </body>
     </html>
@@ -598,4 +585,143 @@ function showCustomPopup(title, message) {
   `;
 
   document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+// ฟังก์ชันคำนวณและอัปเดตข้อมูลแดชบอร์ด
+function updateDashboard() {
+  const period = document.getElementById('dashPeriodSelect').value; // daily หรือ monthly
+  const selectedClass = document.getElementById('dashClassSelect').value; // all หรือ ชื่อชั้น
+  
+  // สมมุติตัวแปรเก็บข้อมูลเช็คชื่อจากระบบ (window.attendanceLogs คืออาร์เรย์เช็คชื่อทั้งหมด)
+  const logs = window.attendanceLogs || []; 
+  const students = window.studentsData || window.studentList || [];
+
+  // 1. กรองนักเรียนตามห้องเรียนที่เลือก
+  let targetStudents = students;
+  if (selectedClass !== 'all') {
+    targetStudents = students.filter(s => (s.className || s.class) === selectedClass);
+  }
+
+  // 2. คำนวณยอด KPI
+  let totalCount = targetStudents.length;
+  let presentCount = 0;
+  let lateCount = 0;
+  let absentCount = 0;
+
+  // ดึงวันที่ปัจจุบัน (YYYY-MM-DD) และ เดือนปัจจุบัน (YYYY-MM)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const currentMonthStr = todayStr.substring(0, 7);
+
+  // สรุปยอดตามตัวเลือก (รายวัน / รายเดือน)
+  targetStudents.forEach(student => {
+    // ดึงประวัติการมาเรียนของนักเรียนคนนี้
+    const studentLogs = logs.filter(l => l.studentId === student.id || l.name === student.name);
+
+    if (period === 'daily') {
+      // รายวัน: ดูสถานะของวันนี้
+      const todayLog = studentLogs.find(l => l.date === todayStr);
+      if (todayLog) {
+        if (todayLog.status === 'มา' || todayLog.status === 'เข้าร่วม') presentCount++;
+        else if (todayLog.status === 'สาย' || todayLog.status === 'ไม่เข้าร่วม') lateCount++;
+        else if (todayLog.status === 'ขาด' || todayLog.status === 'ไม่มาเรียน') absentCount++;
+      }
+    } else {
+      // รายเดือน: นับจำนวนในเดือนปัจจุบัน
+      const monthLogs = studentLogs.filter(l => l.date && l.date.startsWith(currentMonthStr));
+      
+      monthLogs.forEach(l => {
+        if (l.status === 'มา' || l.status === 'เข้าร่วม') presentCount++;
+        else if (l.status === 'สาย' || l.status === 'ไม่เข้าร่วม') lateCount++;
+        else if (l.status === 'ขาด' || l.status === 'ไม่มาเรียน') absentCount++;
+      });
+    }
+  });
+
+  // อัปเดตตัวเลขขึ้นหน้าการ์ด KPI
+  document.getElementById('kpiTotal').innerHTML = `${totalCount} <small>คน</small>`;
+  document.getElementById('kpiPresent').innerHTML = `${presentCount} <small>คน</small>`;
+  document.getElementById('kpiLate').innerHTML = `${lateCount} <small>คน</small>`;
+  document.getElementById('kpiAbsent').innerHTML = `${absentCount} <small>คน</small>`;
+
+  // 3. ตรวจสอบนักเรียนเฝ้าระวัง (ขาดเกิน 4 ครั้งในเดือนนี้ + วันที่สาย)
+  renderAlertTable(targetStudents, logs, currentMonthStr);
+}
+
+// ฟังก์ชันสร้างตารางนักเรียนเฝ้าระวัง (ขาดเกิน 4 ครั้ง)
+function renderAlertTable(students, logs, currentMonthStr) {
+  const alertTbody = document.getElementById('alertTableBody');
+  alertTbody.innerHTML = '';
+
+  let alertList = [];
+
+  students.forEach(student => {
+    // ดึงประวัติเฉพาะเดือนนี้
+    const monthLogs = logs.filter(l => 
+      (l.studentId === student.id || l.name === student.name) && 
+      l.date && l.date.startsWith(currentMonthStr)
+    );
+
+    // นับจำนวนวันที่ขาด
+    const absents = monthLogs.filter(l => l.status === 'ขาด' || l.status === 'ไม่มาเรียน');
+    
+    // ดึงรายการวันที่สาย
+    const lates = monthLogs.filter(l => l.status === 'สาย' || l.status === 'ไม่เข้าร่วม');
+    const lateDates = lates.map(l => l.date); // รายการ YYYY-MM-DD ที่สาย
+
+    // เงื่อนไข: ขาดเกิน 4 ครั้งขึ้นไป
+    if (absents.length > 4) {
+      alertList.push({
+        name: student.name,
+        className: student.className || student.class || 'ไม่ระบุ',
+        absentCount: absents.length,
+        lateDates: lateDates
+      });
+    }
+  });
+
+  // อัปเดตตัวเลข Badge
+  document.getElementById('alertCountBadge').innerText = `พบ ${alertList.length} คน`;
+
+  // ถ้าไม่มีนักเรียนที่ขาดเกิน 4 ครั้ง
+  if (alertList.length === 0) {
+    alertTbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; color: #2e7d32; padding: 20px;">
+          🎉 ไม่พบนกเรียนที่ขาดเรียนเกิน 4 ครั้งในเดือนนี้
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  // วาดแถวตารางนักเรียนที่ติดเงื่อนไข
+  alertList.forEach((item, index) => {
+    // แปลงวันที่สายให้อ่านง่าย
+    const lateDatesHtml = item.lateDates.length > 0 
+      ? item.lateDates.map(d => `<span class="late-tag">📅 ${formatThaiDate(d)}</span>`).join(' ')
+      : '<span style="color: #999;">ไม่มีประวัติสาย</span>';
+
+    alertTbody.innerHTML += `
+      <tr>
+        <td style="text-align: center;">${index + 1}</td>
+        <td><span class="badge-class">${item.className}</span></td>
+        <td><strong>${item.name}</strong></td>
+        <td><span class="absent-count-tag">❌ ขาด ${item.absentCount} ครั้ง</span></td>
+        <td>${lateDatesHtml}</td>
+      </tr>
+    `;
+  });
+}
+
+// ฟังก์ชันแปลงวันที่เป็น พ.ศ. สั้นๆ (เช่น 2026-07-24 -> 24 ก.ค. 69)
+function formatThaiDate(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  
+  const day = parseInt(parts[2]);
+  const monthNames = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+  const month = monthNames[parseInt(parts[1]) - 1];
+  const year = (parseInt(parts[0]) + 543).toString().substring(2);
+
+  return `${day} ${month} ${year}`;
 }
