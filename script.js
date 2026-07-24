@@ -424,17 +424,16 @@ async function saveStudentData(action, payload) {
   }
 }
 
-// ฟังก์ชันสั่งพิมพ์รายชื่อนักเรียน (รองรับคำว่า "ประถมศึกษาปีที่ 1" และป๊อปอัป Swal)
+// ฟังก์ชันสั่งพิมพ์รายชื่อนักเรียน (รองรับทุกระดับชั้น ป.1 - ป.6 / อนุบาล)
 function printStudentList() {
-  // 1. ดึงข้อความจากช่องเลือกชั้นเรียน (ดึง text หน้าเว็บโดยตรง)
-  let selectedClassText = 'ป.1';
+  // 1. ดึงข้อความชั้นเรียนจากช่อง Select ที่เลือกอยู่บนหน้าเว็บ
+  let selectedClassText = '';
   const classSelect = document.getElementById('classSelect') || 
                       document.getElementById('manageClassSelect') || 
                       document.getElementById('selectClass') ||
                       document.querySelector('select');
 
   if (classSelect) {
-    // ดึง Text ที่แสดงผลอยู่ (เช่น "ประถมศึกษาปีที่ 1") หรือ Value
     if (classSelect.selectedIndex !== -1) {
       selectedClassText = classSelect.options[classSelect.selectedIndex].text.trim();
     } else if (classSelect.value) {
@@ -442,21 +441,28 @@ function printStudentList() {
     }
   }
 
-  // แปลงชื่อเพื่อโชว์ในหัวกระดาษ (เช่น "ประถมศึกษาปีที่ 1" -> "ป.1" หรือใช้ชื่อเต็มตามเลือก)
+  // 2. แปลงชื่อระดับชั้นสำหรับแสดงในเอกสารให้สวยงาม (เช่น "ประถมศึกษาปีที่ 2" -> "ป.2")
   let displayClassName = selectedClassText;
-  if (selectedClassText.includes('ประถมศึกษาปีที่ 1') || selectedClassText === 'ป.1') {
-    displayClassName = 'ป.1';
+  
+  if (selectedClassText.includes('ประถมศึกษาปีที่')) {
+    displayClassName = selectedClassText.replace('ประถมศึกษาปีที่', 'ป.').replace(/\s+/g, '');
+  } else if (selectedClassText.includes('อนุบาล')) {
+    displayClassName = selectedClassText.replace('อนุบาลปีที่', 'อ.').replace('อนุบาล', 'อ.').replace(/\s+/g, '');
+  }
+
+  if (!displayClassName || displayClassName === 'เลือกระดับชั้น' || displayClassName === 'ทั้งหมด') {
+    displayClassName = 'ป.1'; // ค่าเริ่มต้นกรณีไม่ได้เลือก
   }
 
   let classStudents = [];
 
-  // 2. กวาดรายชื่อจากตารางที่โชว์อยู่บนหน้าจอทันที (ไม่หมุนค้าง 100%)
+  // 3. กวาดรายชื่อจากตารางที่แสดงอยู่บนหน้าจอ ณ ตอนนั้น
   const tableRows = document.querySelectorAll('table tbody tr');
   
   tableRows.forEach(row => {
     const cols = row.querySelectorAll('td');
     
-    // ตารางในรูป: col[0]=ป้าย ป.1, col[1]=เลขที่, col[2]=ชื่อ-นามสกุล
+    // โครงสร้างตาราง: col[0]=ป้ายระดับชั้น, col[1]=เลขที่, col[2]=ชื่อ-นามสกุล
     if (cols.length >= 3) {
       const noText = cols[1].innerText.trim();
       const nameText = cols[2].innerText.trim();
@@ -468,7 +474,7 @@ function printStudentList() {
         });
       }
     } 
-    // เผื่อโครงสร้างตารางมี 2 คอลัมน์ (col[0]=เลขที่, col[1]=ชื่อ-นามสกุล)
+    // เผื่อกรณีตารางมี 2 คอลัมน์ (col[0]=เลขที่, col[1]=ชื่อ-นามสกุล)
     else if (cols.length >= 2) {
       const noText = cols[0].innerText.trim();
       const nameText = cols[1].innerText.trim();
@@ -482,22 +488,22 @@ function printStudentList() {
     }
   });
 
-  // 3. ถ้ากวาดรายชื่อไม่เจอ ให้แสดงแจ้งเตือน SweetAlert2 ป๊อปอัปสวยๆ
+  // 4. ถ้าไม่มีข้อมูลในตาราง ให้แจ้งเตือนด้วย SweetAlert2
   if (classStudents.length === 0) {
     Swal.fire({
       icon: 'warning',
       title: 'ไม่พบข้อมูลนักเรียน',
-      text: `กรุณากดเลือกชั้น ${selectedClassText} ให้ตารางแสดงรายชื่อก่อนสั่งพิมพ์ครับ`,
+      text: `ไม่พบรายชื่อนักเรียนในชั้น ${selectedClassText} กรุณาเลือกระดับชั้นให้ตารางแสดงรายชื่อก่อนสั่งพิมพ์ครับ`,
       confirmButtonColor: '#8a5a00',
       confirmButtonText: 'ตกลง'
     });
     return;
   }
 
-  // 4. เรียงลำดับตามเลขที่
+  // 5. เรียงลำดับตามเลขที่ (1, 2, 3, ...)
   classStudents.sort((a, b) => Number(a.no) - Number(b.no));
 
-  // 5. สร้างแบบฟอร์มเอกสารทางการ
+  // 6. สร้างแถวข้อมูลสำหรับตารางพิมพ์เอกสาร
   let rowsHtml = classStudents.map((s, index) => `
     <tr>
       <td style="text-align: center;">${s.no || (index + 1)}</td>
@@ -507,7 +513,7 @@ function printStudentList() {
     </tr>
   `).join('');
 
-  // 6. เปิดหน้าสั่งพิมพ์ทันที
+  // 7. เปิดหน้าต่างพิมพ์ทันที
   const printWindow = window.open('', '_blank');
   
   printWindow.document.write(`
@@ -533,7 +539,6 @@ function printStudentList() {
     </head>
     <body>
       <div class="header">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Garuda_Thailande.png" class="garuda-img" alt="ตราครุฑ"><br>
         <div class="title">บัญชีรายชื่อนักเรียน</div>
         <div class="subtitle">โรงเรียนชุมชนบ้านกะมิยอ | ระดับชั้น ${displayClassName}</div>
       </div>
@@ -550,18 +555,6 @@ function printStudentList() {
           ${rowsHtml}
         </tbody>
       </table>
-      <div class="footer-sign">
-        <div class="sign-box">
-          <p>ลงชื่อ......................................................ครูประจำชั้น<br>
-          (......................................................)<br>
-          ตำแหน่ง ......................................................</p>
-        </div>
-        <div class="sign-box">
-          <p>ลงชื่อ......................................................ผู้รับรอง<br>
-          (นางสาววรรณพิตตยา มุสตาฟา)<br>
-          ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</p>
-        </div>
-      </div>
       <script>window.onload = function() { window.print(); }<\/script>
     </body>
     </html>
