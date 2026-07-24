@@ -424,12 +424,14 @@ async function saveStudentData(action, payload) {
   }
 }
 
-// ฟังก์ชันสั่งพิมพ์รายชื่อนักเรียน (รองรับทุกระดับชั้น ป.1 - ป.6 / อนุบาล)
+// ฟังก์ชันพิมพ์รายชื่อนักเรียน ( Pop-up สวยงาม ไม่ใช้ alert เบราว์เซอร์ + รองรับทุกชั้น ป.1-ป.6)
 function printStudentList() {
-  // 1. ดึงข้อความชั้นเรียนจากช่อง Select ที่เลือกอยู่บนหน้าเว็บ
+  // 1. ดึงข้อความชั้นเรียนจากช่อง dropdown ให้ตรงเป๊ะ
   let selectedClassText = '';
-  const classSelect = document.getElementById('classSelect') || 
-                      document.getElementById('manageClassSelect') || 
+  
+  // หา element ตัวเลือกชั้นเรียน
+  const classSelect = document.getElementById('manageClassSelect') || 
+                      document.getElementById('classSelect') || 
                       document.getElementById('selectClass') ||
                       document.querySelector('select');
 
@@ -441,28 +443,27 @@ function printStudentList() {
     }
   }
 
-  // 2. แปลงชื่อระดับชั้นสำหรับแสดงในเอกสารให้สวยงาม (เช่น "ประถมศึกษาปีที่ 2" -> "ป.2")
+  // แปลงชื่อชั้นเรียนสำหรับแสดงผล (เช่น ประถมศึกษาปีที่ 5 -> ป.5)
   let displayClassName = selectedClassText;
-  
   if (selectedClassText.includes('ประถมศึกษาปีที่')) {
     displayClassName = selectedClassText.replace('ประถมศึกษาปีที่', 'ป.').replace(/\s+/g, '');
   } else if (selectedClassText.includes('อนุบาล')) {
     displayClassName = selectedClassText.replace('อนุบาลปีที่', 'อ.').replace('อนุบาล', 'อ.').replace(/\s+/g, '');
   }
 
-  if (!displayClassName || displayClassName === 'เลือกระดับชั้น' || displayClassName === 'ทั้งหมด') {
-    displayClassName = 'ป.1'; // ค่าเริ่มต้นกรณีไม่ได้เลือก
+  if (!displayClassName || displayClassName.includes('เลือก') || displayClassName.includes('ทั้งหมด')) {
+    displayClassName = 'ป.5'; // เผื่อกรณีหาไม่เจอ ให้ใช้ตามหน้าจอปัจจุบัน
   }
 
   let classStudents = [];
 
-  // 3. กวาดรายชื่อจากตารางที่แสดงอยู่บนหน้าจอ ณ ตอนนั้น
+  // 2. กวาดรายชื่อจากตารางที่แสดงอยู่บนหน้าจอทันที
   const tableRows = document.querySelectorAll('table tbody tr');
   
   tableRows.forEach(row => {
     const cols = row.querySelectorAll('td');
     
-    // โครงสร้างตาราง: col[0]=ป้ายระดับชั้น, col[1]=เลขที่, col[2]=ชื่อ-นามสกุล
+    // โครงสร้างตาราง: col[0]=ป้าย ป.5, col[1]=เลขที่, col[2]=ชื่อ-นามสกุล
     if (cols.length >= 3) {
       const noText = cols[1].innerText.trim();
       const nameText = cols[2].innerText.trim();
@@ -474,7 +475,6 @@ function printStudentList() {
         });
       }
     } 
-    // เผื่อกรณีตารางมี 2 คอลัมน์ (col[0]=เลขที่, col[1]=ชื่อ-นามสกุล)
     else if (cols.length >= 2) {
       const noText = cols[0].innerText.trim();
       const nameText = cols[1].innerText.trim();
@@ -488,22 +488,16 @@ function printStudentList() {
     }
   });
 
-  // 4. ถ้าไม่มีข้อมูลในตาราง ให้แจ้งเตือนด้วย SweetAlert2
+  // 3. ถ้าไม่พบข้อมูล ให้แสดง Custom Pop-up สวยงาม (ไม่ใช่ alert เบราว์เซอร์)
   if (classStudents.length === 0) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'ไม่พบข้อมูลนักเรียน',
-      text: `ไม่พบรายชื่อนักเรียนในชั้น ${selectedClassText} กรุณาเลือกระดับชั้นให้ตารางแสดงรายชื่อก่อนสั่งพิมพ์ครับ`,
-      confirmButtonColor: '#8a5a00',
-      confirmButtonText: 'ตกลง'
-    });
+    showCustomPopup('ไม่พบข้อมูลนักเรียน', `กรุณากดเลือกระดับชั้นให้ตารางแสดงรายชื่อนักเรียนก่อนสั่งพิมพ์ครับ`);
     return;
   }
 
-  // 5. เรียงลำดับตามเลขที่ (1, 2, 3, ...)
+  // 4. เรียงลำดับตามเลขที่ (1, 2, 3, ...)
   classStudents.sort((a, b) => Number(a.no) - Number(b.no));
 
-  // 6. สร้างแถวข้อมูลสำหรับตารางพิมพ์เอกสาร
+  // 5. สร้างแบบฟอร์มเอกสารทางการ
   let rowsHtml = classStudents.map((s, index) => `
     <tr>
       <td style="text-align: center;">${s.no || (index + 1)}</td>
@@ -513,7 +507,7 @@ function printStudentList() {
     </tr>
   `).join('');
 
-  // 7. เปิดหน้าต่างพิมพ์ทันที
+  // 6. เปิดหน้าต่างพิมพ์เอกสารทันที
   const printWindow = window.open('', '_blank');
   
   printWindow.document.write(`
@@ -539,6 +533,7 @@ function printStudentList() {
     </head>
     <body>
       <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Garuda_Thailande.png" class="garuda-img" alt="ตราครุฑ"><br>
         <div class="title">บัญชีรายชื่อนักเรียน</div>
         <div class="subtitle">โรงเรียนชุมชนบ้านกะมิยอ | ระดับชั้น ${displayClassName}</div>
       </div>
@@ -555,10 +550,52 @@ function printStudentList() {
           ${rowsHtml}
         </tbody>
       </table>
+      <div class="footer-sign">
+        <div class="sign-box">
+          <p>ลงชื่อ......................................................ครูประจำชั้น<br>
+          (......................................................)<br>
+          ตำแหน่ง ......................................................</p>
+        </div>
+        <div class="sign-box">
+          <p>ลงชื่อ......................................................ผู้รับรอง<br>
+          (นางสาววรรณพิตตยา มุสตาฟา)<br>
+          ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</p>
+        </div>
+      </div>
       <script>window.onload = function() { window.print(); }<\/script>
     </body>
     </html>
   `);
 
   printWindow.document.close();
+}
+
+// ฟังก์ชันสร้าง Pop-up สวยๆ ขึ้นมาเองโดยไม่ใช้ alert() ของเบราว์เซอร์
+function showCustomPopup(title, message) {
+  // ลบ popup เก่าถ้ามี
+  const existingModal = document.getElementById('custom-alert-modal');
+  if (existingModal) existingModal.remove();
+
+  const modalHtml = `
+    <div id="custom-alert-modal" style="
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center;
+      z-index: 99999; animation: fadeIn 0.2s ease-in-out;
+    ">
+      <div style="
+        background: #ffffff; padding: 25px 30px; border-radius: 12px; width: 90%; max-width: 420px;
+        text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-family: 'Sarabun', sans-serif;
+      ">
+        <div style="width: 50px; height: 50px; border-radius: 50%; background: #fff3cd; color: #856404; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 15px auto;">⚠️</div>
+        <h3 style="margin: 0 0 10px 0; color: #333; font-size: 20px; font-weight: bold;">${title}</h3>
+        <p style="margin: 0 0 20px 0; color: #666; font-size: 15px; line-height: 1.5;">${message}</p>
+        <button onclick="document.getElementById('custom-alert-modal').remove()" style="
+          background: #8a5a00; color: white; border: none; padding: 10px 25px; font-size: 16px;
+          border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;
+        " onmouseover="this.style.background='#6c4600'" onmouseout="this.style.background='#8a5a00'">ตกลง</button>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
