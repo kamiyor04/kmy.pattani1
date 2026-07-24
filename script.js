@@ -424,56 +424,59 @@ async function saveStudentData(action, payload) {
   }
 }
 
-// ฟังก์ชันพิมพ์รายชื่อนักเรียน (อ่านข้อมูลจากตารางบนหน้าเว็บทันที - ไม่หมุนค้าง)
+// ฟังก์ชันพิมพ์รายชื่อนักเรียน (ดึงจากความจำระบบทันที ไม่หมุนค้าง 100%)
 function printStudentList() {
-  // 1. หาชื่อชั้นเรียนที่เลือกอยู่ปัจจุบัน
+  // 1. หาชั้นเรียนที่เลือกอยู่
   let selectedClass = 'ป.1';
-  const classElement = document.getElementById('classSelect') || 
-                       document.getElementById('manageClassSelect') || 
-                       document.getElementById('swal-class') ||
-                       document.querySelector('select');
-  if (classElement && classElement.value) {
-    selectedClass = classElement.value.trim();
+  const classSelect = document.getElementById('classSelect') || 
+                      document.getElementById('manageClassSelect') || 
+                      document.getElementById('selectClass') ||
+                      document.querySelector('select');
+  if (classSelect && classSelect.value) {
+    selectedClass = classSelect.value.trim();
   }
   if (selectedClass === 'all' || selectedClass === '') selectedClass = 'ป.1';
 
-  // 2. ดึงข้อมูลนักเรียนจากตาราง HTML ที่แสดงอยู่บนหน้าเว็บโดยตรง
   let classStudents = [];
-  
-  // ค้นหาราว (tr) ทั้งหมดในตาราง
-  const rows = document.querySelectorAll('table tbody tr');
-  
-  rows.forEach(row => {
-    const cols = row.querySelectorAll('td');
-    // ตรวจสอบว่ามีคอลัมน์ข้อมูลเพียงพอ (อย่างน้อย 2 คอลัมน์: เลขที่, ชื่อ-สกุล)
-    if (cols.length >= 2) {
-      const noText = cols[0].innerText.trim();
-      const nameText = cols[1].innerText.trim();
-      
-      // กรองเอาเฉพาะแถวที่มีข้อมูลตัวเลขเลขที่ และมีชื่อนักเรียนจริงๆ (ข้ามแถว "ไม่พบข้อมูล")
-      if (noText && nameText && !isNaN(noText)) {
-        classStudents.push({
-          no: noText,
-          name: nameText
-        });
-      }
-    }
-  });
 
-  // 3. ถ้าบนหน้าจอยังไม่มีรายชื่อ ให้แจ้งเตือนทันที
+  // 2. ดึงข้อมูลจากตัวแปรในระบบที่ดึงมาไว้อยู่แล้ว
+  const globalData = window.studentsData || window.studentList || window.allStudents || window.students || [];
+  
+  if (Array.isArray(globalData) && globalData.length > 0) {
+    classStudents = globalData.filter(s => {
+      const c = String(s.className || s.class || s.grade || s[2] || '').trim();
+      return c === selectedClass;
+    }).map(s => ({
+      no: s.no || s.number || s[0] || '',
+      name: s.name || s.fullName || s[1] || ''
+    }));
+  }
+
+  // 3. ถ้าดึงจากตัวแปรไม่เจอ ให้กวาดรายชื่อจากตารางที่เห็นบนหน้าจอเว็บทันที
   if (classStudents.length === 0) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'ไม่พบข้อมูลนักเรียน',
-      text: `กรุณากดเลือกชั้น ${selectedClass} หรือกดดึงรายชื่อให้ตารางบนหน้าเว็บขึ้นรายชื่อเด็กก่อนนะครับ`
+    const tableRows = document.querySelectorAll('table tbody tr');
+    tableRows.forEach(row => {
+      const cols = row.querySelectorAll('td');
+      if (cols.length >= 2) {
+        const noText = cols[0].innerText.trim();
+        const nameText = cols[1].innerText.trim();
+        if (noText && nameText && !isNaN(noText)) {
+          classStudents.push({ no: noText, name: nameText });
+        }
+      }
     });
+  }
+
+  // 4. ถ้ายังไม่พบข้อมูลจริงๆ ให้แจ้งเตือน (ไม่มีการหมุนรอแล้ว)
+  if (classStudents.length === 0) {
+    alert(`ไม่พบข้อมูลนักเรียนชั้น ${selectedClass}\nกรุณากดเลือกชั้นเรียนให้ตารางบนหน้าเว็บแสดงรายชื่อก่อนสั่งพิมพ์ครับ`);
     return;
   }
 
-  // 4. เรียงลำดับตามเลขที่
+  // 5. เรียงลำดับตามเลขที่
   classStudents.sort((a, b) => Number(a.no) - Number(b.no));
 
-  // 5. สร้างแถวสำหรับตารางเอกสารทางการ
+  // 6. สร้างแบบฟอร์มเอกสารทางการ
   let rowsHtml = classStudents.map((s, index) => `
     <tr>
       <td style="text-align: center;">${s.no || (index + 1)}</td>
@@ -483,7 +486,7 @@ function printStudentList() {
     </tr>
   `).join('');
 
-  // 6. เปิดหน้าต่างพิมพ์ทันที (ไม่ค้างแน่นอน)
+  // 7. สั่งเปิดหน้าพิมพ์ทันที (ไม่มี loading/Swal.fire ให้ค้างแล้ว)
   const printWindow = window.open('', '_blank');
   
   printWindow.document.write(`
