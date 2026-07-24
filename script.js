@@ -726,13 +726,27 @@ function formatThaiDate(dateStr) {
   return `${day} ${month} ${year}`;
 }
 // ตัวอย่างฟังก์ชันเมื่อกดปุ่มเมนู "แดชบอร์ด"
+// ฟังก์ชันเปิดหน้าแดชบอร์ด (แบบซ่อนทุกหน้าอื่น 100%)
 function showDashboard() {
-  // ซ่อนหน้าอื่น แสดงหน้าแดชบอร์ด
-  document.querySelectorAll('.main-content-section').forEach(sec => sec.style.display = 'none');
-  document.getElementById('dashboardSection').style.display = 'block';
+  // 1. ดึงทุก Element ที่เป็นส่วนหน้าจอในระบบมาซ่อนให้หมด
+  const allSections = document.querySelectorAll(
+    '#checkinSection, #manageSection, #dashboardSection, .section-container, .main-content-section, .card-box'
+  );
+  
+  allSections.forEach(sec => {
+    sec.style.display = 'none'; // ซ่อนทุกส่วน
+  });
 
-  // เรียกคำนวณแดชบอร์ดทันทีที่เปิดหน้า
-  updateDashboard();
+  // 2. สั่งแสดงเฉพาะแดชบอร์ด
+  const dashSec = document.getElementById('dashboardSection');
+  if (dashSec) {
+    dashSec.style.display = 'block';
+  }
+
+  // 3. สั่งคำนวณยอดเรียลไทม์
+  if (typeof updateDashboard === 'function') {
+    updateDashboard();
+  }
 }
 // ฟังก์ชันคำนวณแดชบอร์ดแบบดึงข้อมูลจริงในระบบ (แก้ปัญหาหน้าว่างเปล่า)
 function updateDashboard() {
