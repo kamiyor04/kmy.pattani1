@@ -424,69 +424,90 @@ async function saveStudentData(action, payload) {
   }
 }
 
-// ฟังก์ชันพิมพ์รายชื่อนักเรียน (ดึงจากความจำระบบทันที ไม่หมุนค้าง 100%)
+// ฟังก์ชันสั่งพิมพ์รายชื่อนักเรียน (รองรับคำว่า "ประถมศึกษาปีที่ 1" และป๊อปอัป Swal)
 function printStudentList() {
-  // 1. หาชั้นเรียนที่เลือกอยู่
-  let selectedClass = 'ป.1';
+  // 1. ดึงข้อความจากช่องเลือกชั้นเรียน (ดึง text หน้าเว็บโดยตรง)
+  let selectedClassText = 'ป.1';
   const classSelect = document.getElementById('classSelect') || 
                       document.getElementById('manageClassSelect') || 
                       document.getElementById('selectClass') ||
                       document.querySelector('select');
-  if (classSelect && classSelect.value) {
-    selectedClass = classSelect.value.trim();
+
+  if (classSelect) {
+    // ดึง Text ที่แสดงผลอยู่ (เช่น "ประถมศึกษาปีที่ 1") หรือ Value
+    if (classSelect.selectedIndex !== -1) {
+      selectedClassText = classSelect.options[classSelect.selectedIndex].text.trim();
+    } else if (classSelect.value) {
+      selectedClassText = classSelect.value.trim();
+    }
   }
-  if (selectedClass === 'all' || selectedClass === '') selectedClass = 'ป.1';
+
+  // แปลงชื่อเพื่อโชว์ในหัวกระดาษ (เช่น "ประถมศึกษาปีที่ 1" -> "ป.1" หรือใช้ชื่อเต็มตามเลือก)
+  let displayClassName = selectedClassText;
+  if (selectedClassText.includes('ประถมศึกษาปีที่ 1') || selectedClassText === 'ป.1') {
+    displayClassName = 'ป.1';
+  }
 
   let classStudents = [];
 
-  // 2. ดึงข้อมูลจากตัวแปรในระบบที่ดึงมาไว้อยู่แล้ว
-  const globalData = window.studentsData || window.studentList || window.allStudents || window.students || [];
+  // 2. กวาดรายชื่อจากตารางที่โชว์อยู่บนหน้าจอทันที (ไม่หมุนค้าง 100%)
+  const tableRows = document.querySelectorAll('table tbody tr');
   
-  if (Array.isArray(globalData) && globalData.length > 0) {
-    classStudents = globalData.filter(s => {
-      const c = String(s.className || s.class || s.grade || s[2] || '').trim();
-      return c === selectedClass;
-    }).map(s => ({
-      no: s.no || s.number || s[0] || '',
-      name: s.name || s.fullName || s[1] || ''
-    }));
-  }
+  tableRows.forEach(row => {
+    const cols = row.querySelectorAll('td');
+    
+    // ตารางในรูป: col[0]=ป้าย ป.1, col[1]=เลขที่, col[2]=ชื่อ-นามสกุล
+    if (cols.length >= 3) {
+      const noText = cols[1].innerText.trim();
+      const nameText = cols[2].innerText.trim();
 
-  // 3. ถ้าดึงจากตัวแปรไม่เจอ ให้กวาดรายชื่อจากตารางที่เห็นบนหน้าจอเว็บทันที
-  if (classStudents.length === 0) {
-    const tableRows = document.querySelectorAll('table tbody tr');
-    tableRows.forEach(row => {
-      const cols = row.querySelectorAll('td');
-      if (cols.length >= 2) {
-        const noText = cols[0].innerText.trim();
-        const nameText = cols[1].innerText.trim();
-        if (noText && nameText && !isNaN(noText)) {
-          classStudents.push({ no: noText, name: nameText });
-        }
+      if (noText && nameText && !isNaN(noText)) {
+        classStudents.push({
+          no: noText,
+          name: nameText
+        });
       }
-    });
-  }
+    } 
+    // เผื่อโครงสร้างตารางมี 2 คอลัมน์ (col[0]=เลขที่, col[1]=ชื่อ-นามสกุล)
+    else if (cols.length >= 2) {
+      const noText = cols[0].innerText.trim();
+      const nameText = cols[1].innerText.trim();
 
-  // 4. ถ้ายังไม่พบข้อมูลจริงๆ ให้แจ้งเตือน (ไม่มีการหมุนรอแล้ว)
+      if (noText && nameText && !isNaN(noText)) {
+        classStudents.push({
+          no: noText,
+          name: nameText
+        });
+      }
+    }
+  });
+
+  // 3. ถ้ากวาดรายชื่อไม่เจอ ให้แสดงแจ้งเตือน SweetAlert2 ป๊อปอัปสวยๆ
   if (classStudents.length === 0) {
-    alert(`ไม่พบข้อมูลนักเรียนชั้น ${selectedClass}\nกรุณากดเลือกชั้นเรียนให้ตารางบนหน้าเว็บแสดงรายชื่อก่อนสั่งพิมพ์ครับ`);
+    Swal.fire({
+      icon: 'warning',
+      title: 'ไม่พบข้อมูลนักเรียน',
+      text: `กรุณากดเลือกชั้น ${selectedClassText} ให้ตารางแสดงรายชื่อก่อนสั่งพิมพ์ครับ`,
+      confirmButtonColor: '#8a5a00',
+      confirmButtonText: 'ตกลง'
+    });
     return;
   }
 
-  // 5. เรียงลำดับตามเลขที่
+  // 4. เรียงลำดับตามเลขที่
   classStudents.sort((a, b) => Number(a.no) - Number(b.no));
 
-  // 6. สร้างแบบฟอร์มเอกสารทางการ
+  // 5. สร้างแบบฟอร์มเอกสารทางการ
   let rowsHtml = classStudents.map((s, index) => `
     <tr>
       <td style="text-align: center;">${s.no || (index + 1)}</td>
       <td style="text-align: left; padding-left: 15px;">${s.name}</td>
-      <td style="text-align: center;">${selectedClass}</td>
+      <td style="text-align: center;">${displayClassName}</td>
       <td></td>
     </tr>
   `).join('');
 
-  // 7. สั่งเปิดหน้าพิมพ์ทันที (ไม่มี loading/Swal.fire ให้ค้างแล้ว)
+  // 6. เปิดหน้าสั่งพิมพ์ทันที
   const printWindow = window.open('', '_blank');
   
   printWindow.document.write(`
@@ -494,7 +515,7 @@ function printStudentList() {
     <html lang="th">
     <head>
       <meta charset="UTF-8">
-      <title>บัญชีรายชื่อนักเรียน ชั้น ${selectedClass}</title>
+      <title>บัญชีรายชื่อนักเรียน ชั้น ${displayClassName}</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
         body { font-family: 'Sarabun', sans-serif; font-size: 16pt; line-height: 1.6; margin: 0; padding: 20px; color: #000; }
@@ -514,7 +535,7 @@ function printStudentList() {
       <div class="header">
         <img src="https://upload.wikimedia.org/wikipedia/commons/8/84/Garuda_Thailande.png" class="garuda-img" alt="ตราครุฑ"><br>
         <div class="title">บัญชีรายชื่อนักเรียน</div>
-        <div class="subtitle">โรงเรียนชุมชนบ้านกะมิยอ | ระดับชั้น ${selectedClass}</div>
+        <div class="subtitle">โรงเรียนชุมชนบ้านกะมิยอ | ระดับชั้น ${displayClassName}</div>
       </div>
       <table>
         <thead>
