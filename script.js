@@ -902,3 +902,22 @@ function renderDashboardAlertTable(students, logs, currentMonthStr) {
     `;
   });
 }
+// ฟังก์ชันสลับมาหน้าแดชบอร์ด (เรียกใช้งานเมื่อกดปุ่มเมนู "แดชบอร์ด")
+function showDashboardSection() {
+  // 1. ซ่อนหน้าอื่นทั้งหมดที่มี class เป็น main-content-section (หรือ section-container)
+  const allSections = document.querySelectorAll('.main-content-section, .section-container');
+  allSections.forEach(sec => {
+    sec.style.display = 'none';
+  });
+
+  // 2. สั่งแสดงผลเฉพาะหน้าแดชบอร์ด
+  const dashSec = document.getElementById('dashboardSection');
+  if (dashSec) {
+    dashSec.style.display = 'block';
+  }
+
+  // 3. รันฟังก์ชันคำนวณยอด
+  if (typeof updateDashboard === 'function') {
+    updateDashboard();
+  }
+}
