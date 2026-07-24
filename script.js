@@ -734,3 +734,171 @@ function showDashboard() {
   // เรียกคำนวณแดชบอร์ดทันทีที่เปิดหน้า
   updateDashboard();
 }
+// ฟังก์ชันคำนวณแดชบอร์ดแบบดึงข้อมูลจริงในระบบ (แก้ปัญหาหน้าว่างเปล่า)
+function updateDashboard() {
+  // 1. ตรวจสอบว่าหน้าแดชบอร์ดเปิดอยู่ไหม
+  const dashSec = document.getElementById('dashboardSection');
+  if (dashSec) dashSec.style.display = 'block';
+
+  // 2. ดึงค่าตัวกรอง
+  const periodSelect = document.getElementById('dashPeriodSelect');
+  const classSelect = document.getElementById('dashClassSelect');
+  
+  const period = periodSelect ? periodSelect.value : 'monthly';
+  const selectedClass = classSelect ? classSelect.value : 'all';
+
+  // 3. ดึงข้อมูลนักเรียนและประวัติการเช็คชื่อจากทุกตัวแปรที่เป็นไปได้ในระบบ
+  let allStudents = window.studentsData || window.studentList || window.allStudents || window.students || [];
+  let allLogs = window.attendanceLogs || window.checkInLogs || window.attendanceData || window.logs || [];
+
+  // ถ้าดึงจากตัวแปรไม่เจอ ให้กวาดรายชื่อจากตารางที่แสดงผลอยู่หน้าเว็บมาเป็นฐานข้อมูลสำรอง
+  if (!Array.isArray(allStudents) || allStudents.length === 0) {
+    allStudents = [];
+    const rows = document.querySelectorAll('table tbody tr');
+    rows.forEach(row => {
+      const cols = row.querySelectorAll('td');
+      if (cols.length >= 3) {
+        const c = cols[0].innerText.trim();
+        const no = cols[1].innerText.trim();
+        const name = cols[2].innerText.trim();
+        if (name && !isNaN(no)) {
+          allStudents.push({ className: c, no: no, name: name });
+        }
+      }
+    });
+  }
+
+  // 4. กรองนักเรียนตามห้องที่เลือก
+  let filteredStudents = allStudents;
+  if (selectedClass !== 'all') {
+    filteredStudents = allStudents.filter(s => {
+      const c = String(s.className || s.class || s.grade || s[0] || '').trim();
+      return c.includes(selectedClass) || selectedClass.includes(c);
+    });
+  }
+
+  // 5. คำนวณตัวเลขสำหรับ KPI Cards
+  let totalCount = filteredStudents.length;
+  let presentCount = 0;
+  let lateCount = 0;
+  let absentCount = 0;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const currentMonthStr = todayStr.substring(0, 7);
+
+  // คำนวณรายคน
+  filteredStudents.forEach(student => {
+    const sName = student.name || student.fullName || student[1] || '';
+    
+    // ค้นหาประวัติเช็คชื่อของนักเรียนคนนี้
+    const studentLogs = allLogs.filter(l => {
+      const lName = l.name || l.studentName || l[1] || '';
+      return lName.trim() === sName.trim();
+    });
+
+    if (period === 'daily') {
+      const todayLog = studentLogs.find(l => (l.date || l[0] || '').includes(todayStr));
+      if (todayLog) {
+        const st = String(todayLog.status || todayLog[2] || '');
+        if (st.includes('มา') || st.includes('เข้าร่วม')) presentCount++;
+        else if (st.includes('สาย') || st.includes('ไม่เข้าร่วม')) lateCount++;
+        else if (st.includes('ขาด') || st.includes('ไม่มา')) absentCount++;
+      }
+    } else {
+      // สะสมประจำเดือน
+      const monthLogs = studentLogs.filter(l => (l.date || l[0] || '').includes(currentMonthStr));
+      monthLogs.forEach(l => {
+        const st = String(l.status || l[2] || '');
+        if (st.includes('มา') || st.includes('เข้าร่วม')) presentCount++;
+        else if (st.includes('สาย') || st.includes('ไม่เข้าร่วม')) lateCount++;
+        else if (st.includes('ขาด') || st.includes('ไม่มา')) absentCount++;
+      });
+    }
+  });
+
+  // อัปเดตการ์ด KPI บนหน้าจอ
+  if (document.getElementById('kpiTotal')) document.getElementById('kpiTotal').innerHTML = `${totalCount} <small style="font-size:14px; color:#888;">คน</small>`;
+  if (document.getElementById('kpiPresent')) document.getElementById('kpiPresent').innerHTML = `${presentCount} <small style="font-size:14px; color:#888;">คน</small>`;
+  if (document.getElementById('kpiLate')) document.getElementById('kpiLate').innerHTML = `${lateCount} <small style="font-size:14px; color:#888;">คน</small>`;
+  if (document.getElementById('kpiAbsent')) document.getElementById('kpiAbsent').innerHTML = `${absentCount} <small style="font-size:14px; color:#888;">คน</small>`;
+
+  // 6. แสดงผลตารางเฝ้าระวัง (ขาดเกิน 4 ครั้ง / วันที่สาย)
+  renderDashboardAlertTable(filteredStudents, allLogs, currentMonthStr);
+}
+
+// ฟังก์ชันสร้างตารางเฝ้าระวัง
+function renderDashboardAlertTable(students, logs, currentMonthStr) {
+  const alertTbody = document.getElementById('alertTableBody');
+  if (!alertTbody) return;
+
+  alertTbody.innerHTML = '';
+  let alertList = [];
+
+  students.forEach(student => {
+    const sName = student.name || student.fullName || student[1] || '';
+    const sClass = student.className || student.class || student[0] || 'ไม่ระบุ';
+
+    const monthLogs = logs.filter(l => {
+      const lName = l.name || l.studentName || l[1] || '';
+      const lDate = l.date || l[0] || '';
+      return lName.trim() === sName.trim() && lDate.includes(currentMonthStr);
+    });
+
+    // นับจำนวนขาด
+    const absents = monthLogs.filter(l => {
+      const st = String(l.status || l[2] || '');
+      return st.includes('ขาด') || st.includes('ไม่มา');
+    });
+
+    // รายการวันที่สาย
+    const lates = monthLogs.filter(l => {
+      const st = String(l.status || l[2] || '');
+      return st.includes('สาย') || st.includes('ไม่เข้าร่วม');
+    });
+
+    const lateDates = lates.map(l => l.date || l[0] || '');
+
+    // เงื่อนไข: ขาดเกิน 4 ครั้งขึ้นไป
+    if (absents.length > 4) {
+      alertList.push({
+        name: sName,
+        className: sClass,
+        absentCount: absents.length,
+        lateDates: lateDates
+      });
+    }
+  });
+
+  // อัปเดต Badge จำนวนคน
+  const badge = document.getElementById('alertCountBadge');
+  if (badge) badge.innerText = `พบ ${alertList.length} คน`;
+
+  // กรณีไม่พบผู้ขาดเกิน 4 ครั้ง
+  if (alertList.length === 0) {
+    alertTbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; color: #2e7d32; padding: 20px; font-weight: bold;">
+          🎉 ไม่พบนกเรียนที่ขาดเรียนเกิน 4 ครั้งในเดือนนี้
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  // แสดงผลตาราง
+  alertList.forEach((item, index) => {
+    const lateHtml = item.lateDates.length > 0 
+      ? item.lateDates.map(d => `<span style="display:inline-block; background:#fff3e0; color:#e65100; padding:2px 8px; border-radius:4px; font-size:12px; margin:2px;">📅 ${d}</span>`).join(' ')
+      : '<span style="color:#999; font-size:13px;">ไม่มีประวัติสาย</span>';
+
+    alertTbody.innerHTML += `
+      <tr style="border-bottom: 1px solid #eee;">
+        <td style="text-align: center; padding: 10px;">${index + 1}</td>
+        <td style="padding: 10px;"><span style="background:#e3f2fd; color:#1565c0; padding:3px 8px; border-radius:4px; font-size:13px;">${item.className}</span></td>
+        <td style="padding: 10px;"><strong>${item.name}</strong></td>
+        <td style="padding: 10px; color:#c62828; font-weight:bold;">❌ ขาด ${item.absentCount} ครั้ง</td>
+        <td style="padding: 10px;">${lateHtml}</td>
+      </tr>
+    `;
+  });
+}
