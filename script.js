@@ -725,3 +725,12 @@ function formatThaiDate(dateStr) {
 
   return `${day} ${month} ${year}`;
 }
+// ตัวอย่างฟังก์ชันเมื่อกดปุ่มเมนู "แดชบอร์ด"
+function showDashboard() {
+  // ซ่อนหน้าอื่น แสดงหน้าแดชบอร์ด
+  document.querySelectorAll('.main-content-section').forEach(sec => sec.style.display = 'none');
+  document.getElementById('dashboardSection').style.display = 'block';
+
+  // เรียกคำนวณแดชบอร์ดทันทีที่เปิดหน้า
+  updateDashboard();
+}
