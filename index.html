@@ -491,30 +491,38 @@
       </div>
     </div>
 
-    <!-- ================= 3. หน้าแดชบอร์ดสรุปผล ================= -->
-    <div id="dashboard-section" class="content-section" style="display: none;">
-      
-      <!-- ส่วนหัว & ตัวกรอง -->
-      <div class="dashboard-header-bar">
-        <h2 style="margin: 0; color: #333; font-size: 1.5rem; font-weight: bold;">📊 แดชบอร์ดสรุปผลการมาเรียน</h2>
-        
-        <div class="filter-controls">
-          <select id="dashPeriodSelect" onchange="updateDashboard()">
-            <option value="daily">📅 ยอดประจำวัน (วันนี้)</option>
-            <option value="monthly" selected>🗓️ ยอดสะสมประจำเดือนนี้</option>
-          </select>
+<!-- ส่วนหัว & ตัวกรองแดชบอร์ด -->
+<div class="dashboard-header-bar">
+  <h2 style="margin: 0; color: #333; font-size: 1.5rem; font-weight: bold;">📊 แดชบอร์ดสรุปผลการมาเรียน</h2>
+  
+  <div class="filter-controls" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+    <!-- ตัวเลือกรูปแบบการดู -->
+    <select id="dashPeriodType" onchange="toggleDashPeriodInput()" class="form-select form-select-sm" style="width: auto;">
+      <option value="daily">📅 เลือกดูตามวันที่</option>
+      <option value="monthly" selected>🗓️ เลือกดูตามรายเดือน</option>
+    </select>
 
-          <select id="dashClassSelect" onchange="updateDashboard()">
-            <option value="all">🏫 แสดงทุกระดับชั้น (ภาพรวมโรงเรียน)</option>
-            <option value="ป.1">ประถมศึกษาปีที่ 1</option>
-            <option value="ป.2">ประถมศึกษาปีที่ 2</option>
-            <option value="ป.3">ประถมศึกษาปีที่ 3</option>
-            <option value="ป.4">ประถมศึกษาปีที่ 4</option>
-            <option value="ป.5">ประถมศึกษาปีที่ 5</option>
-            <option value="ป.6">ประถมศึกษาปีที่ 6</option>
-          </select>
-        </div>
-      </div>
+    <!-- ช่องเลือกวันที่ (แสดงเมื่อเลือกตามวันที่) -->
+    <input type="date" id="dashSelectedDate" class="form-control form-control-sm" style="width: auto; display: none;" onchange="updateDashboard()">
+
+    <!-- ช่องเลือกเดือน (แสดงเมื่อเลือกรายเดือน) -->
+    <input type="month" id="dashSelectedMonth" class="form-control form-control-sm" style="width: auto;" onchange="updateDashboard()">
+
+    <!-- ตัวกรองห้องเรียน -->
+    <select id="dashClassSelect" onchange="updateDashboard()" class="form-select form-select-sm" style="width: auto;">
+      <option value="all">🏫 ทุกระดับชั้น (ภาพรวม)</option>
+      <option value="ป.1">ประถมศึกษาปีที่ 1</option>
+      <option value="ป.2">ประถมศึกษาปีที่ 2</option>
+      <option value="ป.3">ประถมศึกษาปีที่ 3</option>
+      <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+      <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+      <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+      <option value="ม.1">มัธยมศึกษาปีที่ 1</option>
+      <option value="ม.2">มัธยมศึกษาปีที่ 2</option>
+      <option value="ม.3">มัธยมศึกษาปีที่ 3</option>
+    </select>
+  </div>
+</div>
 
       <!-- การ์ดสรุปยอด 4 ช่อง (KPI Cards) -->
       <div class="kpi-grid">

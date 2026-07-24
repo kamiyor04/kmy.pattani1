@@ -935,3 +935,103 @@ function showDashboardSection() {
     updateDashboard();
   }
 }
+// ตั้งค่าเริ่มต้นวันที่และเดือนปัจจุบันเมื่อโหลดหน้าเว็บ
+document.addEventListener('DOMContentLoaded', function() {
+  const today = new Date().toISOString().split('T')[0];
+  const currentMonth = today.substring(0, 7); // YYYY-MM
+  
+  if (document.getElementById('dashSelectedDate')) {
+    document.getElementById('dashSelectedDate').value = today;
+  }
+  if (document.getElementById('dashSelectedMonth')) {
+    document.getElementById('dashSelectedMonth').value = currentMonth;
+  }
+});
+
+// สลับช่อง Input ระหว่าง เลือกวันที่ VS เลือกเดือน
+function toggleDashPeriodInput() {
+  const periodType = document.getElementById('dashPeriodType').value;
+  const dateInput = document.getElementById('dashSelectedDate');
+  const monthInput = document.getElementById('dashSelectedMonth');
+
+  if (periodType === 'daily') {
+    dateInput.style.display = 'inline-block';
+    monthInput.style.display = 'none';
+  } else {
+    dateInput.style.display = 'none';
+    monthInput.style.display = 'inline-block';
+  }
+  
+  updateDashboard(); // โหลดข้อมูลใหม่ทันที
+}
+
+// ฟังก์ชันดึงข้อมูลแดชบอร์ด
+function updateDashboard() {
+  const periodType = document.getElementById('dashPeriodType').value;
+  const selectedDate = document.getElementById('dashSelectedDate').value;
+  const selectedMonth = document.getElementById('dashSelectedMonth').value;
+  const selectedClass = document.getElementById('dashClassSelect').value;
+
+  // แสดง Loading Alert ขนาดเล็ก หรือ Spinner ระหว่างรอข้อมูล
+  Swal.fire({
+    title: 'กำลังโหลดข้อมูล...',
+    allowOutsideClick: false,
+    didOpen: () => { Swal.showLoading(); }
+  });
+
+  // เรียกไปยัง Google Apps Script
+  google.script.run
+    .withSuccessHandler(renderDashboard)
+    .withFailureHandler(err => {
+      Swal.close();
+      console.error(err);
+      Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถดึงข้อมูลแดชบอร์ดได้', 'error');
+    })
+    .getDashboardData({
+      type: periodType,
+      date: selectedDate,
+      month: selectedMonth,
+      className: selectedClass
+    });
+}
+
+// แสดงผลลัพธ์ลงบนการ์ดและตาราง
+function renderDashboard(data) {
+  Swal.close();
+  if (!data) return;
+
+  // 1. อัปเดตตัวเลข KPI Cards
+  document.getElementById('kpiTotal').innerHTML = `${data.total || 0} <small>คน</small>`;
+  document.getElementById('kpiPresent').innerHTML = `${data.present || 0} <small>คน</small>`;
+  document.getElementById('kpiLate').innerHTML = `${data.late || 0} <small>คน</small>`;
+  document.getElementById('kpiAbsent').innerHTML = `${data.absent || 0} <small>คน</small>`;
+
+  // 2. อัปเดตตารางนักเรียนเฝ้าระวัง
+  const alertBody = document.getElementById('alertTableBody');
+  const badge = document.getElementById('alertCountBadge');
+  
+  if (!data.alerts || data.alerts.length === 0) {
+    badge.innerText = 'พบ 0 คน';
+    alertBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="text-center py-4 text-success fw-bold">
+          🎉 ไม่พบนกเรียนที่ขาดเรียนเกิน 4 ครั้งในเดือนนี้
+        </td>
+      </tr>`;
+    return;
+  }
+
+  badge.innerText = `พบ ${data.alerts.length} คน`;
+  let rows = '';
+  data.alerts.forEach((item, index) => {
+    rows += `
+      <tr>
+        <td class="text-center">${index + 1}</td>
+        <td>${item.className}</td>
+        <td>${item.name}</td>
+        <td class="text-danger fw-bold text-center">${item.absentCount} ครั้ง</td>
+        <td>${item.lateDates || '-'}</td>
+      </tr>`;
+  });
+  alertBody.innerHTML = rows;
+}
