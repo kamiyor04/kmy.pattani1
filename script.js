@@ -965,7 +965,9 @@ function toggleDashPeriodInput() {
   updateDashboard(); // โหลดข้อมูลใหม่ทันที
 }
 
-// ฟังก์ชันดึงข้อมูลแดชบอร์ด
+// ⚠️ นำ Web App URL ของ Google Apps Script มาใส่ในนี้
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
+
 function updateDashboard() {
   const periodType = document.getElementById('dashPeriodType') ? document.getElementById('dashPeriodType').value : 'monthly';
   const selectedDate = document.getElementById('dashSelectedDate') ? document.getElementById('dashSelectedDate').value : '';
@@ -979,8 +981,12 @@ function updateDashboard() {
     didOpen: () => { Swal.showLoading(); }
   });
 
-  google.script.run
-    .withSuccessHandler(function(data) {
+  // สร้าง URL พร้อม Query Parameters
+  const url = `${WEB_APP_URL}?action=getDashboard&type=${periodType}&date=${selectedDate}&month=${selectedMonth}&className=${encodeURIComponent(selectedClass)}`;
+
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
       Swal.close();
       if (data && data.error) {
         Swal.fire('พบข้อผิดพลาด', data.error, 'error');
@@ -988,16 +994,10 @@ function updateDashboard() {
         renderDashboard(data);
       }
     })
-    .withFailureHandler(function(err) {
+    .catch(err => {
       Swal.close();
       console.error(err);
-      Swal.fire('การเชื่อมต่อล้มเหลว', 'ไม่สามารถติดต่อ Google Sheets ได้: ' + err, 'error');
-    })
-    .getDashboardData({
-      type: periodType,
-      date: selectedDate,
-      month: selectedMonth,
-      className: selectedClass
+      Swal.fire('การเชื่อมต่อล้มเหลว', 'ไม่สามารถดึงข้อมูลจาก Google Sheets ได้', 'error');
     });
 }
 
