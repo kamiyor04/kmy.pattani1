@@ -968,10 +968,10 @@ function toggleDashPeriodInput() {
 
 
 function updateDashboard() {
-  // ดึง URL จากตัวแปรหลักด้านบน ถ้าไม่มีค่อยดึงค่าสำรอง
-  const urlToFetch = typeof WEB_APP_URL !== 'undefined' 
+  // ดึง URL จาก WEB_APP_URL
+  const webAppUrl = typeof WEB_APP_URL !== 'undefined' 
     ? WEB_APP_URL 
-    : "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
+    : "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec"; // ⚠️ ใส่ URL ของเกิร์ลตรงนี้
 
   const periodType = document.getElementById('dashPeriodType') ? document.getElementById('dashPeriodType').value : 'monthly';
   const selectedDate = document.getElementById('dashSelectedDate') ? document.getElementById('dashSelectedDate').value : '';
@@ -985,11 +985,13 @@ function updateDashboard() {
     didOpen: () => { Swal.showLoading(); }
   });
 
-  const requestUrl = `${urlToFetch}?action=getDashboard&type=${periodType}&date=${selectedDate}&month=${selectedMonth}&className=${encodeURIComponent(selectedClass)}`;
+  // สร้าง URL ปลายทาง
+  const fetchUrl = `${webAppUrl}?action=getDashboard&type=${periodType}&date=${selectedDate}&month=${selectedMonth}&className=${encodeURIComponent(selectedClass)}`;
 
-  fetch(requestUrl)
+  // ใช้ fetchUrl ตัวเดียวกัน
+  fetch(fetchUrl)
     .then(response => {
-      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+      if (!response.ok) throw new Error(`HTTP Status: ${response.status}`);
       return response.json();
     })
     .then(data => {
