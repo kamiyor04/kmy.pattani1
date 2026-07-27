@@ -586,355 +586,6 @@ function showCustomPopup(title, message) {
 
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
-// ฟังก์ชันคำนวณและอัปเดตข้อมูลแดชบอร์ด
-function updateDashboard() {
-  const period = document.getElementById('dashPeriodSelect').value; // daily หรือ monthly
-  const selectedClass = document.getElementById('dashClassSelect').value; // all หรือ ชื่อชั้น
-  
-  // สมมุติตัวแปรเก็บข้อมูลเช็คชื่อจากระบบ (window.attendanceLogs คืออาร์เรย์เช็คชื่อทั้งหมด)
-  const logs = window.attendanceLogs || []; 
-  const students = window.studentsData || window.studentList || [];
-
-  // 1. กรองนักเรียนตามห้องเรียนที่เลือก
-  let targetStudents = students;
-  if (selectedClass !== 'all') {
-    targetStudents = students.filter(s => (s.className || s.class) === selectedClass);
-  }
-
-  // 2. คำนวณยอด KPI
-  let totalCount = targetStudents.length;
-  let presentCount = 0;
-  let lateCount = 0;
-  let absentCount = 0;
-
-  // ดึงวันที่ปัจจุบัน (YYYY-MM-DD) และ เดือนปัจจุบัน (YYYY-MM)
-  const todayStr = new Date().toISOString().split('T')[0];
-  const currentMonthStr = todayStr.substring(0, 7);
-
-  // สรุปยอดตามตัวเลือก (รายวัน / รายเดือน)
-  targetStudents.forEach(student => {
-    // ดึงประวัติการมาเรียนของนักเรียนคนนี้
-    const studentLogs = logs.filter(l => l.studentId === student.id || l.name === student.name);
-
-    if (period === 'daily') {
-      // รายวัน: ดูสถานะของวันนี้
-      const todayLog = studentLogs.find(l => l.date === todayStr);
-      if (todayLog) {
-        if (todayLog.status === 'มา' || todayLog.status === 'เข้าร่วม') presentCount++;
-        else if (todayLog.status === 'สาย' || todayLog.status === 'ไม่เข้าร่วม') lateCount++;
-        else if (todayLog.status === 'ขาด' || todayLog.status === 'ไม่มาเรียน') absentCount++;
-      }
-    } else {
-      // รายเดือน: นับจำนวนในเดือนปัจจุบัน
-      const monthLogs = studentLogs.filter(l => l.date && l.date.startsWith(currentMonthStr));
-      
-      monthLogs.forEach(l => {
-        if (l.status === 'มา' || l.status === 'เข้าร่วม') presentCount++;
-        else if (l.status === 'สาย' || l.status === 'ไม่เข้าร่วม') lateCount++;
-        else if (l.status === 'ขาด' || l.status === 'ไม่มาเรียน') absentCount++;
-      });
-    }
-  });
-
-  // อัปเดตตัวเลขขึ้นหน้าการ์ด KPI
-  document.getElementById('kpiTotal').innerHTML = `${totalCount} <small>คน</small>`;
-  document.getElementById('kpiPresent').innerHTML = `${presentCount} <small>คน</small>`;
-  document.getElementById('kpiLate').innerHTML = `${lateCount} <small>คน</small>`;
-  document.getElementById('kpiAbsent').innerHTML = `${absentCount} <small>คน</small>`;
-
-  // 3. ตรวจสอบนักเรียนเฝ้าระวัง (ขาดเกิน 4 ครั้งในเดือนนี้ + วันที่สาย)
-  renderAlertTable(targetStudents, logs, currentMonthStr);
-}
-
-// ฟังก์ชันสร้างตารางนักเรียนเฝ้าระวัง (ขาดเกิน 4 ครั้ง)
-function renderAlertTable(students, logs, currentMonthStr) {
-  const alertTbody = document.getElementById('alertTableBody');
-  alertTbody.innerHTML = '';
-
-  let alertList = [];
-
-  students.forEach(student => {
-    // ดึงประวัติเฉพาะเดือนนี้
-    const monthLogs = logs.filter(l => 
-      (l.studentId === student.id || l.name === student.name) && 
-      l.date && l.date.startsWith(currentMonthStr)
-    );
-
-    // นับจำนวนวันที่ขาด
-    const absents = monthLogs.filter(l => l.status === 'ขาด' || l.status === 'ไม่มาเรียน');
-    
-    // ดึงรายการวันที่สาย
-    const lates = monthLogs.filter(l => l.status === 'สาย' || l.status === 'ไม่เข้าร่วม');
-    const lateDates = lates.map(l => l.date); // รายการ YYYY-MM-DD ที่สาย
-
-    // เงื่อนไข: ขาดเกิน 4 ครั้งขึ้นไป
-    if (absents.length > 4) {
-      alertList.push({
-        name: student.name,
-        className: student.className || student.class || 'ไม่ระบุ',
-        absentCount: absents.length,
-        lateDates: lateDates
-      });
-    }
-  });
-
-  // อัปเดตตัวเลข Badge
-  document.getElementById('alertCountBadge').innerText = `พบ ${alertList.length} คน`;
-
-  // ถ้าไม่มีนักเรียนที่ขาดเกิน 4 ครั้ง
-  if (alertList.length === 0) {
-    alertTbody.innerHTML = `
-      <tr>
-        <td colspan="5" style="text-align: center; color: #2e7d32; padding: 20px;">
-          🎉 ไม่พบนกเรียนที่ขาดเรียนเกิน 4 ครั้งในเดือนนี้
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  // วาดแถวตารางนักเรียนที่ติดเงื่อนไข
-  alertList.forEach((item, index) => {
-    // แปลงวันที่สายให้อ่านง่าย
-    const lateDatesHtml = item.lateDates.length > 0 
-      ? item.lateDates.map(d => `<span class="late-tag">📅 ${formatThaiDate(d)}</span>`).join(' ')
-      : '<span style="color: #999;">ไม่มีประวัติสาย</span>';
-
-    alertTbody.innerHTML += `
-      <tr>
-        <td style="text-align: center;">${index + 1}</td>
-        <td><span class="badge-class">${item.className}</span></td>
-        <td><strong>${item.name}</strong></td>
-        <td><span class="absent-count-tag">❌ ขาด ${item.absentCount} ครั้ง</span></td>
-        <td>${lateDatesHtml}</td>
-      </tr>
-    `;
-  });
-}
-
-// ฟังก์ชันแปลงวันที่เป็น พ.ศ. สั้นๆ (เช่น 2026-07-24 -> 24 ก.ค. 69)
-function formatThaiDate(dateStr) {
-  if (!dateStr) return '';
-  const parts = dateStr.split('-');
-  if (parts.length !== 3) return dateStr;
-  
-  const day = parseInt(parts[2]);
-  const monthNames = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-  const month = monthNames[parseInt(parts[1]) - 1];
-  const year = (parseInt(parts[0]) + 543).toString().substring(2);
-
-  return `${day} ${month} ${year}`;
-}
-// ตัวอย่างฟังก์ชันเมื่อกดปุ่มเมนู "แดชบอร์ด"
-// ฟังก์ชันเปิดหน้าแดชบอร์ด (แบบซ่อนทุกหน้าอื่น 100%)
-function showDashboard() {
-  // 1. ดึงทุก Element ที่เป็นส่วนหน้าจอในระบบมาซ่อนให้หมด
-  const allSections = document.querySelectorAll(
-    '#checkinSection, #manageSection, #dashboardSection, .section-container, .main-content-section, .card-box'
-  );
-  
-  allSections.forEach(sec => {
-    sec.style.display = 'none'; // ซ่อนทุกส่วน
-  });
-
-  // 2. สั่งแสดงเฉพาะแดชบอร์ด
-  const dashSec = document.getElementById('dashboardSection');
-  if (dashSec) {
-    dashSec.style.display = 'block';
-  }
-
-  // 3. สั่งคำนวณยอดเรียลไทม์
-  if (typeof updateDashboard === 'function') {
-    updateDashboard();
-  }
-}
-// ฟังก์ชันคำนวณแดชบอร์ดแบบดึงข้อมูลจริงในระบบ (แก้ปัญหาหน้าว่างเปล่า)
-function updateDashboard() {
-  // 1. ตรวจสอบว่าหน้าแดชบอร์ดเปิดอยู่ไหม
-  const dashSec = document.getElementById('dashboardSection');
-  if (dashSec) dashSec.style.display = 'block';
-
-  // 2. ดึงค่าตัวกรอง
-  const periodSelect = document.getElementById('dashPeriodSelect');
-  const classSelect = document.getElementById('dashClassSelect');
-  
-  const period = periodSelect ? periodSelect.value : 'monthly';
-  const selectedClass = classSelect ? classSelect.value : 'all';
-
-  // 3. ดึงข้อมูลนักเรียนและประวัติการเช็คชื่อจากทุกตัวแปรที่เป็นไปได้ในระบบ
-  let allStudents = window.studentsData || window.studentList || window.allStudents || window.students || [];
-  let allLogs = window.attendanceLogs || window.checkInLogs || window.attendanceData || window.logs || [];
-
-  // ถ้าดึงจากตัวแปรไม่เจอ ให้กวาดรายชื่อจากตารางที่แสดงผลอยู่หน้าเว็บมาเป็นฐานข้อมูลสำรอง
-  if (!Array.isArray(allStudents) || allStudents.length === 0) {
-    allStudents = [];
-    const rows = document.querySelectorAll('table tbody tr');
-    rows.forEach(row => {
-      const cols = row.querySelectorAll('td');
-      if (cols.length >= 3) {
-        const c = cols[0].innerText.trim();
-        const no = cols[1].innerText.trim();
-        const name = cols[2].innerText.trim();
-        if (name && !isNaN(no)) {
-          allStudents.push({ className: c, no: no, name: name });
-        }
-      }
-    });
-  }
-
-  // 4. กรองนักเรียนตามห้องที่เลือก
-  let filteredStudents = allStudents;
-  if (selectedClass !== 'all') {
-    filteredStudents = allStudents.filter(s => {
-      const c = String(s.className || s.class || s.grade || s[0] || '').trim();
-      return c.includes(selectedClass) || selectedClass.includes(c);
-    });
-  }
-
-  // 5. คำนวณตัวเลขสำหรับ KPI Cards
-  let totalCount = filteredStudents.length;
-  let presentCount = 0;
-  let lateCount = 0;
-  let absentCount = 0;
-
-  const todayStr = new Date().toISOString().split('T')[0];
-  const currentMonthStr = todayStr.substring(0, 7);
-
-  // คำนวณรายคน
-  filteredStudents.forEach(student => {
-    const sName = student.name || student.fullName || student[1] || '';
-    
-    // ค้นหาประวัติเช็คชื่อของนักเรียนคนนี้
-    const studentLogs = allLogs.filter(l => {
-      const lName = l.name || l.studentName || l[1] || '';
-      return lName.trim() === sName.trim();
-    });
-
-    if (period === 'daily') {
-      const todayLog = studentLogs.find(l => (l.date || l[0] || '').includes(todayStr));
-      if (todayLog) {
-        const st = String(todayLog.status || todayLog[2] || '');
-        if (st.includes('มา') || st.includes('เข้าร่วม')) presentCount++;
-        else if (st.includes('สาย') || st.includes('ไม่เข้าร่วม')) lateCount++;
-        else if (st.includes('ขาด') || st.includes('ไม่มา')) absentCount++;
-      }
-    } else {
-      // สะสมประจำเดือน
-      const monthLogs = studentLogs.filter(l => (l.date || l[0] || '').includes(currentMonthStr));
-      monthLogs.forEach(l => {
-        const st = String(l.status || l[2] || '');
-        if (st.includes('มา') || st.includes('เข้าร่วม')) presentCount++;
-        else if (st.includes('สาย') || st.includes('ไม่เข้าร่วม')) lateCount++;
-        else if (st.includes('ขาด') || st.includes('ไม่มา')) absentCount++;
-      });
-    }
-  });
-
-  // อัปเดตการ์ด KPI บนหน้าจอ
-  if (document.getElementById('kpiTotal')) document.getElementById('kpiTotal').innerHTML = `${totalCount} <small style="font-size:14px; color:#888;">คน</small>`;
-  if (document.getElementById('kpiPresent')) document.getElementById('kpiPresent').innerHTML = `${presentCount} <small style="font-size:14px; color:#888;">คน</small>`;
-  if (document.getElementById('kpiLate')) document.getElementById('kpiLate').innerHTML = `${lateCount} <small style="font-size:14px; color:#888;">คน</small>`;
-  if (document.getElementById('kpiAbsent')) document.getElementById('kpiAbsent').innerHTML = `${absentCount} <small style="font-size:14px; color:#888;">คน</small>`;
-
-  // 6. แสดงผลตารางเฝ้าระวัง (ขาดเกิน 4 ครั้ง / วันที่สาย)
-  renderDashboardAlertTable(filteredStudents, allLogs, currentMonthStr);
-}
-
-// ฟังก์ชันสร้างตารางเฝ้าระวัง
-function renderDashboardAlertTable(students, logs, currentMonthStr) {
-  const alertTbody = document.getElementById('alertTableBody');
-  if (!alertTbody) return;
-
-  alertTbody.innerHTML = '';
-  let alertList = [];
-
-  students.forEach(student => {
-    const sName = student.name || student.fullName || student[1] || '';
-    const sClass = student.className || student.class || student[0] || 'ไม่ระบุ';
-
-    const monthLogs = logs.filter(l => {
-      const lName = l.name || l.studentName || l[1] || '';
-      const lDate = l.date || l[0] || '';
-      return lName.trim() === sName.trim() && lDate.includes(currentMonthStr);
-    });
-
-    // นับจำนวนขาด
-    const absents = monthLogs.filter(l => {
-      const st = String(l.status || l[2] || '');
-      return st.includes('ขาด') || st.includes('ไม่มา');
-    });
-
-    // รายการวันที่สาย
-    const lates = monthLogs.filter(l => {
-      const st = String(l.status || l[2] || '');
-      return st.includes('สาย') || st.includes('ไม่เข้าร่วม');
-    });
-
-    const lateDates = lates.map(l => l.date || l[0] || '');
-
-    // เงื่อนไข: ขาดเกิน 4 ครั้งขึ้นไป
-    if (absents.length > 4) {
-      alertList.push({
-        name: sName,
-        className: sClass,
-        absentCount: absents.length,
-        lateDates: lateDates
-      });
-    }
-  });
-
-  // อัปเดต Badge จำนวนคน
-  const badge = document.getElementById('alertCountBadge');
-  if (badge) badge.innerText = `พบ ${alertList.length} คน`;
-
-  // กรณีไม่พบผู้ขาดเกิน 4 ครั้ง
-  if (alertList.length === 0) {
-    alertTbody.innerHTML = `
-      <tr>
-        <td colspan="5" style="text-align: center; color: #2e7d32; padding: 20px; font-weight: bold;">
-          🎉 ไม่พบนกเรียนที่ขาดเรียนเกิน 4 ครั้งในเดือนนี้
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  // แสดงผลตาราง
-  alertList.forEach((item, index) => {
-    const lateHtml = item.lateDates.length > 0 
-      ? item.lateDates.map(d => `<span style="display:inline-block; background:#fff3e0; color:#e65100; padding:2px 8px; border-radius:4px; font-size:12px; margin:2px;">📅 ${d}</span>`).join(' ')
-      : '<span style="color:#999; font-size:13px;">ไม่มีประวัติสาย</span>';
-
-    alertTbody.innerHTML += `
-      <tr style="border-bottom: 1px solid #eee;">
-        <td style="text-align: center; padding: 10px;">${index + 1}</td>
-        <td style="padding: 10px;"><span style="background:#e3f2fd; color:#1565c0; padding:3px 8px; border-radius:4px; font-size:13px;">${item.className}</span></td>
-        <td style="padding: 10px;"><strong>${item.name}</strong></td>
-        <td style="padding: 10px; color:#c62828; font-weight:bold;">❌ ขาด ${item.absentCount} ครั้ง</td>
-        <td style="padding: 10px;">${lateHtml}</td>
-      </tr>
-    `;
-  });
-}
-// ฟังก์ชันสลับมาหน้าแดชบอร์ด (เรียกใช้งานเมื่อกดปุ่มเมนู "แดชบอร์ด")
-function showDashboardSection() {
-  // 1. ซ่อนหน้าอื่นทั้งหมดที่มี class เป็น main-content-section (หรือ section-container)
-  const allSections = document.querySelectorAll('.main-content-section, .section-container');
-  allSections.forEach(sec => {
-    sec.style.display = 'none';
-  });
-
-  // 2. สั่งแสดงผลเฉพาะหน้าแดชบอร์ด
-  const dashSec = document.getElementById('dashboardSection');
-  if (dashSec) {
-    dashSec.style.display = 'block';
-  }
-
-  // 3. รันฟังก์ชันคำนวณยอด
-  if (typeof updateDashboard === 'function') {
-    updateDashboard();
-  }
-}
 // ตั้งค่าเริ่มต้นวันที่และเดือนปัจจุบันเมื่อโหลดหน้าเว็บ
 document.addEventListener('DOMContentLoaded', function() {
   const today = new Date().toISOString().split('T')[0];
@@ -962,16 +613,13 @@ function toggleDashPeriodInput() {
     monthInput.style.display = 'inline-block';
   }
   
-  updateDashboard(); // โหลดข้อมูลใหม่ทันที
+  updateDashboard();
 }
 
-
-
 function updateDashboard() {
-  // ดึง URL จาก WEB_APP_URL
   const webAppUrl = typeof WEB_APP_URL !== 'undefined' 
     ? WEB_APP_URL 
-    : "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec"; // ⚠️ ใส่ URL ของเกิร์ลตรงนี้
+    : "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
 
   const periodType = document.getElementById('dashPeriodType') ? document.getElementById('dashPeriodType').value : 'monthly';
   const selectedDate = document.getElementById('dashSelectedDate') ? document.getElementById('dashSelectedDate').value : '';
@@ -985,10 +633,8 @@ function updateDashboard() {
     didOpen: () => { Swal.showLoading(); }
   });
 
-  // สร้าง URL ปลายทาง
   const fetchUrl = `${webAppUrl}?action=getDashboard&type=${periodType}&date=${selectedDate}&month=${selectedMonth}&className=${encodeURIComponent(selectedClass)}`;
 
-  // ใช้ fetchUrl ตัวเดียวกัน
   fetch(fetchUrl)
     .then(response => {
       if (!response.ok) throw new Error(`HTTP Status: ${response.status}`);
@@ -1009,23 +655,22 @@ function updateDashboard() {
     });
 }
 
-// แสดงผลลัพธ์ลงบนการ์ดและตาราง
 function renderDashboard(data) {
   Swal.close();
   if (!data) return;
 
-  // 1. อัปเดตตัวเลข KPI Cards
-  document.getElementById('kpiTotal').innerHTML = `${data.total || 0} <small>คน</small>`;
-  document.getElementById('kpiPresent').innerHTML = `${data.present || 0} <small>คน</small>`;
-  document.getElementById('kpiLate').innerHTML = `${data.late || 0} <small>คน</small>`;
-  document.getElementById('kpiAbsent').innerHTML = `${data.absent || 0} <small>คน</small>`;
+  if (document.getElementById('kpiTotal')) document.getElementById('kpiTotal').innerHTML = `${data.total || 0} <small>คน</small>`;
+  if (document.getElementById('kpiPresent')) document.getElementById('kpiPresent').innerHTML = `${data.present || 0} <small>คน</small>`;
+  if (document.getElementById('kpiLate')) document.getElementById('kpiLate').innerHTML = `${data.late || 0} <small>คน</small>`;
+  if (document.getElementById('kpiAbsent')) document.getElementById('kpiAbsent').innerHTML = `${data.absent || 0} <small>คน</small>`;
 
-  // 2. อัปเดตตารางนักเรียนเฝ้าระวัง
   const alertBody = document.getElementById('alertTableBody');
   const badge = document.getElementById('alertCountBadge');
   
+  if (!alertBody) return;
+
   if (!data.alerts || data.alerts.length === 0) {
-    badge.innerText = 'พบ 0 คน';
+    if (badge) badge.innerText = 'พบ 0 คน';
     alertBody.innerHTML = `
       <tr>
         <td colspan="5" class="text-center py-4 text-success fw-bold">
@@ -1035,49 +680,17 @@ function renderDashboard(data) {
     return;
   }
 
-  badge.innerText = `พบ ${data.alerts.length} คน`;
+  if (badge) badge.innerText = `พบ ${data.alerts.length} คน`;
   let rows = '';
   data.alerts.forEach((item, index) => {
     rows += `
       <tr>
         <td class="text-center">${index + 1}</td>
-        <td>${item.className}</td>
-        <td>${item.name}</td>
+        <td><span class="badge bg-info text-dark">${item.className}</span></td>
+        <td class="fw-bold">${item.name}</td>
         <td class="text-danger fw-bold text-center">${item.absentCount} ครั้ง</td>
         <td>${item.lateDates || '-'}</td>
       </tr>`;
   });
   alertBody.innerHTML = rows;
 }
-fetch(url)
-  .then(response => {
-    // 1. เช็คระดับการเชื่อมต่อเครือข่าย
-    if (!response.ok) {
-      throw new Error(`เชื่อมต่อไม่สำเร็จ HTTP status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    Swal.close();
-    
-    // 2. เช็คว่ามี Error ส่งมาจาก Google Apps Script หรือไม่
-    if (data && data.error) {
-      console.error("Server Error:", data.error);
-      Swal.fire('พบปัญหาฝั่ง Sheet', data.error, 'error');
-      return;
-    }
-
-    // 3. เช็คว่าหาข้อมูลเจอไหม (ถ้าเป็น 0 หมด แปลว่าหาไม่เจอ)
-    if (data.total === 0) {
-      console.warn("หาข้อมูลไม่เจอตามเงื่อนไขที่ระบุ");
-      Swal.fire('ไม่พบข้อมูล', 'ไม่มีรายการบันทึกในเงื่อนไข หรือช่วงเวลาที่เลือกครับ', 'info');
-    } else {
-      console.log("ดึงข้อมูลสำเร็จ:", data);
-      renderDashboard(data);
-    }
-  })
-  .catch(err => {
-    Swal.close();
-    console.error("Fetch Error:", err);
-    Swal.fire('การเชื่อมต่อล้มเหลว', 'หาจุดเชื่อมต่อไม่เจอ หรือเกิดข้อผิดพลาด: ' + err.message, 'error');
-  });
