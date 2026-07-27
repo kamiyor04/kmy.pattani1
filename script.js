@@ -969,6 +969,11 @@ function toggleDashPeriodInput() {
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
 
 function updateDashboard() {
+  // เช็ค URL หากยังไม่ได้ประกาศตัวแปรไว้
+  if (typeof WEB_APP_URL === 'undefined') {
+    window.WEB_APP_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec"; // ⚠️ ใส่ URL ของเกิร์ลตรงนี้
+  }
+
   const periodType = document.getElementById('dashPeriodType') ? document.getElementById('dashPeriodType').value : 'monthly';
   const selectedDate = document.getElementById('dashSelectedDate') ? document.getElementById('dashSelectedDate').value : '';
   const selectedMonth = document.getElementById('dashSelectedMonth') ? document.getElementById('dashSelectedMonth').value : '';
@@ -981,23 +986,29 @@ function updateDashboard() {
     didOpen: () => { Swal.showLoading(); }
   });
 
-  // สร้าง URL พร้อม Query Parameters
+  // ยิง Request ดึงข้อมูล
   const url = `${WEB_APP_URL}?action=getDashboard&type=${periodType}&date=${selectedDate}&month=${selectedMonth}&className=${encodeURIComponent(selectedClass)}`;
 
   fetch(url)
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status}`);
+      }
+      return response.json();
+    })
     .then(data => {
       Swal.close();
       if (data && data.error) {
-        Swal.fire('พบข้อผิดพลาด', data.error, 'error');
+        console.error("Server Error:", data.error);
+        Swal.fire('พบปัญหาฝั่ง Sheet', data.error, 'error');
       } else {
         renderDashboard(data);
       }
     })
     .catch(err => {
       Swal.close();
-      console.error(err);
-      Swal.fire('การเชื่อมต่อล้มเหลว', 'ไม่สามารถดึงข้อมูลจาก Google Sheets ได้', 'error');
+      console.error("Fetch Error:", err);
+      Swal.fire('การเชื่อมต่อล้มเหลว', 'ไม่สามารถเชื่อมต่อ Google Sheets ได้: ' + err.message, 'error');
     });
 }
 
