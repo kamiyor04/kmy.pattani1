@@ -548,11 +548,84 @@
 
     <!-- ================= 4. รายงานสถิติ ================= -->
     <div id="reports-section" class="content-section" style="display: none;">
-      <div class="card card-custom p-4 text-center">
-        <i class="fa-solid fa-file-invoice text-warning display-3 mb-3"></i>
-        <h5>รายงานสถิติ</h5>
-        <p class="text-muted small">กำลังพัฒนาเมนูนี้เตรียมพร้อมในขั้นตอนถัดไปครับ...</p>
+      <!-- ส่วนเมนูเลือกเดือนและปุ่มพิมพ์ -->
+<div class="card shadow-sm border-0 mb-4 rounded-4 no-print">
+  <div class="card-body p-4">
+    <h4 class="fw-bold text-primary mb-3">🖨️ พิมพ์รายงานสถิติและการมาสาย</h4>
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label fw-bold">เลือกเดือนที่ต้องการพิมพ์</label>
+        <input type="month" id="printMonthSelect" class="form-control form-control-lg">
       </div>
+      <div class="col-md-8 d-flex gap-2">
+        <button class="btn btn-primary btn-lg flex-fill" onclick="generateReport('stats')">
+          📄 พิมพ์เอกสารสถิติ (แนวนอน)
+        </button>
+        <button class="btn btn-warning text-dark btn-lg flex-fill" onclick="generateReport('late')">
+          ⚠️ พิมพ์เอกสารนักเรียนมาสาย (แนวตั้ง)
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- พื้นที่สำหรับแสดงเอกสารรอการพิมพ์ -->
+<div id="printArea"></div>
+
+<style>
+/* CSS ควบคุมการพิมพ์ทางการ */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .no-print {
+    display: none !important;
+  }
+  #printArea, #printArea * {
+    visibility: visible;
+  }
+  #printArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  /* ตั้งค่าหน้าแนวนอน */
+  .page-landscape {
+    page-break-after: always;
+    size: A4 landscape;
+    padding: 10mm;
+  }
+
+  /* ตั้งค่าหน้าแนวตั้ง */
+  .page-portrait {
+    page-break-after: always;
+    size: A4 portrait;
+    padding: 15mm;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse !important;
+    font-size: 11pt;
+  }
+  th, td {
+    border: 1px solid #000 !important;
+    padding: 4px;
+    text-align: center;
+  }
+  .text-start { text-align: left !important; }
+  
+  .signature-section {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    font-size: 11pt;
+  }
+}
+</style>
     </div>
 
     <!-- ================= 5. ตารางมาสาย ================= -->

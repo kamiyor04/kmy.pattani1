@@ -718,3 +718,195 @@ function renderDashboard(data) {
   });
   alertBody.innerHTML = rows;
 }
+// กำหนดเดือนปัจจุบันตั้งต้น
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  if (document.getElementById('printMonthSelect')) {
+    document.getElementById('printMonthSelect').value = `${yyyy}-${mm}`;
+  }
+});
+
+function generateReport(type) {
+  const monthVal = document.getElementById('printMonthSelect').value;
+  if (!monthVal) {
+    Swal.fire('กรุณาเลือกเดือน', '', 'warning');
+    return;
+  }
+
+  Swal.fire({ title: 'กำลังเตรียมเอกสาร...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+  google.script.run
+    .withSuccessHandler(data => {
+      Swal.close();
+      if (data.error) {
+        Swal.fire('เกิดข้อผิดพลาด', data.error, 'error');
+        return;
+      }
+      
+      if (type === 'stats') {
+        renderLandscapeStatsReport(data);
+      } else {
+        renderPortraitLateReport(data);
+      }
+    })
+    .getPrintReportData({ month: monthVal });
+}
+
+// 1. เรนเดอร์เอกสารสถิติ (แนวนอน)
+function renderLandscapeStatsReport(data) {
+  const printArea = document.getElementById('printArea');
+  printArea.innerHTML = '';
+
+  const [year, month] = data.month.split('-');
+  const thaiMonthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+  const monthTitle = `${thaiMonthNames[parseInt(month, 10) - 1]} ${parseInt(year, 10) + 543}`;
+
+  for (const cls in data.reportData) {
+    const classGroup = data.reportData[cls];
+    
+    let html = `
+      <div class="page-landscape">
+        <div style="text-align: center; margin-bottom: 15px;">
+          <h3 style="margin: 0; font-weight: bold;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
+          <p style="margin: 5px 0;">ระดับชั้น: ${cls} &nbsp;&nbsp;&nbsp;&nbsp; ประจำเดือน: ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; โรงเรียนชุมชนบ้านกะมิยอ</p>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 220px;" rowspan="2">ชื่อ - นามสกุล</th>
+              <th colspan="31">วันที่</th>
+              <th colspan="3">สรุป</th>
+            </tr>
+            <tr>
+              ${Array.from({length: 31}, (_, i) => `<th style="width: 18px; font-size: 9pt;">${i + 1}</th>`).join('')}
+              <th style="width: 25px;">ร</th>
+              <th style="width: 25px;">ส</th>
+              <th style="width: 25px;">ข</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    classGroup.students.forEach((s, idx) => {
+      html += `
+        <tr>
+          <td class="text-start">${idx + 1}. ${s.name}</td>
+          ${Array.from({length: 31}, (_, i) => {
+            const st = s.dailyStatus[i + 1] || '-';
+            return `<td style="font-size: 9pt;">${st}</td>`;
+          }).join('')}
+          <td style="font-weight: bold; color: green;">${s.presentCount || '-'}</td>
+          <td style="font-weight: bold; color: orange;">${s.lateCount || '-'}</td>
+          <td style="font-weight: bold; color: red;">${s.absentCount || '-'}</td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+        </table>
+
+        <div class="signature-section">
+          <div>
+            <br>ลงชื่อ..........................................................ครูประจำชั้น<br>
+            (..........................................................)<br>
+            ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
+          </div>
+          <div>
+            <br>ลงชื่อ..........................................................<br>
+            (นายอับดุล เจะสือแม)<br>
+            ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+          </div>
+          <div>
+            <br>ลงชื่อ..........................................................<br>
+            (นางวันพิทยา มุสตาฟา)<br>
+            ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+          </div>
+        </div>
+      </div>
+    `;
+    printArea.innerHTML += html;
+  }
+
+  setTimeout(() => window.print(), 500);
+}
+
+// 2. เรนเดอร์เอกสารนักเรียนมาสายเกิน 4 ครั้ง (แนวตั้ง)
+function renderPortraitLateReport(data) {
+  const printArea = document.getElementById('printArea');
+  printArea.innerHTML = '';
+
+  const [year, month] = data.month.split('-');
+  const thaiMonthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+  const monthTitle = `${thaiMonthNames[parseInt(month, 10) - 1]} ${parseInt(year, 10) + 543}`;
+
+  for (const cls in data.reportData) {
+    const classGroup = data.reportData[cls];
+    const lateStudents = classGroup.students.filter(s => s.lateCount >= 4);
+
+    let html = `
+      <div class="page-portrait">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h3 style="margin: 0; font-weight: bold;">รายงานนักเรียนมาสาย / ไม่เข้าร่วมกิจกรรม (4 ครั้งขึ้นไป)</h3>
+          <p style="margin: 5px 0;">ระดับชั้น: ${cls} &nbsp;&nbsp;&nbsp;&nbsp; ประจำเดือน: ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; โรงเรียนชุมชนบ้านกะมิยอ</p>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 50px;">ลำดับ</th>
+              <th style="width: 200px;">ชื่อ - นามสกุล</th>
+              <th style="width: 100px;">จำนวนครั้งที่สาย</th>
+              <th>วันที่มาสาย (วันที่ในเดือน)</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    if (lateStudents.length === 0) {
+      html += `<tr><td colspan="4" style="padding: 15px;">🎉 ไม่พบนกเรียนที่มาสายเกิน 4 ครั้งในเดือนนี้</td></tr>`;
+    } else {
+      lateStudents.forEach((s, idx) => {
+        const formattedLateDates = s.lateDates.map(d => `${d}/${month}/${parseInt(year, 10) + 543}`).join(', ');
+        html += `
+          <tr>
+            <td>${idx + 1}</td>
+            <td class="text-start">${s.name}</td>
+            <td style="font-weight: bold; color: red;">${s.lateCount} ครั้ง</td>
+            <td class="text-start">${formattedLateDates}</td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `
+          </tbody>
+        </table>
+
+        <div class="signature-section">
+          <div>
+            <br>ลงชื่อ..........................................................ครูประจำชั้น<br>
+            (..........................................................)<br>
+            ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
+          </div>
+          <div>
+            <br>ลงชื่อ..........................................................<br>
+            (นายอับดุล เจะสือแม)<br>
+            ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+          </div>
+          <div>
+            <br>ลงชื่อ..........................................................<br>
+            (นางวันพิทยา มุสตาฟา)<br>
+            ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+          </div>
+        </div>
+      </div>
+    `;
+    printArea.innerHTML += html;
+  }
+
+  setTimeout(() => window.print(), 500);
+}
