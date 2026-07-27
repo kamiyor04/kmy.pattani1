@@ -58,7 +58,7 @@
       object-fit: contain;
     }
 
-    /* Offcanvas / Sidebar อยู่ฝั่งซ้าย */
+    /* Sidebar / Offcanvas */
     .offcanvas-start {
       background-color: var(--sidebar-bg);
       color: white;
@@ -99,6 +99,10 @@
       display: flex;
       align-items: center;
       transition: all 0.2s ease;
+      background: transparent;
+      border: none;
+      width: 100%;
+      text-align: left;
     }
 
     .nav-pills .nav-link i {
@@ -123,7 +127,6 @@
       min-height: calc(100vh - 65px);
     }
 
-    /* Cards */
     .card-custom {
       border: none;
       border-radius: 16px;
@@ -131,17 +134,7 @@
       background-color: #ffffff;
     }
 
-    /* Status Buttons Styling สำหรับมือถือ */
-    .status-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
     @media (min-width: 768px) {
-      .status-group {
-        flex-direction: row;
-      }
       .main-content {
         padding: 30px;
         max-width: 1200px;
@@ -149,37 +142,7 @@
       }
     }
 
-    .status-group .btn-outline-success {
-      border-color: #10b981;
-      color: #10b981;
-    }
-    .status-group .btn-check:checked + .btn-outline-success {
-      background-color: #10b981;
-      border-color: #10b981;
-      color: #fff;
-    }
-
-    .status-group .btn-outline-warning {
-      border-color: #f59e0b;
-      color: #f59e0b;
-    }
-    .status-group .btn-check:checked + .btn-outline-warning {
-      background-color: #f59e0b;
-      border-color: #f59e0b;
-      color: #fff;
-    }
-
-    .status-group .btn-outline-danger {
-      border-color: #ef4444;
-      color: #ef4444;
-    }
-    .status-group .btn-check:checked + .btn-outline-danger {
-      background-color: #ef4444;
-      border-color: #ef4444;
-      color: #fff;
-    }
-
-    /* Dashboard Custom Style */
+    /* Dashboard Style */
     .dashboard-header-bar {
       display: flex;
       justify-content: space-between;
@@ -187,19 +150,6 @@
       flex-wrap: wrap;
       gap: 15px;
       margin-bottom: 20px;
-    }
-
-    .filter-controls {
-      display: flex;
-      gap: 10px;
-    }
-
-    .filter-controls select {
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-family: 'Sarabun', sans-serif;
-      font-size: 15px;
     }
 
     .kpi-grid {
@@ -294,21 +244,6 @@
       background: #fafafa;
       color: #555;
     }
-
-    .late-tag {
-      display: inline-block;
-      background: #fff3e0;
-      color: #e65100;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 13px;
-      margin: 2px;
-    }
-
-    .absent-count-tag {
-      color: #d32f2f;
-      font-weight: bold;
-    }
   </style>
 </head>
 <body>
@@ -324,10 +259,10 @@
     </div>
   </header>
 
-  <!-- Sidebar เลื่อนออกจากฝั่งซ้าย -->
-  <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
+  <!-- Sidebar -->
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
     <div class="offcanvas-header border-bottom border-secondary">
-      <h5 class="offcanvas-title text-white fs-6" id="sidebarMenuLabel">เมนูหลัก</h5>
+      <h5 class="offcanvas-title text-white fs-6">เมนูหลัก</h5>
       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     
@@ -340,29 +275,29 @@
         </div>
       </div>
 
-      <!-- รายการเมนู -->
-      <div class="nav flex-column nav-pills" role="tablist">
-        <button class="nav-link active" id="menu-attendance" onclick="switchTab('attendance-section', this)">
+      <!-- เมนูสลับหน้า -->
+      <div class="nav flex-column nav-pills">
+        <button class="nav-link active" onclick="switchTab('attendance-section', this)">
           <i class="fa-solid fa-file-pen me-2"></i> บันทึกเช็คชื่อรายวัน
         </button>
 
-        <button class="nav-link" id="menu-students" onclick="switchTab('students-section', this)">
+        <button class="nav-link" onclick="switchTab('students-section', this)">
           <i class="fa-solid fa-users me-2"></i> จัดการรายชื่อนักเรียน
         </button>
 
-        <button class="nav-link" id="menu-dashboard" onclick="switchTab('dashboard-section', this)">
+        <button class="nav-link" onclick="switchTab('dashboard-section', this)">
           <i class="fa-solid fa-chart-column me-2"></i> แดชบอร์ด
         </button>
 
-        <button class="nav-link" id="menu-reports" onclick="switchTab('reports-section', this)">
+        <button class="nav-link" onclick="switchTab('reports-section', this)">
           <i class="fa-solid fa-clipboard-list me-2"></i> รายงานสถิติ
         </button>
 
-        <button class="nav-link" id="menu-late-schedule" onclick="switchTab('late-section', this)">
+        <button class="nav-link" onclick="switchTab('late-section', this)">
           <i class="fa-solid fa-stopwatch me-2"></i> ตารางปฏิบัติงานมาสาย
         </button>
 
-        <button class="nav-link" id="menu-settings" onclick="switchTab('settings-section', this)">
+        <button class="nav-link" onclick="switchTab('settings-section', this)">
           <i class="fa-solid fa-gear me-2"></i> ตั้งค่าระบบวันหยุด
         </button>
       </div>
@@ -418,7 +353,7 @@
             </thead>
             <tbody id="studentTableBody">
               <tr>
-                <td colspan="3" class="text-center py-4 text-muted" id="statusMessage">
+                <td colspan="3" class="text-center py-4 text-muted">
                   กรุณาเลือกชั้นเรียนและกด <b>"ดึงรายชื่อ"</b>
                 </td>
               </tr>
@@ -491,40 +426,38 @@
       </div>
     </div>
 
-<!-- ส่วนหัว & ตัวกรองแดชบอร์ด -->
-<div class="dashboard-header-bar">
-  <h2 style="margin: 0; color: #333; font-size: 1.5rem; font-weight: bold;">📊 แดชบอร์ดสรุปผลการมาเรียน</h2>
-  
-  <div class="filter-controls" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-    <!-- ตัวเลือกรูปแบบการดู -->
-    <select id="dashPeriodType" onchange="toggleDashPeriodInput()" class="form-select form-select-sm" style="width: auto;">
-      <option value="daily">📅 เลือกดูตามวันที่</option>
-      <option value="monthly" selected>🗓️ เลือกดูตามรายเดือน</option>
-    </select>
+    <!-- ================= 3. หน้าแดชบอร์ดสรุปผล ================= -->
+    <div id="dashboard-section" class="content-section" style="display: none;">
+      
+      <!-- ส่วนหัว & ตัวกรอง -->
+      <div class="dashboard-header-bar">
+        <h2 style="margin: 0; color: #333; font-size: 1.5rem; font-weight: bold;">📊 แดชบอร์ดสรุปผลการมาเรียน</h2>
+        
+        <div class="filter-controls" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <select id="dashPeriodType" onchange="toggleDashPeriodInput()" class="form-select form-select-sm" style="width: auto;">
+            <option value="daily">📅 เลือกดูตามวันที่</option>
+            <option value="monthly" selected>🗓️ เลือกดูตามรายเดือน</option>
+          </select>
 
-    <!-- ช่องเลือกวันที่ (แสดงเมื่อเลือกตามวันที่) -->
-    <input type="date" id="dashSelectedDate" class="form-control form-control-sm" style="width: auto; display: none;" onchange="updateDashboard()">
+          <input type="date" id="dashSelectedDate" class="form-control form-control-sm" style="width: auto; display: none;" onchange="updateDashboard()">
+          <input type="month" id="dashSelectedMonth" class="form-control form-control-sm" style="width: auto;" onchange="updateDashboard()">
 
-    <!-- ช่องเลือกเดือน (แสดงเมื่อเลือกรายเดือน) -->
-    <input type="month" id="dashSelectedMonth" class="form-control form-control-sm" style="width: auto;" onchange="updateDashboard()">
+          <select id="dashClassSelect" onchange="updateDashboard()" class="form-select form-select-sm" style="width: auto;">
+            <option value="all">🏫 ทุกระดับชั้น (ภาพรวม)</option>
+            <option value="ป.1">ประถมศึกษาปีที่ 1</option>
+            <option value="ป.2">ประถมศึกษาปีที่ 2</option>
+            <option value="ป.3">ประถมศึกษาปีที่ 3</option>
+            <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+            <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+            <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+            <option value="ม.1">มัธยมศึกษาปีที่ 1</option>
+            <option value="ม.2">มัธยมศึกษาปีที่ 2</option>
+            <option value="ม.3">มัธยมศึกษาปีที่ 3</option>
+          </select>
+        </div>
+      </div>
 
-    <!-- ตัวกรองห้องเรียน -->
-    <select id="dashClassSelect" onchange="updateDashboard()" class="form-select form-select-sm" style="width: auto;">
-      <option value="all">🏫 ทุกระดับชั้น (ภาพรวม)</option>
-      <option value="ป.1">ประถมศึกษาปีที่ 1</option>
-      <option value="ป.2">ประถมศึกษาปีที่ 2</option>
-      <option value="ป.3">ประถมศึกษาปีที่ 3</option>
-      <option value="ป.4">ประถมศึกษาปีที่ 4</option>
-      <option value="ป.5">ประถมศึกษาปีที่ 5</option>
-      <option value="ป.6">ประถมศึกษาปีที่ 6</option>
-      <option value="ม.1">มัธยมศึกษาปีที่ 1</option>
-      <option value="ม.2">มัธยมศึกษาปีที่ 2</option>
-      <option value="ม.3">มัธยมศึกษาปีที่ 3</option>
-    </select>
-  </div>
-</div>
-
-      <!-- การ์ดสรุปยอด 4 ช่อง (KPI Cards) -->
+      <!-- KPI Cards -->
       <div class="kpi-grid">
         <div class="kpi-card total">
           <div class="kpi-icon">👥</div>
@@ -559,7 +492,7 @@
         </div>
       </div>
 
-      <!-- ตารางเฝ้าระวังเรียลไทม์ -->
+      <!-- Alert Table -->
       <div class="alert-section">
         <div class="alert-header">
           <h3 style="margin: 0; color: #d32f2f; font-size: 18px; font-weight: bold;">🚨 รายชื่อนักเรียนเฝ้าระวัง (ขาดเรียนเกิน 4 ครั้งในเดือนนี้)</h3>
@@ -578,7 +511,9 @@
               </tr>
             </thead>
             <tbody id="alertTableBody">
-              <!-- ข้อมูลจะเด้งตรงนี้ -->
+              <tr>
+                <td colspan="5" class="text-center py-4 text-muted">กำลังโหลดข้อมูล...</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -586,7 +521,7 @@
 
     </div>
 
-    <!-- ================= 4. เมนูอื่นๆ ================= -->
+    <!-- ================= 4. รายงานสถิติ ================= -->
     <div id="reports-section" class="content-section" style="display: none;">
       <div class="card card-custom p-4 text-center">
         <i class="fa-solid fa-file-invoice text-warning display-3 mb-3"></i>
@@ -595,6 +530,7 @@
       </div>
     </div>
 
+    <!-- ================= 5. ตารางมาสาย ================= -->
     <div id="late-section" class="content-section" style="display: none;">
       <div class="card card-custom p-4 text-center">
         <i class="fa-solid fa-clock-rotate-left text-danger display-3 mb-3"></i>
@@ -603,6 +539,7 @@
       </div>
     </div>
 
+    <!-- ================= 6. ตั้งค่าระบบวันหยุด ================= -->
     <div id="settings-section" class="content-section" style="display: none;">
       <div class="card card-custom p-4 text-center">
         <i class="fa-solid fa-calendar-xmark text-secondary display-3 mb-3"></i>
@@ -619,36 +556,41 @@
   <script src="script.js"></script>
 
   <script>
+    // ฟังก์ชันสลับหน้าเพจ (Tab Switching)
     function switchTab(sectionId, element) {
-      // 1. ซ่อนทุกส่วนที่เป็น class content-section
-      document.querySelectorAll('.content-section').forEach(sec => {
+      // 1. ซ่อนทุกหน้าที่มี class เป็น content-section
+      const sections = document.querySelectorAll('.content-section');
+      sections.forEach(sec => {
         sec.style.display = 'none';
       });
 
-      // 2. เอาสีไฮไลท์ active ออกจากปุ่มเมนูทุกปุ่ม
-      document.querySelectorAll('.nav-link').forEach(btn => {
+      // 2. ปลดสถานะ active จากปุ่มเมนูทั้งหมด
+      const navLinks = document.querySelectorAll('.nav-link');
+      navLinks.forEach(btn => {
         btn.classList.remove('active');
       });
 
-      // 3. แสดงผลเฉพาะ section ที่เลือก
+      // 3. เปิดเฉพาะหน้า section ที่กดเลือก
       const targetSec = document.getElementById(sectionId);
       if (targetSec) {
         targetSec.style.display = 'block';
       }
 
-      // 4. ใส่สีไฮไลท์ให้ปุ่มเมนูที่กด
+      // 4. ไฮไลท์สีปุ่มเมนูที่กด
       if (element) {
         element.classList.add('active');
       }
 
-      // 5. ปิดเมนู SideBar ในมือถืออัตโนมัติ
+      // 5. ปิดแถบเมนูในมือถืออัตโนมัติ
       const sidebarEl = document.getElementById('sidebarMenu');
-      const bsOffcanvas = bootstrap.Offcanvas.getInstance(sidebarEl);
-      if (bsOffcanvas) {
-        bsOffcanvas.hide();
+      if (sidebarEl) {
+        const bsOffcanvas = bootstrap.Offcanvas.getInstance(sidebarEl);
+        if (bsOffcanvas) {
+          bsOffcanvas.hide();
+        }
       }
 
-      // 6. โหลดข้อมูลอัตโนมัติเมื่อเปลี่ยนหน้า
+      // 6. โหลดข้อมูลอัตโนมัติเมื่อกดสลับหน้า
       if (sectionId === 'students-section' && typeof fetchStudentManageList === 'function') {
         fetchStudentManageList();
       } else if (sectionId === 'dashboard-section' && typeof updateDashboard === 'function') {
