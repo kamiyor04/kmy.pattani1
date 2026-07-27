@@ -1041,3 +1041,35 @@ function renderDashboard(data) {
   });
   alertBody.innerHTML = rows;
 }
+fetch(url)
+  .then(response => {
+    // 1. เช็คระดับการเชื่อมต่อเครือข่าย
+    if (!response.ok) {
+      throw new Error(`เชื่อมต่อไม่สำเร็จ HTTP status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    Swal.close();
+    
+    // 2. เช็คว่ามี Error ส่งมาจาก Google Apps Script หรือไม่
+    if (data && data.error) {
+      console.error("Server Error:", data.error);
+      Swal.fire('พบปัญหาฝั่ง Sheet', data.error, 'error');
+      return;
+    }
+
+    // 3. เช็คว่าหาข้อมูลเจอไหม (ถ้าเป็น 0 หมด แปลว่าหาไม่เจอ)
+    if (data.total === 0) {
+      console.warn("หาข้อมูลไม่เจอตามเงื่อนไขที่ระบุ");
+      Swal.fire('ไม่พบข้อมูล', 'ไม่มีรายการบันทึกในเงื่อนไข หรือช่วงเวลาที่เลือกครับ', 'info');
+    } else {
+      console.log("ดึงข้อมูลสำเร็จ:", data);
+      renderDashboard(data);
+    }
+  })
+  .catch(err => {
+    Swal.close();
+    console.error("Fetch Error:", err);
+    Swal.fire('การเชื่อมต่อล้มเหลว', 'หาจุดเชื่อมต่อไม่เจอ หรือเกิดข้อผิดพลาด: ' + err.message, 'error');
+  });
