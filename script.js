@@ -659,11 +659,35 @@ function renderDashboard(data) {
   Swal.close();
   if (!data) return;
 
+  // 1. อัปเดต การ์ด KPI รวม
   if (document.getElementById('kpiTotal')) document.getElementById('kpiTotal').innerHTML = `${data.total || 0} <small>คน</small>`;
   if (document.getElementById('kpiPresent')) document.getElementById('kpiPresent').innerHTML = `${data.present || 0} <small>คน</small>`;
   if (document.getElementById('kpiLate')) document.getElementById('kpiLate').innerHTML = `${data.late || 0} <small>คน</small>`;
   if (document.getElementById('kpiAbsent')) document.getElementById('kpiAbsent').innerHTML = `${data.absent || 0} <small>คน</small>`;
 
+  // 2. เรนเดอร์ ตารางสรุปแยกตามระดับชั้น
+  const classSummaryBody = document.getElementById('classSummaryTableBody');
+  if (classSummaryBody && data.classSummary) {
+    if (data.classSummary.length === 0) {
+      classSummaryBody.innerHTML = `<tr><td colspan="5" class="text-center py-3 text-muted">ไม่พบข้อมูลระดับชั้น</td></tr>`;
+    } else {
+      let classRows = '';
+      data.classSummary.forEach(item => {
+        classRows += `
+          <tr>
+            <td class="ps-4 fw-bold"><span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">${item.className}</span></td>
+            <td class="text-center fw-semibold">${item.total} คน</td>
+            <td class="text-center text-success fw-bold">${item.present} คน</td>
+            <td class="text-center text-warning text-dark fw-bold">${item.late} คน</td>
+            <td class="text-center text-danger fw-bold pe-4">${item.absent} คน</td>
+          </tr>
+        `;
+      });
+      classSummaryBody.innerHTML = classRows;
+    }
+  }
+
+  // 3. เรนเดอร์ ตารางรายชื่อนักเรียนมาสายเกิน 4 ครั้ง
   const alertBody = document.getElementById('alertTableBody');
   const badge = document.getElementById('alertCountBadge');
   
@@ -674,7 +698,7 @@ function renderDashboard(data) {
     alertBody.innerHTML = `
       <tr>
         <td colspan="5" class="text-center py-4 text-success fw-bold">
-          🎉 ไม่พบนกเรียนที่ขาดเรียนเกิน 4 ครั้งในเดือนนี้
+          🎉 ไม่พบนกเรียนที่มาสายเกิน 4 ครั้งในเดือนนี้
         </td>
       </tr>`;
     return;
@@ -688,8 +712,8 @@ function renderDashboard(data) {
         <td class="text-center">${index + 1}</td>
         <td><span class="badge bg-info text-dark">${item.className}</span></td>
         <td class="fw-bold">${item.name}</td>
-        <td class="text-danger fw-bold text-center">${item.absentCount} ครั้ง</td>
-        <td>${item.lateDates || '-'}</td>
+        <td class="text-warning text-dark fw-bold text-center">${item.lateCount} ครั้ง</td>
+        <td><small class="text-secondary">${item.lateDates || '-'}</small></td>
       </tr>`;
   });
   alertBody.innerHTML = rows;

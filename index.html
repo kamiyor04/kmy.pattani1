@@ -491,7 +491,32 @@
           </div>
         </div>
       </div>
-
+<!-- ตารางสรุปการมาเรียนแยกตามระดับชั้น -->
+<div class="card shadow-sm border-0 mb-4 rounded-4">
+  <div class="card-header bg-white py-3">
+    <h5 class="card-title m-0 fw-bold text-primary">
+      🏫 สรุปการมาเรียนแยกตามระดับชั้น
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">ระดับชั้น</th>
+            <th class="text-center">นักเรียนทั้งหมด</th>
+            <th class="text-center text-success">มาเรียน / เข้าร่วม</th>
+            <th class="text-center text-warning">มาสาย / ไม่เข้าร่วม</th>
+            <th class="text-center text-danger pe-4">ขาดเรียน</th>
+          </tr>
+        </thead>
+        <tbody id="classSummaryTableBody">
+          <!-- ข้อมูลจะถูกโหลดใส่ตรงนี้ -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
       <!-- Alert Table -->
       <div class="alert-section">
         <div class="alert-header">
