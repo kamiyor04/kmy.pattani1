@@ -965,14 +965,13 @@ function toggleDashPeriodInput() {
   updateDashboard(); // โหลดข้อมูลใหม่ทันที
 }
 
-// ⚠️ นำ Web App URL ของ Google Apps Script มาใส่ในนี้
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
+
 
 function updateDashboard() {
-  // เช็ค URL หากยังไม่ได้ประกาศตัวแปรไว้
-  if (typeof WEB_APP_URL === 'undefined') {
-    window.WEB_APP_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec"; // ⚠️ ใส่ URL ของเกิร์ลตรงนี้
-  }
+  // ดึง URL จากตัวแปรหลักด้านบน ถ้าไม่มีค่อยดึงค่าสำรอง
+  const urlToFetch = typeof WEB_APP_URL !== 'undefined' 
+    ? WEB_APP_URL 
+    : "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
 
   const periodType = document.getElementById('dashPeriodType') ? document.getElementById('dashPeriodType').value : 'monthly';
   const selectedDate = document.getElementById('dashSelectedDate') ? document.getElementById('dashSelectedDate').value : '';
@@ -986,20 +985,16 @@ function updateDashboard() {
     didOpen: () => { Swal.showLoading(); }
   });
 
-  // ยิง Request ดึงข้อมูล
-  const url = `${WEB_APP_URL}?action=getDashboard&type=${periodType}&date=${selectedDate}&month=${selectedMonth}&className=${encodeURIComponent(selectedClass)}`;
+  const requestUrl = `${urlToFetch}?action=getDashboard&type=${periodType}&date=${selectedDate}&month=${selectedMonth}&className=${encodeURIComponent(selectedClass)}`;
 
-  fetch(url)
+  fetch(requestUrl)
     .then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
       return response.json();
     })
     .then(data => {
       Swal.close();
       if (data && data.error) {
-        console.error("Server Error:", data.error);
         Swal.fire('พบปัญหาฝั่ง Sheet', data.error, 'error');
       } else {
         renderDashboard(data);
