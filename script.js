@@ -967,25 +967,31 @@ function toggleDashPeriodInput() {
 
 // ฟังก์ชันดึงข้อมูลแดชบอร์ด
 function updateDashboard() {
-  const periodType = document.getElementById('dashPeriodType').value;
-  const selectedDate = document.getElementById('dashSelectedDate').value;
-  const selectedMonth = document.getElementById('dashSelectedMonth').value;
-  const selectedClass = document.getElementById('dashClassSelect').value;
+  const periodType = document.getElementById('dashPeriodType') ? document.getElementById('dashPeriodType').value : 'monthly';
+  const selectedDate = document.getElementById('dashSelectedDate') ? document.getElementById('dashSelectedDate').value : '';
+  const selectedMonth = document.getElementById('dashSelectedMonth') ? document.getElementById('dashSelectedMonth').value : '';
+  const selectedClass = document.getElementById('dashClassSelect') ? document.getElementById('dashClassSelect').value : 'all';
 
-  // แสดง Loading Alert ขนาดเล็ก หรือ Spinner ระหว่างรอข้อมูล
   Swal.fire({
     title: 'กำลังโหลดข้อมูล...',
+    text: 'โปรดรอสักครู่',
     allowOutsideClick: false,
     didOpen: () => { Swal.showLoading(); }
   });
 
-  // เรียกไปยัง Google Apps Script
   google.script.run
-    .withSuccessHandler(renderDashboard)
-    .withFailureHandler(err => {
+    .withSuccessHandler(function(data) {
+      Swal.close();
+      if (data && data.error) {
+        Swal.fire('พบข้อผิดพลาด', data.error, 'error');
+      } else {
+        renderDashboard(data);
+      }
+    })
+    .withFailureHandler(function(err) {
       Swal.close();
       console.error(err);
-      Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถดึงข้อมูลแดชบอร์ดได้', 'error');
+      Swal.fire('การเชื่อมต่อล้มเหลว', 'ไม่สามารถติดต่อ Google Sheets ได้: ' + err, 'error');
     })
     .getDashboardData({
       type: periodType,
