@@ -244,12 +244,76 @@
       background: #fafafa;
       color: #555;
     }
+
+    /* CSS ควบคุมการพิมพ์ทางการ */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .no-print {
+        display: none !important;
+      }
+      #printArea, #printArea * {
+        visibility: visible;
+      }
+      #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+
+      /* ตั้งค่าหน้าแนวนอน */
+      .page-landscape {
+        page-break-after: always;
+        break-after: page;
+        size: A4 landscape;
+        padding: 10mm;
+      }
+      .page-landscape:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+
+      /* ตั้งค่าหน้าแนวตั้ง */
+      .page-portrait {
+        page-break-after: always;
+        break-after: page;
+        size: A4 portrait;
+        padding: 15mm;
+      }
+      .page-portrait:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse !important;
+        font-size: 10pt;
+      }
+      th, td {
+        border: 1px solid #000 !important;
+        padding: 3px 2px;
+        text-align: center;
+      }
+      .text-start { text-align: left !important; }
+      
+      .signature-section {
+        margin-top: 25px;
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+        font-size: 11pt;
+        page-break-inside: avoid;
+      }
+    }
   </style>
 </head>
 <body>
 
   <!-- Header บนมือถือ -->
-  <header class="mobile-header">
+  <header class="mobile-header no-print">
     <button class="btn btn-outline-light btn-sm border-0 fs-5" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
       <i class="fa-solid fa-bars"></i>
     </button>
@@ -260,7 +324,7 @@
   </header>
 
   <!-- Sidebar -->
-  <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMenu">
+  <div class="offcanvas offcanvas-start no-print" tabindex="-1" id="sidebarMenu">
     <div class="offcanvas-header border-bottom border-secondary">
       <h5 class="offcanvas-title text-white fs-6">เมนูหลัก</h5>
       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -320,6 +384,10 @@
           <div class="col-12 col-md-5">
             <label class="form-label fw-medium mb-1"><small>🏫 เลือกระดับชั้น:</small></label>
             <select class="form-select" id="classSelect">
+              <optgroup label="ระดับปฐมวัย">
+                <option value="อนุบาล 2">อนุบาล 2</option>
+                <option value="อนุบาล 3">อนุบาล 3</option>
+              </optgroup>
               <optgroup label="ระดับประถมศึกษา">
                 <option value="ป.1">ประถมศึกษาปีที่ 1</option>
                 <option value="ป.2">ประถมศึกษาปีที่ 2</option>
@@ -378,9 +446,6 @@
             <button class="btn btn-primary btn-sm" onclick="openAddStudentModal()">
               <i class="fa-solid fa-user-plus me-1"></i>เพิ่มนักเรียน
             </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm ms-1" onclick="printStudentList()">
-              🖨️ พิมพ์รายชื่อ
-            </button>
           </div>
         </div>
 
@@ -389,6 +454,10 @@
             <label class="form-label fw-medium"><small>เลือกระดับชั้น:</small></label>
             <select id="manageClassSelect" class="form-select form-select-sm" onchange="fetchStudentManageList()">
               <option value="all">-- แสดงทุกระดับชั้น --</option>
+              <optgroup label="ระดับปฐมวัย">
+                <option value="อนุบาล 2">อนุบาล 2</option>
+                <option value="อนุบาล 3">อนุบาล 3</option>
+              </optgroup>
               <optgroup label="ระดับประถมศึกษา">
                 <option value="ป.1">ประถมศึกษาปีที่ 1</option>
                 <option value="ป.2">ประถมศึกษาปีที่ 2</option>
@@ -428,8 +497,6 @@
 
     <!-- ================= 3. หน้าแดชบอร์ดสรุปผล ================= -->
     <div id="dashboard-section" class="content-section" style="display: none;">
-      
-      <!-- ส่วนหัว & ตัวกรอง -->
       <div class="dashboard-header-bar">
         <h2 style="margin: 0; color: #333; font-size: 1.5rem; font-weight: bold;">📊 แดชบอร์ดสรุปผลการมาเรียน</h2>
         
@@ -444,6 +511,8 @@
 
           <select id="dashClassSelect" onchange="updateDashboard()" class="form-select form-select-sm" style="width: auto;">
             <option value="all">🏫 ทุกระดับชั้น (ภาพรวม)</option>
+            <option value="อนุบาล 2">อนุบาล 2</option>
+            <option value="อนุบาล 3">อนุบาล 3</option>
             <option value="ป.1">ประถมศึกษาปีที่ 1</option>
             <option value="ป.2">ประถมศึกษาปีที่ 2</option>
             <option value="ป.3">ประถมศึกษาปีที่ 3</option>
@@ -491,32 +560,34 @@
           </div>
         </div>
       </div>
-<!-- ตารางสรุปการมาเรียนแยกตามระดับชั้น -->
-<div class="card shadow-sm border-0 mb-4 rounded-4">
-  <div class="card-header bg-white py-3">
-    <h5 class="card-title m-0 fw-bold text-primary">
-      🏫 สรุปการมาเรียนแยกตามระดับชั้น
-    </h5>
-  </div>
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th class="ps-4">ระดับชั้น</th>
-            <th class="text-center">นักเรียนทั้งหมด</th>
-            <th class="text-center text-success">มาเรียน / เข้าร่วม</th>
-            <th class="text-center text-warning">มาสาย / ไม่เข้าร่วม</th>
-            <th class="text-center text-danger pe-4">ขาดเรียน</th>
-          </tr>
-        </thead>
-        <tbody id="classSummaryTableBody">
-          <!-- ข้อมูลจะถูกโหลดใส่ตรงนี้ -->
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+
+      <!-- ตารางสรุปการมาเรียนแยกตามระดับชั้น -->
+      <div class="card shadow-sm border-0 mb-4 rounded-4">
+        <div class="card-header bg-white py-3">
+          <h5 class="card-title m-0 fw-bold text-primary">
+            🏫 สรุปการมาเรียนแยกตามระดับชั้น
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="ps-4">ระดับชั้น</th>
+                  <th class="text-center">นักเรียนทั้งหมด</th>
+                  <th class="text-center text-success">มาเรียน / เข้าร่วม</th>
+                  <th class="text-center text-warning">มาสาย / ไม่เข้าร่วม</th>
+                  <th class="text-center text-danger pe-4">ขาดเรียน</th>
+                </tr>
+              </thead>
+              <tbody id="classSummaryTableBody">
+                <!-- ข้อมูลจะถูกโหลดใส่ตรงนี้ -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- Alert Table -->
       <div class="alert-section">
         <div class="alert-header">
@@ -546,98 +617,52 @@
 
     </div>
 
-    <!-- ================= 4. รายงานสถิติ ================= -->
+    <!-- ================= 4. รายงานสถิติและการมาสาย ================= -->
     <div id="reports-section" class="content-section" style="display: none;">
-      <!-- ส่วนเมนูเลือกเดือนและปุ่มพิมพ์ -->
-<!-- ส่วนเมนูเลือกเดือน/ห้องเรียน และปุ่มพิมพ์ -->
-<div class="card shadow-sm border-0 mb-4 rounded-4 no-print">
-  <div class="card-body p-4">
-    <h4 class="fw-bold text-primary mb-3">🖨️ พิมพ์รายงานสถิติและการมาสาย</h4>
-    <div class="row g-3 align-items-end">
-      <!-- Dropdown เลือกเดือน -->
-      <div class="col-md-3">
-        <label class="form-label fw-bold">เลือกเดือน</label>
-        <input type="month" id="printMonthSelect" class="form-control form-control-lg">
+      <div class="card shadow-sm border-0 mb-4 rounded-4 no-print">
+        <div class="card-body p-4">
+          <h4 class="fw-bold text-primary mb-3">🖨️ พิมพ์รายงานสถิติและการมาสาย</h4>
+          <div class="row g-3 align-items-end">
+            <!-- Dropdown เลือกเดือน -->
+            <div class="col-md-3">
+              <label class="form-label fw-bold">เลือกเดือน</label>
+              <input type="month" id="printMonthSelect" class="form-control form-control-lg">
+            </div>
+
+            <!-- Dropdown เลือกระดับชั้น -->
+            <div class="col-md-3">
+              <label class="form-label fw-bold">เลือกระดับชั้น/ห้องเรียน</label>
+              <select id="printClassSelect" class="form-select form-select-lg">
+                <option value="all">-- ทุกระดับชั้น --</option>
+                <option value="อนุบาล 2">อนุบาล 2</option>
+                <option value="อนุบาล 3">อนุบาล 3</option>
+                <option value="ป.1">ประถมศึกษาปีที่ 1</option>
+                <option value="ป.2">ประถมศึกษาปีที่ 2</option>
+                <option value="ป.3">ประถมศึกษาปีที่ 3</option>
+                <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+                <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+                <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+                <option value="ม.1">มัธยมศึกษาปีที่ 1</option>
+                <option value="ม.2">มัธยมศึกษาปีที่ 2</option>
+                <option value="ม.3">มัธยมศึกษาปีที่ 3</option>
+              </select>
+            </div>
+
+            <!-- ปุ่มสั่งพิมพ์ -->
+            <div class="col-md-6 d-flex gap-2">
+              <button class="btn btn-primary btn-lg flex-fill" onclick="generateReport('stats')">
+                📄 พิมพ์รายงานสถิติ
+              </button>
+              <button class="btn btn-warning text-dark btn-lg flex-fill" onclick="generateReport('late')">
+                ⚠️ พิมพ์รายงานเด็กสาย
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <!-- Dropdown เลือกระดับชั้น -->
-      <div class="col-md-3">
-        <label class="form-label fw-bold">เลือกระดับชั้น/ห้องเรียน</label>
-        <select id="printClassSelect" class="form-select form-select-lg">
-          <option value="all">-- ทุกระดับชั้น --</option>
-          <!-- รายชื่อห้องจะถูกโหลดใส่ตรงนี้ -->
-        </select>
-      </div>
-
-      <!-- ปุ่มสั่งพิมพ์ -->
-      <div class="col-md-6 d-flex gap-2">
-        <button class="btn btn-primary btn-lg flex-fill" onclick="generateReport('stats')">
-          📄 พิมพ์รายงานสถิติ
-        </button>
-        <button class="btn btn-warning text-dark btn-lg flex-fill" onclick="generateReport('late')">
-          ⚠️ พิมพ์รายงานเด็กสาย
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- พื้นที่สำหรับแสดงเอกสารรอการพิมพ์ -->
-<div id="printArea"></div>
-
-<style>
-/* CSS ควบคุมการพิมพ์ทางการ */
-@media print {
-  body * {
-    visibility: hidden;
-  }
-  .no-print {
-    display: none !important;
-  }
-  #printArea, #printArea * {
-    visibility: visible;
-  }
-  #printArea {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-
-  /* ตั้งค่าหน้าแนวนอน */
-  .page-landscape {
-    page-break-after: always;
-    size: A4 landscape;
-    padding: 10mm;
-  }
-
-  /* ตั้งค่าหน้าแนวตั้ง */
-  .page-portrait {
-    page-break-after: always;
-    size: A4 portrait;
-    padding: 15mm;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse !important;
-    font-size: 11pt;
-  }
-  th, td {
-    border: 1px solid #000 !important;
-    padding: 4px;
-    text-align: center;
-  }
-  .text-start { text-align: left !important; }
-  
-  .signature-section {
-    margin-top: 30px;
-    display: flex;
-    justify-content: space-around;
-    text-align: center;
-    font-size: 11pt;
-  }
-}
-</style>
+      
+      <!-- พื้นที่สำหรับแสดงเอกสารรอการพิมพ์ -->
+      <div id="printArea"></div>
     </div>
 
     <!-- ================= 5. ตารางมาสาย ================= -->
@@ -663,49 +688,253 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="script.js"></script>
 
   <script>
+    // ตั้งค่าเริ่มต้นเมื่อเปิดหน้าเว็บ
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      
+      const attendanceDateInput = document.getElementById('attendanceDate');
+      if (attendanceDateInput) attendanceDateInput.value = `${yyyy}-${mm}-${dd}`;
+
+      const monthInput = document.getElementById('printMonthSelect');
+      if (monthInput) monthInput.value = `${yyyy}-${mm}`;
+
+      const dashMonthInput = document.getElementById('dashSelectedMonth');
+      if (dashMonthInput) dashMonthInput.value = `${yyyy}-${mm}`;
+
+      const dashDateInput = document.getElementById('dashSelectedDate');
+      if (dashDateInput) dashDateInput.value = `${yyyy}-${mm}-${dd}`;
+    });
+
     // ฟังก์ชันสลับหน้าเพจ (Tab Switching)
     function switchTab(sectionId, element) {
-      // 1. ซ่อนทุกหน้าที่มี class เป็น content-section
       const sections = document.querySelectorAll('.content-section');
-      sections.forEach(sec => {
-        sec.style.display = 'none';
-      });
+      sections.forEach(sec => sec.style.display = 'none');
 
-      // 2. ปลดสถานะ active จากปุ่มเมนูทั้งหมด
       const navLinks = document.querySelectorAll('.nav-link');
-      navLinks.forEach(btn => {
-        btn.classList.remove('active');
-      });
+      navLinks.forEach(btn => btn.classList.remove('active'));
 
-      // 3. เปิดเฉพาะหน้า section ที่กดเลือก
       const targetSec = document.getElementById(sectionId);
-      if (targetSec) {
-        targetSec.style.display = 'block';
-      }
+      if (targetSec) targetSec.style.display = 'block';
 
-      // 4. ไฮไลท์สีปุ่มเมนูที่กด
-      if (element) {
-        element.classList.add('active');
-      }
+      if (element) element.classList.add('active');
 
-      // 5. ปิดแถบเมนูในมือถืออัตโนมัติ
       const sidebarEl = document.getElementById('sidebarMenu');
       if (sidebarEl) {
         const bsOffcanvas = bootstrap.Offcanvas.getInstance(sidebarEl);
-        if (bsOffcanvas) {
-          bsOffcanvas.hide();
-        }
+        if (bsOffcanvas) bsOffcanvas.hide();
       }
 
-      // 6. โหลดข้อมูลอัตโนมัติเมื่อกดสลับหน้า
       if (sectionId === 'students-section' && typeof fetchStudentManageList === 'function') {
         fetchStudentManageList();
       } else if (sectionId === 'dashboard-section' && typeof updateDashboard === 'function') {
         updateDashboard();
       }
+    }
+
+    // 🖨️ ฟังก์ชันสร้างรายงานสถิติ และรายงานเด็กมาสาย
+    function generateReport(type) {
+      const monthVal = document.getElementById('printMonthSelect').value;
+      const classVal = document.getElementById('printClassSelect').value;
+
+      if (!monthVal) {
+        Swal.fire('กรุณาเลือกเดือน', '', 'warning');
+        return;
+      }
+
+      Swal.fire({ title: 'กำลังเตรียมเอกสาร...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+      google.script.run
+        .withSuccessHandler(data => {
+          Swal.close();
+          if (!data || data.error) {
+            Swal.fire('เกิดข้อผิดพลาด', data ? data.error : 'ไม่สามารถดึงข้อมูลได้', 'error');
+            return;
+          }
+          
+          if (!data.reportData || Object.keys(data.reportData).length === 0) {
+            Swal.fire('ไม่พบข้อมูล', 'ไม่มีข้อมูลของเดือนหรือระดับชั้นที่เลือก', 'info');
+            return;
+          }
+
+          if (type === 'stats') {
+            renderLandscapeStatsReport(data);
+          } else {
+            renderPortraitLateReport(data);
+          }
+        })
+        .getReportData({ month: monthVal, className: classVal });
+    }
+
+    // 📄 1. เรนเดอร์รายงานสถิติประจำวัน (แนวนอน A4)
+    function renderLandscapeStatsReport(data) {
+      const printArea = document.getElementById('printArea');
+      printArea.innerHTML = '';
+
+      const [year, month] = data.month.split('-');
+      const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+      const monthTitle = `${thaiMonths[parseInt(month, 10) - 1]} ${parseInt(year, 10) + 543}`;
+
+      for (const cls in data.reportData) {
+        const classGroup = data.reportData[cls];
+        var fullClassName = cls;
+        if (cls.includes("ป.")) fullClassName = cls.replace("ป.", "ประถมศึกษาปีที่ ");
+        else if (cls.includes("ม.")) fullClassName = cls.replace("ม.", "มัธยมศึกษาปีที่ ");
+
+        let html = `
+          <div class="page-landscape">
+            <div style="text-align: center; margin-bottom: 12px;">
+              <h3 style="margin: 0; font-weight: bold; font-size: 16pt;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
+              <p style="margin: 4px 0; font-size: 13pt;"><b>ระดับชั้น:</b> ${fullClassName} &nbsp;&nbsp;&nbsp;&nbsp; <b>ประจำเดือน:</b> ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; <b>โรงเรียนชุมชนบ้านกะมิยอ</b></p>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 180px;" rowspan="2">ชื่อ - นามสกุล</th>
+                  <th colspan="31">วันที่</th>
+                  <th colspan="3">สรุป</th>
+                </tr>
+                <tr>
+                  ${Array.from({length: 31}, (_, i) => `<th style="width: 18px; font-size: 8pt; padding: 1px;">${i + 1}</th>`).join('')}
+                  <th style="width: 22px; color: green;">ร</th>
+                  <th style="width: 22px; color: orange;">ส</th>
+                  <th style="width: 22px; color: red;">ข</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        classGroup.students.forEach((s, idx) => {
+          html += `
+            <tr>
+              <td class="text-start">${idx + 1}. ${s.name}</td>
+              ${Array.from({length: 31}, (_, i) => {
+                const st = s.dailyStatus[i + 1] || '-';
+                let colorStyle = '';
+                if (st === 'ร') colorStyle = 'color: green; font-weight: bold;';
+                if (st === 'ส') colorStyle = 'color: orange; font-weight: bold;';
+                if (st === 'ข') colorStyle = 'color: red; font-weight: bold;';
+                return `<td style="font-size: 8.5pt; ${colorStyle}">${st}</td>`;
+              }).join('')}
+              <td style="font-weight: bold; color: green;">${s.presentCount || '-'}</td>
+              <td style="font-weight: bold; color: orange;">${s.lateCount || '-'}</td>
+              <td style="font-weight: bold; color: red;">${s.absentCount || '-'}</td>
+            </tr>
+          `;
+        });
+
+        html += `
+              </tbody>
+            </table>
+
+            <div class="signature-section">
+              <div>
+                <br>ลงชื่อ..........................................................ครูประจำชั้น<br>
+                (..........................................................)<br>
+                ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
+              </div>
+              <div>
+                <br>ลงชื่อ..........................................................<br>
+                (นายอับดุล เจะสือแต)<br>
+                ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+              </div>
+              <div>
+                <br>ลงชื่อ..........................................................<br>
+                (นางวันพิทยา มุสตาฟา)<br>
+                ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+              </div>
+            </div>
+          </div>
+        `;
+        printArea.innerHTML += html;
+      }
+
+      setTimeout(() => window.print(), 500);
+    }
+
+    // ⚠️ 2. เรนเดอร์รายงานเด็กมาสาย >= 4 ครั้ง (แนวตั้ง A4)
+    function renderPortraitLateReport(data) {
+      const printArea = document.getElementById('printArea');
+      printArea.innerHTML = '';
+
+      const [year, month] = data.month.split('-');
+      const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+      const monthTitle = `${thaiMonths[parseInt(month, 10) - 1]} ${parseInt(year, 10) + 543}`;
+
+      for (const cls in data.reportData) {
+        const classGroup = data.reportData[cls];
+        const lateStudents = classGroup.students.filter(s => s.lateCount >= 4);
+
+        var fullClassName = cls;
+        if (cls.includes("ป.")) fullClassName = cls.replace("ป.", "ประถมศึกษาปีที่ ");
+        else if (cls.includes("ม.")) fullClassName = cls.replace("ม.", "มัธยมศึกษาปีที่ ");
+
+        let html = `
+          <div class="page-portrait">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <h3 style="margin: 0; font-weight: bold; font-size: 16pt;">รายงานสรุปรายชื่อนักเรียนมาสาย / ไม่เข้าร่วมกิจกรรม (4 ครั้งขึ้นไป)</h3>
+              <p style="margin: 5px 0; font-size: 13pt;"><b>ระดับชั้น:</b> ${fullClassName} &nbsp;&nbsp;&nbsp;&nbsp; <b>ประจำเดือน:</b> ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; <b>โรงเรียนชุมชนบ้านกะมิยอ</b></p>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 8%;">ลำดับ</th>
+                  <th style="width: 32%;">ชื่อ - นามสกุล</th>
+                  <th style="width: 15%;">จำนวนสาย</th>
+                  <th style="width: 45%;">วันที่มาสาย (วัน/เดือน/ปี)</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        if (lateStudents.length === 0) {
+          html += `<tr><td colspan="4" style="padding: 15px; text-align: center;">🎉 ไม่พบนกเรียนที่มาสายตั้งแต่ 4 ครั้งขึ้นไปในเดือนนี้</td></tr>`;
+        } else {
+          lateStudents.forEach((s, idx) => {
+            html += `
+              <tr>
+                <td>${idx + 1}</td>
+                <td class="text-start">${s.name}</td>
+                <td style="font-weight: bold; color: red;">${s.lateCount} ครั้ง</td>
+                <td class="text-start">${s.lateDates.join(', ')}</td>
+              </tr>
+            `;
+          });
+        }
+
+        html += `
+              </tbody>
+            </table>
+
+            <div class="signature-section">
+              <div>
+                <br>ลงชื่อ..........................................................ครูประจำชั้น<br>
+                (..........................................................)<br>
+                ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
+              </div>
+              <div>
+                <br>ลงชื่อ..........................................................<br>
+                (นายอับดุล เจะสือแต)<br>
+                ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+              </div>
+              <div>
+                <br>ลงชื่อ..........................................................<br>
+                (นางวันพิทยา มุสตาฟา)<br>
+                ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+              </div>
+            </div>
+          </div>
+        `;
+        printArea.innerHTML += html;
+      }
+
+      setTimeout(() => window.print(), 500);
     }
   </script>
 </body>
