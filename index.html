@@ -549,26 +549,38 @@
     <!-- ================= 4. รายงานสถิติ ================= -->
     <div id="reports-section" class="content-section" style="display: none;">
       <!-- ส่วนเมนูเลือกเดือนและปุ่มพิมพ์ -->
+<!-- ส่วนเมนูเลือกเดือน/ห้องเรียน และปุ่มพิมพ์ -->
 <div class="card shadow-sm border-0 mb-4 rounded-4 no-print">
   <div class="card-body p-4">
     <h4 class="fw-bold text-primary mb-3">🖨️ พิมพ์รายงานสถิติและการมาสาย</h4>
     <div class="row g-3 align-items-end">
-      <div class="col-md-4">
-        <label class="form-label fw-bold">เลือกเดือนที่ต้องการพิมพ์</label>
+      <!-- Dropdown เลือกเดือน -->
+      <div class="col-md-3">
+        <label class="form-label fw-bold">เลือกเดือน</label>
         <input type="month" id="printMonthSelect" class="form-control form-control-lg">
       </div>
-      <div class="col-md-8 d-flex gap-2">
+
+      <!-- Dropdown เลือกระดับชั้น -->
+      <div class="col-md-3">
+        <label class="form-label fw-bold">เลือกระดับชั้น/ห้องเรียน</label>
+        <select id="printClassSelect" class="form-select form-select-lg">
+          <option value="all">-- ทุกระดับชั้น --</option>
+          <!-- รายชื่อห้องจะถูกโหลดใส่ตรงนี้ -->
+        </select>
+      </div>
+
+      <!-- ปุ่มสั่งพิมพ์ -->
+      <div class="col-md-6 d-flex gap-2">
         <button class="btn btn-primary btn-lg flex-fill" onclick="generateReport('stats')">
-          📄 พิมพ์เอกสารสถิติ (แนวนอน)
+          📄 พิมพ์รายงานสถิติ
         </button>
         <button class="btn btn-warning text-dark btn-lg flex-fill" onclick="generateReport('late')">
-          ⚠️ พิมพ์เอกสารนักเรียนมาสาย (แนวตั้ง)
+          ⚠️ พิมพ์รายงานเด็กสาย
         </button>
       </div>
     </div>
   </div>
 </div>
-
 <!-- พื้นที่สำหรับแสดงเอกสารรอการพิมพ์ -->
 <div id="printArea"></div>
 

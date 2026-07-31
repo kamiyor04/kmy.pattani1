@@ -910,3 +910,69 @@ function renderPortraitLateReport(data) {
 
   setTimeout(() => window.print(), 500);
 }
+// โหลดตัวเลือกห้องเรียนเข้า Dropdown เมื่อเปิดหน้า
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  if (document.getElementById('printMonthSelect')) {
+    document.getElementById('printMonthSelect').value = `${yyyy}-${mm}`;
+  }
+
+  // ดึงรายชื่อห้องเรียนมาใส่ Dropdown
+  if (typeof google !== 'undefined' && google.script) {
+    google.script.run
+      .withSuccessHandler(classes => {
+        const select = document.getElementById('printClassSelect');
+        if (select && classes.length > 0) {
+          select.innerHTML = '<option value="all">-- ทุกระดับชั้น --</option>';
+          classes.forEach(cls => {
+            select.innerHTML += `<option value="${cls}">${cls}</option>`;
+          });
+        }
+      })
+      .getClassList();
+  }
+});
+
+function generateReport(type) {
+  const monthVal = document.getElementById('printMonthSelect').value;
+  const selectedClass = document.getElementById('printClassSelect').value;
+
+  if (!monthVal) {
+    Swal.fire('กรุณาเลือกเดือน', '', 'warning');
+    return;
+  }
+
+  Swal.fire({ title: 'กำลังเตรียมเอกสาร...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+  google.script.run
+    .withSuccessHandler(data => {
+      Swal.close();
+      if (data.error) {
+        Swal.fire('เกิดข้อผิดพลาด', data.error, 'error');
+        return;
+      }
+      
+      // กรองเฉพาะห้องที่เลือก (ถ้าเลือกเฉพาะห้อง)
+      if (selectedClass !== 'all') {
+        const filteredData = {};
+        if (data.reportData[selectedClass]) {
+          filteredData[selectedClass] = data.reportData[selectedClass];
+        }
+        data.reportData = filteredData;
+      }
+
+      if (Object.keys(data.reportData).length === 0) {
+        Swal.fire('ไม่พบข้อมูล', 'ไม่มีข้อมูลของระดับชั้นที่เลือกในเดือนนี้', 'info');
+        return;
+      }
+
+      if (type === 'stats') {
+        renderLandscapeStatsReport(data);
+      } else {
+        renderPortraitLateReport(data);
+      }
+    })
+    .getPrintReportData({ month: monthVal });
+}
