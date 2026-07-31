@@ -1,10 +1,28 @@
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec"; // ⚠️ อย่าลืมใส่ URL จริงของคุณนะครับ
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
 
+// --- 1. Event Listener เริ่มต้นเมื่อโหลดหน้าเว็บ ---
 document.addEventListener("DOMContentLoaded", () => {
+  const today = new Date().toISOString().split('T')[0];
+  const currentMonth = today.substring(0, 7);
+
   const dateInput = document.getElementById('attendanceDate');
   if (dateInput) dateInput.valueAsDate = new Date();
+
+  if (document.getElementById('dashSelectedDate')) {
+    document.getElementById('dashSelectedDate').value = today;
+  }
+  if (document.getElementById('dashSelectedMonth')) {
+    document.getElementById('dashSelectedMonth').value = currentMonth;
+  }
+  if (document.getElementById('printMonthSelect')) {
+    document.getElementById('printMonthSelect').value = currentMonth;
+  }
+
+  // ดึงรายชื่อห้องเรียนมาใส่ Dropdown สำหรับหน้าพิมพ์รายงาน
+  fetchClassList();
 });
 
+// --- 2. ฟังก์ชันเช็คชื่อนักเรียน (Attendance) ---
 function loadStudentList() {
   const className = document.getElementById('classSelect').value;
   const attendanceDate = document.getElementById('attendanceDate').value;
@@ -14,7 +32,7 @@ function loadStudentList() {
     Swal.fire({
       icon: 'warning',
       title: 'แจ้งเตือน',
-      text: 'กรุณาเลือกวันที่บันทึกกิจกรรมก่อนครับ 55',
+      text: 'กรุณาเลือกวันที่บันทึกกิจกรรมก่อนครับ',
       confirmButtonColor: '#4f46e5'
     });
     return;
@@ -31,7 +49,6 @@ function loadStudentList() {
   const oldScript = document.getElementById('jsonp-script');
   if (oldScript) oldScript.remove();
 
-  // ตั้ง Timeout 12 วินาที ถ้ายังไม่ตอบกลับให้ตัดการทำงานทันที
   const timer = setTimeout(() => {
     const s = document.getElementById('jsonp-script');
     if (s) s.remove();
@@ -45,7 +62,7 @@ function loadStudentList() {
   }, 12000);
 
   window.renderStudentTable = function(response) {
-    clearTimeout(timer); // ยกเลิกเวลาถ้าได้ข้อมูลแล้ว
+    clearTimeout(timer);
     
     if (!response || response.status === "error") {
       Swal.fire({
@@ -184,9 +201,7 @@ async function submitAttendance() {
       title: 'กำลังบันทึกข้อมูล...',
       text: 'กรุณารอสักครู่ ระบบกำลังอัปเดตข้อมูลลง Google Sheets',
       allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      }
+      didOpen: () => Swal.showLoading()
     });
 
     try {
@@ -225,7 +240,8 @@ async function submitAttendance() {
     }
   }
 }
-// ดึงรายชื่อมาแสดงในหน้าจัดการ
+
+// --- 3. การจัดการรายชื่อนักเรียน (Manage Students) ---
 function fetchStudentManageList() {
   const selectedClass = document.getElementById('manageClassSelect').value;
   const tbody = document.getElementById('manageStudentTableBody');
@@ -245,7 +261,7 @@ function renderManageStudentTable(response) {
   }
 
   const students = response.data;
-  if (students.length === 0) {
+  if (!students || students.length === 0) {
     tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">ไม่พบข้อมูลนักเรียน</td></tr>`;
     return;
   }
@@ -271,7 +287,6 @@ function renderManageStudentTable(response) {
   tbody.innerHTML = html;
 }
 
-// ฟังก์ชันเปิด Modal เพิ่มนักเรียนใหม่ + เช็คเลขที่/ชื่อ ซ้ำในห้อง
 function openAddStudentModal() {
   Swal.fire({
     title: '➕ เพิ่มนักเรียนใหม่',
@@ -288,8 +303,8 @@ function openAddStudentModal() {
         </optgroup>
         <optgroup label="ระดับมัธยมศึกษาตอนต้น">
           <option value="ม.1">มัธยมศึกษาปีที่ 1 (ม.1)</option>
-          <option value="ม.2">ม.2</option>
-          <option value="ม.3">ม.3</option>
+          <option value="ม.2">มัธยมศึกษาปีที่ 2 (ม.2)</option>
+          <option value="ม.3">มัธยมศึกษาปีที่ 3 (ม.3)</option>
         </optgroup>
       </select>
 
@@ -308,28 +323,34 @@ function openAddStudentModal() {
       const no = document.getElementById('swal-no').value.trim();
       const name = document.getElementById('swal-name').value.trim();
 
-      // 1. ตรวจสอบว่ากรอกข้อมูลครบถ้วนหรือไม่
       if (!no || !name) {
         Swal.showValidationMessage('กรุณากรอกเลขที่และชื่อ-นามสกุลให้ครบถ้วนครับ');
         return false;
       }
 
-      // 2. ดึงข้อมูลนักเรียนทั้งหมดในระบบมาตรวจสอบ (สมมติว่าเกิร์ลเก็บไว้อยู่ในตัวแปร global หรือ localStorage)
-      // หากเก็บใน localStorage หรือดึงมาจาก Google Sheets ให้ปรับชื่อตัวแปรที่เก็บข้อมูลนักเรียน
-      const allStudents = window.studentData || []; // หรือดึงจากแหล่งข้อมูลนักเรียนในโปรเจกต์
+      // ดึงตารางปัจจุบันมาเช็คความซ้ำซ้อนเบื้องต้น
+      const rows = document.querySelectorAll('#manageStudentTableBody tr');
+      let isDuplicateNo = false;
+      let isDuplicateName = false;
 
-      // กรองเฉพาะนักเรียนในห้องเดียวกัน
-      const sameClassStudents = allStudents.filter(s => s.className === className);
+      rows.forEach(row => {
+        const cols = row.querySelectorAll('td');
+        if (cols.length >= 3) {
+          const rowClass = cols[0].innerText.trim();
+          const rowNo = cols[1].innerText.trim();
+          const rowName = cols[2].innerText.trim();
 
-      // 3. เช็คว่าเลขที่ซ้ำหรือไม่
-      const isDuplicateNo = sameClassStudents.some(s => String(s.no) === String(no));
+          if (rowClass === className) {
+            if (rowNo === no) isDuplicateNo = true;
+            if (rowName === name) isDuplicateName = true;
+          }
+        }
+      });
+
       if (isDuplicateNo) {
         Swal.showValidationMessage(`เลขที่ ${no} ในชั้น ${className} มีในระบบแล้วครับ`);
         return false;
       }
-
-      // 4. เช็คว่าชื่อ-นามสกุล ซ้ำหรือไม่
-      const isDuplicateName = sameClassStudents.some(s => s.name.trim() === name);
       if (isDuplicateName) {
         Swal.showValidationMessage(`นักเรียนชื่อ "${name}" มีอยู่ในชั้น ${className} แล้วครับ`);
         return false;
@@ -337,15 +358,13 @@ function openAddStudentModal() {
 
       return { no, name, className };
     }
-  }).then(async (result) => {
+  }).then((result) => {
     if (result.isConfirmed) {
-      // ส่งข้อมูลไปบันทึกยัง Google Apps Script หรือ Database
       saveStudentData('addStudent', { student: result.value });
     }
   });
 }
 
-// ยืนยันลบน้องนักเรียน
 function confirmDeleteStudent(no, className, name) {
   Swal.fire({
     title: 'ยืนยันการลบ?',
@@ -362,27 +381,7 @@ function confirmDeleteStudent(no, className, name) {
   });
 }
 
-// ฟังก์ชันส่งข้อมูลไปยัง Apps Script
-async function saveStudentData(action, bodyData) {
-  Swal.showLoading();
-  try {
-    const res = await fetch(WEB_APP_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: action, ...bodyData })
-    });
-    const data = await res.json();
-    if (data.status === "success") {
-      Swal.fire('สำเร็จ!', data.message, 'success');
-      fetchStudentManageList(); // โหลดตารางใหม่
-    } else {
-      Swal.fire('ผิดพลาด', data.message, 'error');
-    }
-  } catch (err) {
-    Swal.fire('ผิดพลาด', err.message, 'error');
-  }
-}
-// ฟังก์ชันบันทึกข้อมูลนักเรียนใหม่
+// ฟังก์ชันหลักในการบันทึก/เพิ่ม/ลบ ข้อมูลนักเรียน
 async function saveStudentData(action, payload) {
   Swal.fire({
     title: 'กำลังบันทึกข้อมูล...',
@@ -393,11 +392,12 @@ async function saveStudentData(action, payload) {
   try {
     const response = await fetch(WEB_APP_URL, {
       method: 'POST',
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ action: action, ...payload })
     });
     const result = await response.json();
 
-    if (result.success) {
+    if (result.status === "success" || result.success) {
       Swal.fire({
         icon: 'success',
         title: 'สำเร็จ!',
@@ -405,10 +405,8 @@ async function saveStudentData(action, payload) {
         timer: 1500,
         showConfirmButton: false
       });
-      // โหลดตารางนักเรียนใหม่
       fetchStudentManageList();
     } else {
-      // ถ้า Apps Script ตรวจพบว่าซ้ำ จะเด้งเตือนตรงนี้ทันที
       Swal.fire({
         icon: 'error',
         title: 'ไม่สามารถบันทึกได้',
@@ -424,26 +422,17 @@ async function saveStudentData(action, payload) {
   }
 }
 
-// ฟังก์ชันพิมพ์รายชื่อนักเรียน ( Pop-up สวยงาม ไม่ใช้ alert เบราว์เซอร์ + รองรับทุกชั้น ป.1-ป.6)
+// --- 4. พิมพ์แบบฟอร์มรายชื่อนักเรียน ---
 function printStudentList() {
-  // 1. ดึงข้อความชั้นเรียนจากช่อง dropdown ให้ตรงเป๊ะ
   let selectedClassText = '';
-  
-  // หา element ตัวเลือกชั้นเรียน
   const classSelect = document.getElementById('manageClassSelect') || 
                       document.getElementById('classSelect') || 
-                      document.getElementById('selectClass') ||
                       document.querySelector('select');
 
   if (classSelect) {
-    if (classSelect.selectedIndex !== -1) {
-      selectedClassText = classSelect.options[classSelect.selectedIndex].text.trim();
-    } else if (classSelect.value) {
-      selectedClassText = classSelect.value.trim();
-    }
+    selectedClassText = classSelect.options[classSelect.selectedIndex]?.text.trim() || classSelect.value.trim();
   }
 
-  // แปลงชื่อชั้นเรียนสำหรับแสดงผล (เช่น ประถมศึกษาปีที่ 5 -> ป.5)
   let displayClassName = selectedClassText;
   if (selectedClassText.includes('ประถมศึกษาปีที่')) {
     displayClassName = selectedClassText.replace('ประถมศึกษาปีที่', 'ป.').replace(/\s+/g, '');
@@ -452,52 +441,36 @@ function printStudentList() {
   }
 
   if (!displayClassName || displayClassName.includes('เลือก') || displayClassName.includes('ทั้งหมด')) {
-    displayClassName = 'ป.5'; // เผื่อกรณีหาไม่เจอ ให้ใช้ตามหน้าจอปัจจุบัน
+    displayClassName = 'ป.5';
   }
 
   let classStudents = [];
-
-  // 2. กวาดรายชื่อจากตารางที่แสดงอยู่บนหน้าจอทันที
-  const tableRows = document.querySelectorAll('table tbody tr');
+  const tableRows = document.querySelectorAll('#manageStudentTableBody tr, #studentTableBody tr');
   
   tableRows.forEach(row => {
     const cols = row.querySelectorAll('td');
-    
-    // โครงสร้างตาราง: col[0]=ป้าย ป.5, col[1]=เลขที่, col[2]=ชื่อ-นามสกุล
     if (cols.length >= 3) {
       const noText = cols[1].innerText.trim();
       const nameText = cols[2].innerText.trim();
-
       if (noText && nameText && !isNaN(noText)) {
-        classStudents.push({
-          no: noText,
-          name: nameText
-        });
+        classStudents.push({ no: noText, name: nameText });
       }
-    } 
-    else if (cols.length >= 2) {
+    } else if (cols.length >= 2) {
       const noText = cols[0].innerText.trim();
       const nameText = cols[1].innerText.trim();
-
       if (noText && nameText && !isNaN(noText)) {
-        classStudents.push({
-          no: noText,
-          name: nameText
-        });
+        classStudents.push({ no: noText, name: nameText });
       }
     }
   });
 
-  // 3. ถ้าไม่พบข้อมูล ให้แสดง Custom Pop-up สวยงาม (ไม่ใช่ alert เบราว์เซอร์)
   if (classStudents.length === 0) {
     showCustomPopup('ไม่พบข้อมูลนักเรียน', `กรุณากดเลือกระดับชั้นให้ตารางแสดงรายชื่อนักเรียนก่อนสั่งพิมพ์ครับ`);
     return;
   }
 
-  // 4. เรียงลำดับตามเลขที่ (1, 2, 3, ...)
   classStudents.sort((a, b) => Number(a.no) - Number(b.no));
 
-  // 5. สร้างแบบฟอร์มเอกสารทางการ
   let rowsHtml = classStudents.map((s, index) => `
     <tr>
       <td style="text-align: center;">${s.no || (index + 1)}</td>
@@ -507,9 +480,7 @@ function printStudentList() {
     </tr>
   `).join('');
 
-  // 6. เปิดหน้าต่างพิมพ์เอกสารทันที
   const printWindow = window.open('', '_blank');
-  
   printWindow.document.write(`
     <!DOCTYPE html>
     <html lang="th">
@@ -520,14 +491,11 @@ function printStudentList() {
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
         body { font-family: 'Sarabun', sans-serif; font-size: 16pt; line-height: 1.6; margin: 0; padding: 20px; color: #000; }
         .header { text-align: center; margin-bottom: 20px; }
-        .garuda-img { width: 80px; height: auto; margin-bottom: 10px; }
         .title { font-weight: bold; font-size: 18pt; margin-bottom: 5px; }
         .subtitle { font-size: 16pt; margin-bottom: 15px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #000; padding: 8px 5px; font-size: 15pt; }
         th { background-color: #f2f2f2; font-weight: bold; text-align: center; }
-        .footer-sign { margin-top: 40px; width: 100%; display: table; }
-        .sign-box { display: table-cell; width: 50%; text-align: center; vertical-align: top; }
         @media print { @page { size: A4 portrait; margin: 2cm 1.5cm 2cm 2cm; } body { padding: 0; } }
       </style>
     </head>
@@ -557,9 +525,7 @@ function printStudentList() {
   printWindow.document.close();
 }
 
-// ฟังก์ชันสร้าง Pop-up สวยๆ ขึ้นมาเองโดยไม่ใช้ alert() ของเบราว์เซอร์
 function showCustomPopup(title, message) {
-  // ลบ popup เก่าถ้ามี
   const existingModal = document.getElementById('custom-alert-modal');
   if (existingModal) existingModal.remove();
 
@@ -567,7 +533,7 @@ function showCustomPopup(title, message) {
     <div id="custom-alert-modal" style="
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center;
-      z-index: 99999; animation: fadeIn 0.2s ease-in-out;
+      z-index: 99999;
     ">
       <div style="
         background: #ffffff; padding: 25px 30px; border-radius: 12px; width: 90%; max-width: 420px;
@@ -578,28 +544,15 @@ function showCustomPopup(title, message) {
         <p style="margin: 0 0 20px 0; color: #666; font-size: 15px; line-height: 1.5;">${message}</p>
         <button onclick="document.getElementById('custom-alert-modal').remove()" style="
           background: #8a5a00; color: white; border: none; padding: 10px 25px; font-size: 16px;
-          border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;
-        " onmouseover="this.style.background='#6c4600'" onmouseout="this.style.background='#8a5a00'">ตกลง</button>
+          border-radius: 6px; cursor: pointer; font-weight: bold;
+        ">ตกลง</button>
       </div>
     </div>
   `;
-
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
-// ตั้งค่าเริ่มต้นวันที่และเดือนปัจจุบันเมื่อโหลดหน้าเว็บ
-document.addEventListener('DOMContentLoaded', function() {
-  const today = new Date().toISOString().split('T')[0];
-  const currentMonth = today.substring(0, 7); // YYYY-MM
-  
-  if (document.getElementById('dashSelectedDate')) {
-    document.getElementById('dashSelectedDate').value = today;
-  }
-  if (document.getElementById('dashSelectedMonth')) {
-    document.getElementById('dashSelectedMonth').value = currentMonth;
-  }
-});
 
-// สลับช่อง Input ระหว่าง เลือกวันที่ VS เลือกเดือน
+// --- 5. การจัดการ Dashboard ---
 function toggleDashPeriodInput() {
   const periodType = document.getElementById('dashPeriodType').value;
   const dateInput = document.getElementById('dashSelectedDate');
@@ -617,10 +570,6 @@ function toggleDashPeriodInput() {
 }
 
 function updateDashboard() {
-  const webAppUrl = typeof WEB_APP_URL !== 'undefined' 
-    ? WEB_APP_URL 
-    : "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
-
   const periodType = document.getElementById('dashPeriodType') ? document.getElementById('dashPeriodType').value : 'monthly';
   const selectedDate = document.getElementById('dashSelectedDate') ? document.getElementById('dashSelectedDate').value : '';
   const selectedMonth = document.getElementById('dashSelectedMonth') ? document.getElementById('dashSelectedMonth').value : '';
@@ -630,10 +579,10 @@ function updateDashboard() {
     title: 'กำลังโหลดข้อมูล...',
     text: 'โปรดรอสักครู่',
     allowOutsideClick: false,
-    didOpen: () => { Swal.showLoading(); }
+    didOpen: () => Swal.showLoading()
   });
 
-  const fetchUrl = `${webAppUrl}?action=getDashboard&type=${periodType}&date=${selectedDate}&month=${selectedMonth}&className=${encodeURIComponent(selectedClass)}`;
+  const fetchUrl = `${WEB_APP_URL}?action=getDashboard&type=${periodType}&date=${selectedDate}&month=${selectedMonth}&className=${encodeURIComponent(selectedClass)}`;
 
   fetch(fetchUrl)
     .then(response => {
@@ -650,22 +599,18 @@ function updateDashboard() {
     })
     .catch(err => {
       Swal.close();
-      console.error("Fetch Error:", err);
       Swal.fire('การเชื่อมต่อล้มเหลว', 'ไม่สามารถเชื่อมต่อ Google Sheets ได้: ' + err.message, 'error');
     });
 }
 
 function renderDashboard(data) {
-  Swal.close();
   if (!data) return;
 
-  // 1. อัปเดต การ์ด KPI รวม
   if (document.getElementById('kpiTotal')) document.getElementById('kpiTotal').innerHTML = `${data.total || 0} <small>คน</small>`;
   if (document.getElementById('kpiPresent')) document.getElementById('kpiPresent').innerHTML = `${data.present || 0} <small>คน</small>`;
   if (document.getElementById('kpiLate')) document.getElementById('kpiLate').innerHTML = `${data.late || 0} <small>คน</small>`;
   if (document.getElementById('kpiAbsent')) document.getElementById('kpiAbsent').innerHTML = `${data.absent || 0} <small>คน</small>`;
 
-  // 2. เรนเดอร์ ตารางสรุปแยกตามระดับชั้น
   const classSummaryBody = document.getElementById('classSummaryTableBody');
   if (classSummaryBody && data.classSummary) {
     if (data.classSummary.length === 0) {
@@ -687,20 +632,13 @@ function renderDashboard(data) {
     }
   }
 
-  // 3. เรนเดอร์ ตารางรายชื่อนักเรียนมาสายเกิน 4 ครั้ง
   const alertBody = document.getElementById('alertTableBody');
   const badge = document.getElementById('alertCountBadge');
-  
   if (!alertBody) return;
 
   if (!data.alerts || data.alerts.length === 0) {
     if (badge) badge.innerText = 'พบ 0 คน';
-    alertBody.innerHTML = `
-      <tr>
-        <td colspan="5" class="text-center py-4 text-success fw-bold">
-          🎉 ไม่พบนกเรียนที่มาสายเกิน 4 ครั้งในเดือนนี้
-        </td>
-      </tr>`;
+    alertBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-success fw-bold">🎉 ไม่พบนกเรียนที่มาสายเกิน 4 ครั้งในเดือนนี้</td></tr>`;
     return;
   }
 
@@ -718,18 +656,30 @@ function renderDashboard(data) {
   });
   alertBody.innerHTML = rows;
 }
-// กำหนดเดือนปัจจุบันตั้งต้น
-document.addEventListener('DOMContentLoaded', () => {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  if (document.getElementById('printMonthSelect')) {
-    document.getElementById('printMonthSelect').value = `${yyyy}-${mm}`;
-  }
-});
+
+// --- 6. พิมพ์รายงานสรุปประจำเดือน (Report) ---
+function fetchClassList() {
+  const select = document.getElementById('printClassSelect');
+  if (!select) return;
+
+  fetch(`${WEB_APP_URL}?action=getClassList`)
+    .then(res => res.json())
+    .then(res => {
+      const classes = res.data || [];
+      if (classes.length > 0) {
+        select.innerHTML = '<option value="all">-- ทุกระดับชั้น --</option>';
+        classes.forEach(cls => {
+          select.innerHTML += `<option value="${cls}">${cls}</option>`;
+        });
+      }
+    })
+    .catch(err => console.error("Error fetching class list:", err));
+}
 
 function generateReport(type) {
-  const monthVal = document.getElementById('printMonthSelect').value;
+  const monthVal = document.getElementById('printMonthSelect')?.value;
+  const selectedClass = document.getElementById('printClassSelect')?.value || 'all';
+
   if (!monthVal) {
     Swal.fire('กรุณาเลือกเดือน', '', 'warning');
     return;
@@ -737,26 +687,37 @@ function generateReport(type) {
 
   Swal.fire({ title: 'กำลังเตรียมเอกสาร...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-  google.script.run
-    .withSuccessHandler(data => {
+  const fetchUrl = `${WEB_APP_URL}?action=getReportData&month=${monthVal}&className=${encodeURIComponent(selectedClass)}`;
+
+  fetch(fetchUrl)
+    .then(res => res.json())
+    .then(data => {
       Swal.close();
       if (data.error) {
         Swal.fire('เกิดข้อผิดพลาด', data.error, 'error');
         return;
       }
-      
+
+      if (!data.reportData || Object.keys(data.reportData).length === 0) {
+        Swal.fire('ไม่พบข้อมูล', 'ไม่มีข้อมูลของระดับชั้นที่เลือกในเดือนนี้', 'info');
+        return;
+      }
+
       if (type === 'stats') {
         renderLandscapeStatsReport(data);
       } else {
         renderPortraitLateReport(data);
       }
     })
-    .getPrintReportData({ month: monthVal });
+    .catch(err => {
+      Swal.close();
+      Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: ' + err.message, 'error');
+    });
 }
 
-// 1. เรนเดอร์เอกสารสถิติ (แนวนอน)
 function renderLandscapeStatsReport(data) {
   const printArea = document.getElementById('printArea');
+  if (!printArea) return;
   printArea.innerHTML = '';
 
   const [year, month] = data.month.split('-');
@@ -765,14 +726,12 @@ function renderLandscapeStatsReport(data) {
 
   for (const cls in data.reportData) {
     const classGroup = data.reportData[cls];
-    
     let html = `
       <div class="page-landscape">
         <div style="text-align: center; margin-bottom: 15px;">
           <h3 style="margin: 0; font-weight: bold;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
           <p style="margin: 5px 0;">ระดับชั้น: ${cls} &nbsp;&nbsp;&nbsp;&nbsp; ประจำเดือน: ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; โรงเรียนชุมชนบ้านกะมิยอ</p>
         </div>
-
         <table>
           <thead>
             <tr>
@@ -794,10 +753,7 @@ function renderLandscapeStatsReport(data) {
       html += `
         <tr>
           <td class="text-start">${idx + 1}. ${s.name}</td>
-          ${Array.from({length: 31}, (_, i) => {
-            const st = s.dailyStatus[i + 1] || '-';
-            return `<td style="font-size: 9pt;">${st}</td>`;
-          }).join('')}
+          ${Array.from({length: 31}, (_, i) => `<td style="font-size: 9pt;">${s.dailyStatus[i + 1] || '-'}</td>`).join('')}
           <td style="font-weight: bold; color: green;">${s.presentCount || '-'}</td>
           <td style="font-weight: bold; color: orange;">${s.lateCount || '-'}</td>
           <td style="font-weight: bold; color: red;">${s.absentCount || '-'}</td>
@@ -808,23 +764,10 @@ function renderLandscapeStatsReport(data) {
     html += `
           </tbody>
         </table>
-
-        <div class="signature-section">
-          <div>
-            <br>ลงชื่อ..........................................................ครูประจำชั้น<br>
-            (..........................................................)<br>
-            ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
-          </div>
-          <div>
-            <br>ลงชื่อ..........................................................<br>
-            (นายอับดุล เจะสือแม)<br>
-            ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
-          </div>
-          <div>
-            <br>ลงชื่อ..........................................................<br>
-            (นางวันพิทยา มุสตาฟา)<br>
-            ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
-          </div>
+        <div class="signature-section" style="margin-top: 30px; display: flex; justify-content: space-between; text-align: center;">
+          <div><br>ลงชื่อ..........................................................ครูประจำชั้น<br>(..........................................................)<br>ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ</div>
+          <div><br>ลงชื่อ..........................................................<br>(นายอับดุล เจะสือแม)<br>ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</div>
+          <div><br>ลงชื่อ..........................................................<br>(นางวันพิทยา มุสตาฟา)<br>ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</div>
         </div>
       </div>
     `;
@@ -834,9 +777,9 @@ function renderLandscapeStatsReport(data) {
   setTimeout(() => window.print(), 500);
 }
 
-// 2. เรนเดอร์เอกสารนักเรียนมาสายเกิน 4 ครั้ง (แนวตั้ง)
 function renderPortraitLateReport(data) {
   const printArea = document.getElementById('printArea');
+  if (!printArea) return;
   printArea.innerHTML = '';
 
   const [year, month] = data.month.split('-');
@@ -853,7 +796,6 @@ function renderPortraitLateReport(data) {
           <h3 style="margin: 0; font-weight: bold;">รายงานนักเรียนมาสาย / ไม่เข้าร่วมกิจกรรม (4 ครั้งขึ้นไป)</h3>
           <p style="margin: 5px 0;">ระดับชั้น: ${cls} &nbsp;&nbsp;&nbsp;&nbsp; ประจำเดือน: ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; โรงเรียนชุมชนบ้านกะมิยอ</p>
         </div>
-
         <table>
           <thead>
             <tr>
@@ -867,16 +809,15 @@ function renderPortraitLateReport(data) {
     `;
 
     if (lateStudents.length === 0) {
-      html += `<tr><td colspan="4" style="padding: 15px;">🎉 ไม่พบนกเรียนที่มาสายเกิน 4 ครั้งในเดือนนี้</td></tr>`;
+      html += `<tr><td colspan="4" style="padding: 15px; text-align: center;">🎉 ไม่พบนกเรียนที่มาสายเกิน 4 ครั้งในเดือนนี้</td></tr>`;
     } else {
       lateStudents.forEach((s, idx) => {
-        const formattedLateDates = s.lateDates.map(d => `${d}/${month}/${parseInt(year, 10) + 543}`).join(', ');
         html += `
           <tr>
-            <td>${idx + 1}</td>
+            <td style="text-align: center;">${idx + 1}</td>
             <td class="text-start">${s.name}</td>
-            <td style="font-weight: bold; color: red;">${s.lateCount} ครั้ง</td>
-            <td class="text-start">${formattedLateDates}</td>
+            <td style="font-weight: bold; color: red; text-align: center;">${s.lateCount} ครั้ง</td>
+            <td class="text-start">${s.lateDates.join(', ') || '-'}</td>
           </tr>
         `;
       });
@@ -885,23 +826,10 @@ function renderPortraitLateReport(data) {
     html += `
           </tbody>
         </table>
-
-        <div class="signature-section">
-          <div>
-            <br>ลงชื่อ..........................................................ครูประจำชั้น<br>
-            (..........................................................)<br>
-            ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
-          </div>
-          <div>
-            <br>ลงชื่อ..........................................................<br>
-            (นายอับดุล เจะสือแม)<br>
-            ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
-          </div>
-          <div>
-            <br>ลงชื่อ..........................................................<br>
-            (นางวันพิทยา มุสตาฟา)<br>
-            ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
-          </div>
+        <div class="signature-section" style="margin-top: 40px; display: flex; justify-content: space-between; text-align: center;">
+          <div><br>ลงชื่อ..........................................................ครูประจำชั้น<br>(..........................................................)<br>ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ</div>
+          <div><br>ลงชื่อ..........................................................<br>(นายอับดุล เจะสือแม)<br>ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</div>
+          <div><br>ลงชื่อ..........................................................<br>(นางวันพิทยา มุสตาฟา)<br>ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</div>
         </div>
       </div>
     `;
@@ -909,70 +837,4 @@ function renderPortraitLateReport(data) {
   }
 
   setTimeout(() => window.print(), 500);
-}
-// โหลดตัวเลือกห้องเรียนเข้า Dropdown เมื่อเปิดหน้า
-document.addEventListener('DOMContentLoaded', () => {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  if (document.getElementById('printMonthSelect')) {
-    document.getElementById('printMonthSelect').value = `${yyyy}-${mm}`;
-  }
-
-  // ดึงรายชื่อห้องเรียนมาใส่ Dropdown
-  if (typeof google !== 'undefined' && google.script) {
-    google.script.run
-      .withSuccessHandler(classes => {
-        const select = document.getElementById('printClassSelect');
-        if (select && classes.length > 0) {
-          select.innerHTML = '<option value="all">-- ทุกระดับชั้น --</option>';
-          classes.forEach(cls => {
-            select.innerHTML += `<option value="${cls}">${cls}</option>`;
-          });
-        }
-      })
-      .getClassList();
-  }
-});
-
-function generateReport(type) {
-  const monthVal = document.getElementById('printMonthSelect').value;
-  const selectedClass = document.getElementById('printClassSelect').value;
-
-  if (!monthVal) {
-    Swal.fire('กรุณาเลือกเดือน', '', 'warning');
-    return;
-  }
-
-  Swal.fire({ title: 'กำลังเตรียมเอกสาร...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-  google.script.run
-    .withSuccessHandler(data => {
-      Swal.close();
-      if (data.error) {
-        Swal.fire('เกิดข้อผิดพลาด', data.error, 'error');
-        return;
-      }
-      
-      // กรองเฉพาะห้องที่เลือก (ถ้าเลือกเฉพาะห้อง)
-      if (selectedClass !== 'all') {
-        const filteredData = {};
-        if (data.reportData[selectedClass]) {
-          filteredData[selectedClass] = data.reportData[selectedClass];
-        }
-        data.reportData = filteredData;
-      }
-
-      if (Object.keys(data.reportData).length === 0) {
-        Swal.fire('ไม่พบข้อมูล', 'ไม่มีข้อมูลของระดับชั้นที่เลือกในเดือนนี้', 'info');
-        return;
-      }
-
-      if (type === 'stats') {
-        renderLandscapeStatsReport(data);
-      } else {
-        renderPortraitLateReport(data);
-      }
-    })
-    .getPrintReportData({ month: monthVal });
 }
