@@ -736,39 +736,50 @@
       }
     }
 
-    // 🖨️ ฟังก์ชันสร้างรายงานสถิติ และรายงานเด็กมาสาย
     function generateReport(type) {
-      const monthVal = document.getElementById('printMonthSelect').value;
-      const classVal = document.getElementById('printClassSelect').value;
+  const monthVal = document.getElementById('printMonthSelect').value;
+  const classVal = document.getElementById('printClassSelect').value;
 
-      if (!monthVal) {
-        Swal.fire('กรุณาเลือกเดือน', '', 'warning');
+  if (!monthVal) {
+    Swal.fire('กรุณาเลือกเดือน', '', 'warning');
+    return;
+  }
+
+  Swal.fire({ 
+    title: 'กำลังเตรียมเอกสาร...', 
+    text: 'กรุณารอสักครู่ระบบกำลังประมวลผลข้อมูล',
+    allowOutsideClick: false, 
+    didOpen: () => Swal.showLoading() 
+  });
+
+  google.script.run
+    .withSuccessHandler(data => {
+      Swal.close();
+      if (!data) {
+        Swal.fire('เกิดข้อผิดพลาด', 'ไม่ได้รับข้อมูลตอบกลับจากระบบ', 'error');
+        return;
+      }
+      if (data.error) {
+        Swal.fire('เกิดข้อผิดพลาดจากระบบ', data.error, 'error');
+        return;
+      }
+      if (!data.reportData || Object.keys(data.reportData).length === 0) {
+        Swal.fire('ไม่พบข้อมูล', 'ไม่มีประวัติการเช็คชื่อในเดือนและชั้นเรียนที่เลือก', 'info');
         return;
       }
 
-      Swal.fire({ title: 'กำลังเตรียมเอกสาร...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-      google.script.run
-        .withSuccessHandler(data => {
-          Swal.close();
-          if (!data || data.error) {
-            Swal.fire('เกิดข้อผิดพลาด', data ? data.error : 'ไม่สามารถดึงข้อมูลได้', 'error');
-            return;
-          }
-          
-          if (!data.reportData || Object.keys(data.reportData).length === 0) {
-            Swal.fire('ไม่พบข้อมูล', 'ไม่มีข้อมูลของเดือนหรือระดับชั้นที่เลือก', 'info');
-            return;
-          }
-
-          if (type === 'stats') {
-            renderLandscapeStatsReport(data);
-          } else {
-            renderPortraitLateReport(data);
-          }
-        })
-        .getReportData({ month: monthVal, className: classVal });
-    }
+      if (type === 'stats') {
+        renderLandscapeStatsReport(data);
+      } else {
+        renderPortraitLateReport(data);
+      }
+    })
+    .withFailureHandler(err => {
+      Swal.close();
+      Swal.fire('การเชื่อมต่อผิดพลาด', err.message || 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้', 'error');
+    })
+    .getReportData({ month: monthVal, className: classVal });
+}
 
     // 📄 1. เรนเดอร์รายงานสถิติประจำวัน (แนวนอน A4)
     function renderLandscapeStatsReport(data) {
