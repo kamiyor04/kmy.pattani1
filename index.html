@@ -384,10 +384,6 @@
           <div class="col-12 col-md-5">
             <label class="form-label fw-medium mb-1"><small>🏫 เลือกระดับชั้น:</small></label>
             <select class="form-select" id="classSelect">
-              <optgroup label="ระดับปฐมวัย">
-                <option value="อนุบาล 2">อนุบาล 2</option>
-                <option value="อนุบาล 3">อนุบาล 3</option>
-              </optgroup>
               <optgroup label="ระดับประถมศึกษา">
                 <option value="ป.1">ประถมศึกษาปีที่ 1</option>
                 <option value="ป.2">ประถมศึกษาปีที่ 2</option>
@@ -457,10 +453,6 @@
             <label class="form-label fw-medium"><small>เลือกระดับชั้น:</small></label>
             <select id="manageClassSelect" class="form-select form-select-sm" onchange="fetchStudentManageList()">
               <option value="all">-- แสดงทุกระดับชั้น --</option>
-              <optgroup label="ระดับปฐมวัย">
-                <option value="อนุบาล 2">อนุบาล 2</option>
-                <option value="อนุบาล 3">อนุบาล 3</option>
-              </optgroup>
               <optgroup label="ระดับประถมศึกษา">
                 <option value="ป.1">ประถมศึกษาปีที่ 1</option>
                 <option value="ป.2">ประถมศึกษาปีที่ 2</option>
@@ -514,8 +506,6 @@
 
           <select id="dashClassSelect" onchange="updateDashboard()" class="form-select form-select-sm" style="width: auto;">
             <option value="all">🏫 ทุกระดับชั้น (ภาพรวม)</option>
-            <option value="อนุบาล 2">อนุบาล 2</option>
-            <option value="อนุบาล 3">อนุบาล 3</option>
             <option value="ป.1">ประถมศึกษาปีที่ 1</option>
             <option value="ป.2">ประถมศึกษาปีที่ 2</option>
             <option value="ป.3">ประถมศึกษาปีที่ 3</option>
@@ -637,8 +627,6 @@
               <label class="form-label fw-bold">เลือกระดับชั้น/ห้องเรียน</label>
               <select id="printClassSelect" class="form-select form-select-lg">
                 <option value="all">-- ทุกระดับชั้น --</option>
-                <option value="อนุบาล 2">อนุบาล 2</option>
-                <option value="อนุบาล 3">อนุบาล 3</option>
                 <option value="ป.1">ประถมศึกษาปีที่ 1</option>
                 <option value="ป.2">ประถมศึกษาปีที่ 2</option>
                 <option value="ป.3">ประถมศึกษาปีที่ 3</option>
@@ -1012,10 +1000,6 @@
         html: `
           <div class="text-start mb-2"><small class="fw-bold">เลือกระดับชั้น:</small></div>
           <select id="swal-class" class="swal2-select w-100 m-0 mb-3">
-            <optgroup label="ระดับปฐมวัย">
-              <option value="อนุบาล 2">อนุบาล 2</option>
-              <option value="อนุบาล 3">อนุบาล 3</option>
-            </optgroup>
             <optgroup label="ระดับประถมศึกษา">
               <option value="ป.1">ประถมศึกษาปีที่ 1 (ป.1)</option>
               <option value="ป.2">ประถมศึกษาปีที่ 2 (ป.2)</option>
@@ -1355,42 +1339,198 @@
       alertBody.innerHTML = rows;
     }
 
-    // --- 4. รายงานสถิติและการพิมพ์ ---
-    function generateReport(type) {
-      const monthVal = document.getElementById('printMonthSelect').value;
-      const selectedClass = document.getElementById('printClassSelect').value;
+// 1. ปรับฟังก์ชันสั่งพิมพ์รายงานสถิติให้เรียก action=getReportData
+function generateReport(type) {
+  const monthVal = document.getElementById('printMonthSelect')?.value;
+  const selectedClass = document.getElementById('printClassSelect')?.value || 'all';
 
-      if (!monthVal) {
-        Swal.fire('กรุณาเลือกเดือน', '', 'warning');
+  if (!monthVal) {
+    Swal.fire('กรุณาเลือกเดือน', '', 'warning');
+    return;
+  }
+
+  Swal.fire({ 
+    title: 'กำลังเตรียมเอกสาร...', 
+    text: 'กรุณารอสักครู่ ระบบกำลังประมวลผลตารางประจำเดือน',
+    allowOutsideClick: false, 
+    didOpen: () => Swal.showLoading() 
+  });
+
+  // เรียกไปยัง action=getReportData เพื่อดึงประวัติรายวัน + วันหยุดชีต Setting
+  const fetchUrl = `${WEB_APP_URL}?action=getReportData&month=${monthVal}&className=${encodeURIComponent(selectedClass)}`;
+
+  fetch(fetchUrl)
+    .then(res => res.json())
+    .then(data => {
+      Swal.close();
+      if (data.error) {
+        Swal.fire('เกิดข้อผิดพลาด', data.error, 'error');
         return;
       }
 
-      Swal.fire({ 
-        title: 'กำลังเตรียมเอกสาร...', 
-        text: 'กรุณารอสักครู่ระบบกำลังประมวลผลข้อมูล',
-        allowOutsideClick: false, 
-        didOpen: () => Swal.showLoading() 
-      });
+      if (!data.reportData || Object.keys(data.reportData).length === 0) {
+        Swal.fire('ไม่พบข้อมูล', 'ไม่มีข้อมูลของระดับชั้นที่เลือกในเดือนนี้', 'info');
+        return;
+      }
 
-      const fetchUrl = `${WEB_APP_URL}?action=getDashboard&type=monthly&month=${monthVal}&className=${encodeURIComponent(selectedClass)}`;
+      if (type === 'stats') {
+        renderLandscapeStatsReport(data);
+      } else {
+        renderPortraitLateReport(data);
+      }
+    })
+    .catch(err => {
+      Swal.close();
+      Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: ' + err.message, 'error');
+    });
+}
 
-      fetch(fetchUrl)
-        .then(res => res.json())
-        .then(data => {
-          Swal.close();
-          if (!data || data.error) {
-            Swal.fire('เกิดข้อผิดพลาด', data ? data.error : 'ไม่ได้รับข้อมูลจากระบบ', 'error');
-            return;
-          }
+// 2. ฟังก์ชันเรนเดอร์สถิติรายวันแนวนอน (พร้อมรวมวันเสาร์-อาทิตย์ และวันหยุด)
+function renderLandscapeStatsReport(data) {
+  const printArea = document.getElementById('printArea');
+  if (!printArea) return;
+  printArea.innerHTML = '';
 
-          // จัดรูปแบบข้อมูลสำหรับรายงาน
-          fetchReportDataAndPrint(monthVal, selectedClass, type);
-        })
-        .catch(err => {
-          Swal.close();
-          Swal.fire('การเชื่อมต่อผิดพลาด', err.message || 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้', 'error');
-        });
+  const [yearStr, monthStr] = data.month.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+
+  const thaiMonthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+  const monthTitle = `${thaiMonthNames[month - 1]} ${year + 543}`;
+  
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const holidays = data.holidays || {};
+
+  for (const cls in data.reportData) {
+    const classGroup = data.reportData[cls];
+    const totalStudents = classGroup.students.length;
+
+    // จำแนกประเภทของแต่ละวันในเดือน
+    const dayTypes = {};
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateObj = new Date(year, month - 1, d);
+      const dayOfWeek = dateObj.getDay(); // 0 = อาทิตย์, 6 = เสาร์
+      const dateKey = `${yearStr}-${monthStr}-${String(d).padStart(2, '0')}`;
+
+      if (dayOfWeek === 6) {
+        dayTypes[d] = { isMerged: true, name: '--- วันเสาร์ ---' };
+      } else if (dayOfWeek === 0) {
+        dayTypes[d] = { isMerged: true, name: '--- วันอาทิตย์ ---' };
+      } else if (holidays[dateKey]) {
+        dayTypes[d] = { isMerged: true, name: `--- ${holidays[dateKey]} ---` };
+      } else {
+        dayTypes[d] = { isMerged: false };
+      }
     }
+
+    let html = `
+      <div class="page-landscape">
+        <style>
+          .vertical-text {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 8pt;
+            color: #444;
+            letter-spacing: 1px;
+            padding: 4px 0;
+          }
+          .table-report th, .table-report td {
+            text-align: center;
+            vertical-align: middle;
+            padding: 3px 1px;
+          }
+        </style>
+
+        <div style="text-align: center; margin-bottom: 12px;">
+          <h3 style="margin: 0; font-weight: bold; font-size: 15pt;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
+          <p style="margin: 4px 0; font-size: 12pt;">
+            <b>ระดับชั้น:</b> ${cls} &nbsp;&nbsp;&nbsp;&nbsp; 
+            <b>ประจำเดือน:</b> ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; 
+            <b>โรงเรียนชุมชนบ้านกะมิยอ</b>
+          </p>
+        </div>
+
+        <table class="table-report" style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+          <thead>
+            <tr>
+              <th style="width: 180px;" rowspan="2">ชื่อ-นามสกุล</th>
+              <th colspan="${daysInMonth}">วันที่</th>
+              <th colspan="3">สรุป</th>
+            </tr>
+            <tr>
+    `;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      html += `<th style="width: 18px; font-size: 8pt;">${d}</th>`;
+    }
+
+    html += `
+              <th style="width: 22px; color: green;">ก</th>
+              <th style="width: 22px; color: orange;">ส</th>
+              <th style="width: 22px; color: red;">ข</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    classGroup.students.forEach((s, idx) => {
+      html += `<tr>`;
+      html += `<td style="text-align: left; padding-left: 5px;">${idx + 1}. ${s.name}</td>`;
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        if (dayTypes[d].isMerged) {
+          if (idx === 0) {
+            html += `<td rowspan="${totalStudents}" class="vertical-text">${dayTypes[d].name}</td>`;
+          }
+        } else {
+          const st = s.dailyStatus[d] || '-';
+          let styleColor = '';
+          if (st === 'ก') styleColor = 'color: green;';
+          if (st === 'ส') styleColor = 'color: orange; font-weight: bold;';
+          if (st === 'ข') styleColor = 'color: red; font-weight: bold;';
+
+          html += `<td style="${styleColor}">${st}</td>`;
+        }
+      }
+
+      html += `
+        <td>${s.presentCount || '-'}</td>
+        <td style="color: orange; font-weight: bold;">${s.lateCount || '-'}</td>
+        <td style="color: red; font-weight: bold;">${s.absentCount || '-'}</td>
+      </tr>`;
+    });
+
+    html += `
+          </tbody>
+        </table>
+
+        <div class="signature-section" style="margin-top: 25px; display: flex; justify-content: space-around; text-align: center; font-size: 10pt;">
+          <div>
+            <br>ลงชื่อ..........................................................<br>
+            (..........................................................)<br>
+            ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
+          </div>
+          <div>
+            <br>ลงชื่อ..........................................................<br>
+            (นายอับดุล เจะสือแม)<br>
+            ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+          </div>
+          <div>
+            <br>ลงชื่อ..........................................................<br>
+            (นางวันพิทยา มุสตาฟา)<br>
+            ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+          </div>
+        </div>
+      </div>
+    `;
+    printArea.innerHTML += html;
+  }
+
+  setTimeout(() => window.print(), 500);
+}
 
     function fetchReportDataAndPrint(monthVal, selectedClass, type) {
       // เรียกข้อมูลดึงสถิติรายเดือนผ่าน Web App
@@ -1428,76 +1568,6 @@
         });
     }
 
-    // 📄 1. เรนเดอร์รายงานสถิติประจำวัน (แนวนอน A4)
-    function renderLandscapeStatsReport(data) {
-      const printArea = document.getElementById('printArea');
-      printArea.innerHTML = '';
-
-      const [year, month] = data.month.split('-');
-      const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-      const monthTitle = `${thaiMonths[parseInt(month, 10) - 1]} ${parseInt(year, 10) + 543}`;
-      const classNameDisplay = data.selectedClass === 'all' ? 'ทุกระดับชั้น' : data.selectedClass;
-
-      let html = `
-        <div class="page-landscape">
-          <div style="text-align: center; margin-bottom: 12px;">
-            <h3 style="margin: 0; font-weight: bold; font-size: 16pt;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
-            <p style="margin: 4px 0; font-size: 13pt;"><b>ระดับชั้น:</b> ${classNameDisplay} &nbsp;&nbsp;&nbsp;&nbsp; <b>ประจำเดือน:</b> ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; <b>โรงเรียนชุมชนบ้านกะมิยอ</b></p>
-          </div>
-
-          <table style="margin-top: 15px;">
-            <thead>
-              <tr>
-                <th>ระดับชั้น</th>
-                <th>จำนวนนักเรียนทั้งหมด</th>
-                <th>มาเรียน / เข้าร่วม (รวม)</th>
-                <th>มาสาย / ไม่เข้าร่วม (รวม)</th>
-                <th>ขาดเรียน (รวม)</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-
-      if (data.dashboardData && data.dashboardData.classSummary) {
-        data.dashboardData.classSummary.forEach(item => {
-          html += `
-            <tr>
-              <td>${item.className}</td>
-              <td>${item.total} คน</td>
-              <td style="color: green; font-weight: bold;">${item.present} คน</td>
-              <td style="color: orange; font-weight: bold;">${item.late} คน</td>
-              <td style="color: red; font-weight: bold;">${item.absent} คน</td>
-            </tr>
-          `;
-        });
-      }
-
-      html += `
-            </tbody>
-          </table>
-
-          <div class="signature-section">
-            <div>
-              <br>ลงชื่อ..........................................................ครูประจำชั้น<br>
-              (..........................................................)<br>
-              ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
-            </div>
-            <div>
-              <br>ลงชื่อ..........................................................<br>
-              (นายอับดุล เจะสือแต)<br>
-              ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
-            </div>
-            <div>
-              <br>ลงชื่อ..........................................................<br>
-              (นางวันพิทยา มุสตาฟา)<br>
-              ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
-            </div>
-          </div>
-        </div>
-      `;
-      printArea.innerHTML = html;
-      setTimeout(() => window.print(), 500);
-    }
 
     // ⚠️ 2. เรนเดอร์รายงานเด็กมาสาย >= 4 ครั้ง (แนวตั้ง A4)
     function renderPortraitLateReport(data) {
@@ -1530,7 +1600,7 @@
       `;
 
       if (!data.alerts || data.alerts.length === 0) {
-        html += `<tr><td colspan="5" style="padding: 15px; text-align: center;">🎉 ไม่พบนกเรียนที่มาสายตั้งแต่ 4 ครั้งขึ้นไปในเดือนนี้</td></tr>`;
+        html += `<tr><td colspan="5" style="padding: 15px; text-align: center;"> ไม่พบนกเรียนที่มาสายตั้งแต่ 4 ครั้งขึ้นไปในเดือนนี้</td></tr>`;
       } else {
         data.alerts.forEach((s, idx) => {
           html += `
@@ -1551,7 +1621,7 @@
 
           <div class="signature-section">
             <div>
-              <br>ลงชื่อ..........................................................ครูประจำชั้น<br>
+              <br>ลงชื่อ..........................................................<br>
               (..........................................................)<br>
               ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
             </div>
