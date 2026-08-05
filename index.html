@@ -249,7 +249,7 @@
     @media print {
       @page {
         size: A4 landscape !important;
-        margin: 20mm 10mm 10mm 10mm;
+        margin: 12mm 10mm 10mm 10mm !important; /* ปรับขอบบนให้อยู่ในระยะพอดี ไม่ดันตารางตกหน้า */
       }
 
       html, body {
@@ -261,22 +261,15 @@
         overflow: visible !important;
       }
 
-      body * {
-        visibility: hidden;
-      }
-
+      /* ซ่อนองค์ประกอบที่ไม่ต้องการพิมพ์ */
       .no-print, header, nav, .offcanvas, .btn, .card, .mobile-header {
         display: none !important;
       }
 
-      #printArea, #printArea * {
-        visibility: visible !important;
-      }
-
+      /* จัดการพื้นที่แสดงผลหลัก ให้แนบติดกันตาม Normal Flow */
       #printArea {
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
+        display: block !important;
+        position: relative !important; /* ยกเลิก absolute เพื่อไม่ให้โครงสร้างลอยกระจาย */
         width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
@@ -295,21 +288,27 @@
         break-after: auto;
       }
 
+      /* ห้ามไม่ให้ส่วนหัวข้อแยกออกจากตาราง */
+      .report-header {
+        page-break-inside: avoid !important;
+        page-break-after: avoid !important;
+        margin-bottom: 10px !important;
+      }
+
       .table-report {
         width: 100% !important;
         table-layout: fixed !important;
         border-collapse: collapse !important;
         font-size: 8pt !important;
-        page-break-inside: auto; /* อนุญาตให้แบ่งตารางลงหน้าถัดไปได้เมื่อไม่พอ */
+        page-break-inside: auto; /* หากจำนวนนักเรียนยาวเกินหน้ากระดาษ ให้ตัดทอนเฉพาะแถวที่ล้นไปแผ่นถัดไปได้ */
       }
-      
+
       .table-report tr {
-        page-break-inside: avoid; /* ป้องกันไม่ให้ตัวแถวถูกตัดครึ่งระหว่างแผ่น */
-        page-break-after: auto;
+        page-break-inside: avoid !important; /* ป้องกันไม่ให้แถวรายชื่อถูกตัดครึ่งแผ่น */
       }
 
       .table-report thead {
-        display: table-header-group; /* แสดงหัวตารางซ้ำอัตโนมัติเมื่อขึ้นหน้าใหม่ */
+        display: table-header-group; /* หัวตารางจะตามไปแสดงด้านบนอัตโนมัติหากมีแผ่นถัดไป */
       }
 
       .table-report th, .table-report td {
@@ -336,7 +335,7 @@
       }
       
       .signature-section {
-        margin-top: 25px;
+        margin-top: 15px;
         display: flex;
         justify-content: space-around;
         text-align: center;
@@ -1421,8 +1420,7 @@
         });
     }
 
-    // เรนเดอร์รายงานสถิติรายวันแนวนอน (พร้อมรวมวันเสาร์-อาทิตย์ และวันหยุด)
-    function renderLandscapeStatsReport(data) {
+function renderLandscapeStatsReport(data) {
       const printArea = document.getElementById('printArea');
       if (!printArea) return;
       printArea.innerHTML = '';
@@ -1441,11 +1439,10 @@
         const classGroup = data.reportData[cls];
         const totalStudents = classGroup.students.length;
 
-        // จำแนกประเภทของแต่ละวันในเดือน
         const dayTypes = {};
         for (let d = 1; d <= daysInMonth; d++) {
           const dateObj = new Date(year, month - 1, d);
-          const dayOfWeek = dateObj.getDay(); // 0 = อาทิตย์, 6 = เสาร์
+          const dayOfWeek = dateObj.getDay();
           const dateKey = `${yearStr}-${monthStr}-${String(d).padStart(2, '0')}`;
 
           if (dayOfWeek === 6) {
@@ -1461,17 +1458,17 @@
 
         let html = `
           <div class="page-landscape">
-            <!-- หัวรายงาน -->
-            <div style="text-align: center; margin-bottom: 15px;">
-              <h3 style="margin: 0 0 8px 0; font-weight: bold; font-size: 16pt;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
-              <p style="margin: 0; font-size: 13pt;">
+            <!-- ส่วนหัวข้อรายงาน ใส่คลาส report-header เพื่อไม่ให้แยกกับตาราง -->
+            <div class="report-header" style="text-align: center;">
+              <h3 style="margin: 0 0 6px 0; font-weight: bold; font-size: 15pt;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
+              <p style="margin: 0; font-size: 12pt;">
                 <b>ระดับชั้น:</b> ${cls} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
                 <b>ประจำเดือน:</b> ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
                 <b>โรงเรียนชุมชนบ้านกะมิยอ</b>
               </p>
             </div>
 
-            <!-- ตารางรายงาน -->
+            <!-- ตารางรายงานต่อจากหัวข้อทันที -->
             <table class="table-report">
               <thead>
                 <tr>
@@ -1526,7 +1523,6 @@
               </tbody>
             </table>
 
-            <!-- ลายเซ็นท้ายเอกสาร -->
             <div class="signature-section">
               <div>
                 <br>ลงชื่อ..........................................................ครูประจำชั้น<br>
