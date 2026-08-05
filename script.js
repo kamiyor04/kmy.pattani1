@@ -777,59 +777,150 @@ function renderLandscapeStatsReport(data) {
   setTimeout(() => window.print(), 500);
 }
 
-function renderPortraitLateReport(data) {
+function renderLandscapeStatsReport(data) {
   const printArea = document.getElementById('printArea');
   if (!printArea) return;
   printArea.innerHTML = '';
 
-  const [year, month] = data.month.split('-');
+  const [yearStr, monthStr] = data.month.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+
   const thaiMonthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-  const monthTitle = `${thaiMonthNames[parseInt(month, 10) - 1]} ${parseInt(year, 10) + 543}`;
+  const monthTitle = `${thaiMonthNames[month - 1]} ${year + 543}`;
+  
+  // คำนวณจำนวนวันในเดือนนั้นๆ (28, 29, 30, 31 วัน)
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const holidays = data.holidays || {};
 
   for (const cls in data.reportData) {
     const classGroup = data.reportData[cls];
-    const lateStudents = classGroup.students.filter(s => s.lateCount >= 4);
+    const totalStudents = classGroup.students.length;
+
+    // ตรวจสอบวันเสาร์ (6), อาทิตย์ (0) และวันหยุดพิเศษ
+    const dayTypes = {}; // { dayNum: { isHoliday: true, name: 'วันเสาร์' } }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateObj = new Date(year, month - 1, d);
+      const dayOfWeek = dateObj.getDay(); // 0 = อาทิตย์, 6 = เสาร์
+      const dateKey = `${yearStr}-${monthStr}-${String(d).padStart(2, '0')}`;
+
+      if (dayOfWeek === 6) {
+        dayTypes[d] = { isMerged: true, name: '--- วันเสาร์ ---' };
+      } else if (dayOfWeek === 0) {
+        dayTypes[d] = { isMerged: true, name: '--- วันอาทิตย์ ---' };
+      } else if (holidays[dateKey]) {
+        dayTypes[d] = { isMerged: true, name: `--- ${holidays[dateKey]} ---` };
+      } else {
+        dayTypes[d] = { isMerged: false };
+      }
+    }
 
     let html = `
-      <div class="page-portrait">
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h3 style="margin: 0; font-weight: bold;">รายงานนักเรียนมาสาย / ไม่เข้าร่วมกิจกรรม (4 ครั้งขึ้นไป)</h3>
-          <p style="margin: 5px 0;">ระดับชั้น: ${cls} &nbsp;&nbsp;&nbsp;&nbsp; ประจำเดือน: ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; โรงเรียนชุมชนบ้านกะมิยอ</p>
+      <div class="page-landscape">
+        <style>
+          .vertical-text {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 8.5pt;
+            color: #555;
+            letter-spacing: 1px;
+            padding: 5px 0;
+          }
+          .table-report th, .table-report td {
+            text-align: center;
+            vertical-align: middle;
+            padding: 2px 1px;
+          }
+        </style>
+
+        <div style="text-align: center; margin-bottom: 15px;">
+          <h3 style="margin: 0; font-weight: bold; font-size: 16pt;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
+          <p style="margin: 5px 0; font-size: 13pt;">
+            <b>ระดับชั้น:</b> ${cls} &nbsp;&nbsp;&nbsp;&nbsp; 
+            <b>ประจำเดือน:</b> ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; 
+            <b>โรงเรียนชุมชนบ้านกะมิยอ</b>
+          </p>
         </div>
-        <table>
+
+        <table class="table-report" style="width: 100%; border-collapse: collapse;">
           <thead>
             <tr>
-              <th style="width: 50px;">ลำดับ</th>
-              <th style="width: 200px;">ชื่อ - นามสกุล</th>
-              <th style="width: 100px;">จำนวนครั้งที่สาย</th>
-              <th>วันที่มาสาย (วันที่ในเดือน)</th>
+              <th style="width: 200px;" rowspan="2">ชื่อ-นามสกุล</th>
+              <th colspan="${daysInMonth}">วันที่</th>
+              <th colspan="3">สรุป</th>
+            </tr>
+            <tr>
+    `;
+
+    // วนสร้างหัวตารางวันที่ 1 - 31
+    for (let d = 1; d <= daysInMonth; d++) {
+      html += `<th style="width: 18px; font-size: 8.5pt;">${d}</th>`;
+    }
+
+    html += `
+              <th style="width: 22px; color: green;">ก</th>
+              <th style="width: 22px; color: orange;">ส</th>
+              <th style="width: 22px; color: red;">ข</th>
             </tr>
           </thead>
           <tbody>
     `;
 
-    if (lateStudents.length === 0) {
-      html += `<tr><td colspan="4" style="padding: 15px; text-align: center;">🎉 ไม่พบนกเรียนที่มาสายเกิน 4 ครั้งในเดือนนี้</td></tr>`;
-    } else {
-      lateStudents.forEach((s, idx) => {
-        html += `
-          <tr>
-            <td style="text-align: center;">${idx + 1}</td>
-            <td class="text-start">${s.name}</td>
-            <td style="font-weight: bold; color: red; text-align: center;">${s.lateCount} ครั้ง</td>
-            <td class="text-start">${s.lateDates.join(', ') || '-'}</td>
-          </tr>
-        `;
-      });
-    }
+    // สร้างแถวรายชื่อนักเรียน
+    classGroup.students.forEach((s, idx) => {
+      html += `<tr>`;
+      html += `<td style="text-align: left; padding-left: 5px; font-size: 9.5pt;">${idx + 1}. ${s.name}</td>`;
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        if (dayTypes[d].isMerged) {
+          // ยุบรวมเซลล์แนวตั้งสำหรับนักเรียนคนแรก (Row index 0)
+          if (idx === 0) {
+            html += `<td rowspan="${totalStudents}" class="vertical-text">${dayTypes[d].name}</td>`;
+          }
+          // คนอื่นๆ ข้ามเซลล์นี้เพราะถูกยุบไปแล้ว
+        } else {
+          const st = s.dailyStatus[d] || '-';
+          let styleColor = '';
+          if (st === 'ก') styleColor = 'color: green;';
+          if (st === 'ส') styleColor = 'color: orange; font-weight: bold;';
+          if (st === 'ข') styleColor = 'color: red; font-weight: bold;';
+
+          html += `<td style="font-size: 9pt; ${styleColor}">${st}</td>`;
+        }
+      }
+
+      // คอลัมน์สรุป ก / ส / ข
+      html += `
+        <td style="font-size: 9pt;">${s.presentCount || '-'}</td>
+        <td style="font-size: 9pt; color: orange; font-weight: bold;">${s.lateCount || '-'}</td>
+        <td style="font-size: 9pt; color: red; font-weight: bold;">${s.absentCount || '-'}</td>
+      </tr>`;
+    });
 
     html += `
           </tbody>
         </table>
-        <div class="signature-section" style="margin-top: 40px; display: flex; justify-content: space-between; text-align: center;">
-          <div><br>ลงชื่อ..........................................................ครูประจำชั้น<br>(..........................................................)<br>ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ</div>
-          <div><br>ลงชื่อ..........................................................<br>(นายอับดุล เจะสือแม)<br>ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</div>
-          <div><br>ลงชื่อ..........................................................<br>(นางวันพิทยา มุสตาฟา)<br>ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</div>
+
+        <!-- ลายเซ็นท้ายเอกสาร -->
+        <div class="signature-section" style="margin-top: 25px; display: flex; justify-content: space-around; text-align: center; font-size: 10.5pt;">
+          <div>
+            <br>ลงชื่อ..........................................................ครูประจำชั้น<br>
+            (..........................................................)<br>
+            ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
+          </div>
+          <div>
+            <br>ลงชื่อ..........................................................<br>
+            (นายอับดุล เจะสือแม)<br>
+            ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+          </div>
+          <div>
+            <br>ลงชื่อ..........................................................<br>
+            (นางวันพิทยา มุสตาฟา)<br>
+            ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+          </div>
         </div>
       </div>
     `;
