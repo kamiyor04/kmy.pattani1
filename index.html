@@ -247,67 +247,86 @@
 
     /* CSS ควบคุมการพิมพ์ทางการ */
     @media print {
-      body * {
-        visibility: hidden;
-      }
-      .no-print {
-        display: none !important;
-      }
-      #printArea, #printArea * {
-        visibility: visible;
-      }
-      #printArea {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-      }
+  /* 1. บังคับทิศทางกระดาษ A4 แนวนอนที่ระดับเอกสาร */
+  @page {
+    size: A4 landscape !important;
+    margin: 8mm 10mm 8mm 10mm;
+  }
 
-      /* ตั้งค่าหน้าแนวนอน */
-      .page-landscape {
-        page-break-after: always;
-        break-after: page;
-        size: A4 landscape;
-        padding: 10mm;
-      }
-      .page-landscape:last-child {
-        page-break-after: auto;
-        break-after: auto;
-      }
+  /* 2. ซ่อนองค์ประกอบที่ไม่เกี่ยวข้องทั้งหมดอย่างเด็ดขาด */
+  html, body {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
 
-      /* ตั้งค่าหน้าแนวตั้ง */
-      .page-portrait {
-        page-break-after: always;
-        break-after: page;
-        size: A4 portrait;
-        padding: 15mm;
-      }
-      .page-portrait:last-child {
-        page-break-after: auto;
-        break-after: auto;
-      }
+  body * {
+    visibility: hidden;
+  }
 
-      table {
-        width: 100%;
-        border-collapse: collapse !important;
-        font-size: 10pt;
-      }
-      th, td {
-        border: 1px solid #000 !important;
-        padding: 3px 2px;
-        text-align: center;
-      }
-      .text-start { text-align: left !important; }
-      
-      .signature-section {
-        margin-top: 25px;
-        display: flex;
-        justify-content: space-around;
-        text-align: center;
-        font-size: 11pt;
-        page-break-inside: avoid;
-      }
-    }
+  .no-print, header, nav, .offcanvas, .btn, .card, .mobile-header {
+    display: none !important;
+  }
+
+  /* 3. ดึงเฉพาะ #printArea มาแสดงผลให้เต็มหน้ากระดาษแนวนอน */
+  #printArea, #printArea * {
+    visibility: visible !important;
+  }
+
+  #printArea {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 4. กำหนดคุณลักษณะหน้าแนวนอน */
+  .page-landscape {
+    width: 100% !important;
+    display: block !important;
+    page-break-after: always;
+    break-after: page;
+    box-sizing: border-box;
+  }
+
+  .page-landscape:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  /* 5. จัดสัดส่วนตารางรายงานสถิติ */
+  table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    font-size: 8.5pt !important;
+  }
+
+  th, td {
+    border: 1px solid #000 !important;
+    padding: 2px 1px !important;
+    text-align: center;
+    word-wrap: break-word;
+  }
+
+  .text-start { 
+    text-align: left !important; 
+  }
+  
+  .signature-section {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+}
   </style>
 </head>
 <body>
