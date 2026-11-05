@@ -288,6 +288,8 @@
       .print-page {
         width: 100% !important;
         display: block !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
         page-break-after: always !important;
         break-after: page !important;
         box-sizing: border-box;
@@ -319,13 +321,15 @@
 
       table.report-table {
         width: 100% !important;
-        border-collapse: separate !important; /* แยกขอบการคำนวณเพื่อป้องกันเส้นขอบหายตอน rowspan */
+        border-collapse: separate !important;
         border-spacing: 0 !important;
         table-layout: fixed !important;
         margin-bottom: 8px !important;
+        border-top: 1px solid #000000 !important;
+        border-left: 1px solid #000000 !important;
       }
 
-      /* บังคับตีเส้นขอบ 1px รอบทุกช่อง */
+      /* บังคับตีเส้นขอบ 1px รอบทุกเซลล์รวมถึงเส้นล่างสุดของตาราง */
       table.report-table th, 
       table.report-table td {
         border-right: 1px solid #000000 !important;
@@ -336,15 +340,6 @@
         font-family: 'Sarabun', sans-serif !important;
         box-sizing: border-box !important;
         word-wrap: break-word !important;
-      }
-
-      table.report-table tr:first-child th {
-        border-top: 1px solid #000000 !important;
-      }
-
-      table.report-table th:first-child, 
-      table.report-table td:first-child {
-        border-left: 1px solid #000000 !important;
       }
 
       /* หัวตารางวันในสัปดาห์แนวตั้ง */
@@ -360,7 +355,7 @@
         margin: 0 auto !important;
       }
 
-      /* คอลัมน์ผสานเซลล์วันเสาร์-อาทิตย์ พร้อมเส้นขอบคมชัด */
+      /* คอลัมน์ผสานเซลล์วันเสาร์-อาทิตย์ พร้อมตีเส้นครบทุกด้านรวมถึงเส้นล่าง */
       .merged-weekend-cell {
         background-color: #f5f5f5 !important;
         writing-mode: vertical-lr !important;
@@ -1569,7 +1564,7 @@
 
             for (let d = 1; d <= daysInMonth; d++) {
               if (dayTypes[d].isWeekend) {
-                // ผสานเซลล์เฉพาะแถวแรกสุดของหน้านั้นๆ
+                // ผสานเซลล์เฉพาะแถวแรกสุดของหน้ากระดาษ
                 if (idx === 0) {
                   html += `<td rowspan="${studentCountOnPage}" class="merged-weekend-cell">${dayTypes[d].label}</td>`;
                 }
