@@ -589,7 +589,6 @@
         <h2 style="margin: 0; color: #333; font-size: 1.5rem; font-weight: bold;">📊 แดชบอร์ดสรุปผลการมาเรียน</h2>
         
         <div class="filter-controls" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-          <!-- ตัดช่องเลือกประเภทออก ให้ดูเป็นรายวันอย่างเดียว และคงช่องเลือกวันที่ไว้ -->
           <input type="date" id="dashSelectedDate" class="form-control form-control-sm" style="width: auto;" onchange="updateDashboard()">
 
           <select id="dashClassSelect" onchange="updateDashboard()" class="form-select form-select-sm" style="width: auto;">
@@ -755,10 +754,44 @@
 
     <!-- ================= 6. ตั้งค่าระบบวันหยุด ================= -->
     <div id="settings-section" class="content-section" style="display: none;">
-      <div class="card card-custom p-4 text-center">
-        <i class="fa-solid fa-calendar-xmark text-secondary display-3 mb-3"></i>
-        <h5>ตั้งค่าระบบวันหยุด</h5>
-        <p class="text-muted small">กำลังพัฒนาเมนูนี้เตรียมพร้อมในขั้นตอนถัดไปครับ...</p>
+      <div class="card card-custom p-4 mb-4">
+        <h4 class="fw-bold text-primary mb-3"><i class="fa-solid fa-calendar-xmark me-2"></i>ตั้งค่าระบบวันหยุดพิเศษ / วันหยุดราชการ</h4>
+        <p class="text-muted small">กำหนดวันหยุดพิเศษเพื่อให้ระบบแสดงผลในรายงานสถิติประจำเดือนอย่างถูกต้อง</p>
+
+        <div class="row g-3 align-items-end mb-4">
+          <div class="col-md-3">
+            <label class="form-label fw-bold">วันที่หยุด</label>
+            <input type="date" id="holidayDate" class="form-control">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label fw-bold">ชื่อวันหยุด / รายละเอียด</label>
+            <input type="text" id="holidayDesc" class="form-control" placeholder="เช่น วันหยุดราชการ, วันหยุดพิเศษ">
+          </div>
+          <div class="col-md-4">
+            <button class="btn btn-success w-100" onclick="saveHoliday()">
+              <i class="fa-solid fa-plus me-1"></i> บันทึกวันหยุด
+            </button>
+          </div>
+        </div>
+
+        <h5 class="fw-bold mb-3 text-secondary">📅 รายการวันหยุดที่บันทึกไว้</h5>
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 15%; text-align: center;">วันที่</th>
+                <th style="width: 25%;">วันในสัปดาห์</th>
+                <th>รายละเอียดวันหยุด</th>
+                <th style="width: 15%; text-align: center;">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="holidayTableBody">
+              <tr>
+                <td colspan="4" class="text-center py-3 text-muted">ยังไม่มีข้อมูลวันหยุดพิเศษ</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -786,6 +819,12 @@
 
       const dashDateInput = document.getElementById('dashSelectedDate');
       if (dashDateInput) dashDateInput.value = `${yyyy}-${mm}-${dd}`;
+
+      const holidayDateInput = document.getElementById('holidayDate');
+      if (holidayDateInput) holidayDateInput.value = `${yyyy}-${mm}-${dd}`;
+
+      // โหลดรายการวันหยุดเมื่อเปิดหน้าตั้งค่า
+      fetchHolidays();
     });
 
     // ฟังก์ชันสลับหน้าเพจ (Tab Switching)
@@ -811,6 +850,8 @@
         fetchStudentManageList();
       } else if (sectionId === 'dashboard-section' && typeof updateDashboard === 'function') {
         updateDashboard();
+      } else if (sectionId === 'settings-section' && typeof fetchHolidays === 'function') {
+        fetchHolidays();
       }
     }
 
@@ -1311,7 +1352,7 @@
       printWindow.document.close();
     }
 
-    // --- 3. แดชบอร์ดสรุปผล (บังคับใช้ประเภทรายวัน) ---
+    // --- 3. แดชบอร์ดสรุปผล ---
     function updateDashboard() {
       const selectedDate = document.getElementById('dashSelectedDate') ? document.getElementById('dashSelectedDate').value : '';
       const selectedClass = document.getElementById('dashClassSelect') ? document.getElementById('dashClassSelect').value : 'all';
@@ -1323,7 +1364,6 @@
         didOpen: () => { Swal.showLoading(); }
       });
 
-      // ส่ง type='daily' บังคับดึงข้อมูลรายวันตามวันที่เลือก
       const fetchUrl = `${WEB_APP_URL}?action=getDashboard&type=daily&date=${selectedDate}&className=${encodeURIComponent(selectedClass)}`;
 
       fetch(fetchUrl)
@@ -1452,7 +1492,6 @@
         });
     }
 
-    // --- 4.1 รายงานสรุปสถิติประจำเดือน ---
     function renderLandscapeStatsReport(data) {
       const printArea = document.getElementById('printArea');
       if (!printArea) return;
@@ -1499,14 +1538,12 @@
 
           let html = `
             <div class="print-page">
-              <!-- 1. หัวรายงาน -->
               <div class="report-header">
                 <h3>รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
                 <p><b>ระดับชั้น:</b> ${cls} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>ประจำเดือน:</b> ${monthTitle}</p>
                 <p><b>โรงเรียนชุมชนบ้านกะมิยอ</b></p>
               </div>
 
-              <!-- 2. ตารางข้อมูล -->
               <table class="report-table">
                 <thead>
                   <tr>
@@ -1595,7 +1632,6 @@
       setTimeout(() => window.print(), 500);
     }
 
-    // --- 4.2 รายงานเด็กมาสาย 4 ครั้งขึ้นไป (แนวตั้ง A4 Portrait) ---
     function renderPortraitLateReport(data) {
       const printArea = document.getElementById('printArea');
       if (!printArea) return;
@@ -1673,6 +1709,109 @@
         printArea.innerHTML += html;
       }
       setTimeout(() => window.print(), 500);
+    }
+
+    // --- 6. ฟังก์ชันจัดการระบบวันหยุด ---
+    function fetchHolidays() {
+      const tbody = document.getElementById('holidayTableBody');
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div> กำลังโหลดข้อมูล...</td></tr>`;
+
+      const script = document.createElement('script');
+      script.src = `${WEB_APP_URL}?action=getHolidays&callback=renderHolidayTable`;
+      document.body.appendChild(script);
+    }
+
+    window.renderHolidayTable = function(response) {
+      const tbody = document.getElementById('holidayTableBody');
+      if (!response || response.status !== "success" || !response.data || response.data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3 text-muted">ยังไม่มีข้อมูลวันหยุดพิเศษ</td></tr>`;
+        return;
+      }
+
+      let html = '';
+      response.data.forEach((h, index) => {
+        const dateObj = new Date(h.date);
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dateStr = dateObj.toLocaleDateString('th-TH', options);
+
+        html += `
+          <tr>
+            <td class="text-center fw-semibold">${h.date}</td>
+            <td>${dateStr}</td>
+            <td>${h.description}</td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteHoliday('${h.date}')">
+                <i class="fa-solid fa-trash"></i> ลบ
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    };
+
+    async function saveHoliday() {
+      const date = document.getElementById('holidayDate').value;
+      const desc = document.getElementById('holidayDesc').value.trim();
+
+      if (!date || !desc) {
+        Swal.fire('แจ้งเตือน', 'กรุณาเลือกวันที่และกรอกรายละเอียดวันหยุดครับ', 'warning');
+        return;
+      }
+
+      Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+      try {
+        const response = await fetch(WEB_APP_URL, {
+          method: 'POST',
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: 'saveHoliday', date: date, description: desc })
+        });
+        const res = await response.json();
+
+        if (res.status === "success") {
+          Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ!', timer: 1500, showConfirmButton: false });
+          document.getElementById('holidayDesc').value = '';
+          fetchHolidays();
+        } else {
+          Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
+        }
+      } catch (error) {
+        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
+      }
+    }
+
+    async function deleteHoliday(date) {
+      const result = await Swal.fire({
+        title: 'ยืนยันการลบ?',
+        text: `ต้องการลบวันหยุดวันที่ ${date} ออกจากระบบหรือไม่?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'ใช่, ลบเลย',
+        cancelButtonText: 'ยกเลิก'
+      });
+
+      if (result.isConfirmed) {
+        Swal.fire({ title: 'กำลังลบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+          const response = await fetch(WEB_APP_URL, {
+            method: 'POST',
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: 'deleteHoliday', date: date })
+          });
+          const res = await response.json();
+
+          if (res.status === "success") {
+            Swal.fire({ icon: 'success', title: 'ลบสำเร็จ!', timer: 1500, showConfirmButton: false });
+            fetchHolidays();
+          } else {
+            Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
+          }
+        } catch (error) {
+          Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
+        }
+      }
     }
   </script>
 </body>
