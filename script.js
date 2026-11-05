@@ -1,28 +1,25 @@
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbze6PHouALWAr_xog9v1Wucd0DmAqFZ6_cVT55Ya7yzUAYtFiiwX7qWULU40oNdZQa6/exec";
 
-// --- 1. Event Listener เริ่มต้นเมื่อโหลดหน้าเว็บ ---
 document.addEventListener("DOMContentLoaded", () => {
-  const today = new Date().toISOString().split('T')[0];
-  const currentMonth = today.substring(0, 7);
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
 
-  const dateInput = document.getElementById('attendanceDate');
-  if (dateInput) dateInput.valueAsDate = new Date();
+  const attendanceDateInput = document.getElementById('attendanceDate');
+  if (attendanceDateInput) attendanceDateInput.value = `${yyyy}-${mm}-${dd}`;
 
-  if (document.getElementById('dashSelectedDate')) {
-    document.getElementById('dashSelectedDate').value = today;
-  }
-  if (document.getElementById('dashSelectedMonth')) {
-    document.getElementById('dashSelectedMonth').value = currentMonth;
-  }
-  if (document.getElementById('printMonthSelect')) {
-    document.getElementById('printMonthSelect').value = currentMonth;
-  }
+  const monthInput = document.getElementById('printMonthSelect');
+  if (monthInput) monthInput.value = `${yyyy}-${mm}`;
 
-  // ดึงรายชื่อห้องเรียนมาใส่ Dropdown สำหรับหน้าพิมพ์รายงาน
-  fetchClassList();
+  const dashMonthInput = document.getElementById('dashSelectedMonth');
+  if (dashMonthInput) dashMonthInput.value = `${yyyy}-${mm}`;
+
+  const dashDateInput = document.getElementById('dashSelectedDate');
+  if (dashDateInput) dashDateInput.value = `${yyyy}-${mm}-${dd}`;
 });
 
-// --- 2. ฟังก์ชันเช็คชื่อนักเรียน (Attendance) ---
+// --- 1. เช็คชื่อรายวัน ---
 function loadStudentList() {
   const className = document.getElementById('classSelect').value;
   const attendanceDate = document.getElementById('attendanceDate').value;
@@ -201,7 +198,7 @@ async function submitAttendance() {
       title: 'กำลังบันทึกข้อมูล...',
       text: 'กรุณารอสักครู่ ระบบกำลังอัปเดตข้อมูลลง Google Sheets',
       allowOutsideClick: false,
-      didOpen: () => Swal.showLoading()
+      didOpen: () => { Swal.showLoading(); }
     });
 
     try {
@@ -241,7 +238,7 @@ async function submitAttendance() {
   }
 }
 
-// --- 3. การจัดการรายชื่อนักเรียน (Manage Students) ---
+// --- 2. จัดการรายชื่อนักเรียน ---
 function fetchStudentManageList() {
   const selectedClass = document.getElementById('manageClassSelect').value;
   const tbody = document.getElementById('manageStudentTableBody');
@@ -261,7 +258,7 @@ function renderManageStudentTable(response) {
   }
 
   const students = response.data;
-  if (!students || students.length === 0) {
+  if (students.length === 0) {
     tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">ไม่พบข้อมูลนักเรียน</td></tr>`;
     return;
   }
@@ -271,10 +268,10 @@ function renderManageStudentTable(response) {
     html += `
       <tr>
         <td><span class="badge bg-info text-dark">${std.className}</span></td>
-        <td class="fw-bold">${std.no}</td>
+        <td class="fw-bold text-center">${std.no}</td>
         <td>${std.name}</td>
         <td class="text-center">
-          <button class="btn btn-sm btn-outline-warning me-1" onclick="editStudent('${std.no}', '${std.name}', '${std.className}')">
+          <button class="btn btn-sm btn-outline-warning me-1" onclick="openEditStudentModal('${std.no}', '${std.name}', '${std.className}')">
             <i class="fa-solid fa-pen-to-square"></i> แก้ไข
           </button>
           <button class="btn btn-sm btn-outline-danger" onclick="confirmDeleteStudent('${std.no}', '${std.className}', '${std.name}')">
@@ -327,40 +324,48 @@ function openAddStudentModal() {
         Swal.showValidationMessage('กรุณากรอกเลขที่และชื่อ-นามสกุลให้ครบถ้วนครับ');
         return false;
       }
-
-      // ดึงตารางปัจจุบันมาเช็คความซ้ำซ้อนเบื้องต้น
-      const rows = document.querySelectorAll('#manageStudentTableBody tr');
-      let isDuplicateNo = false;
-      let isDuplicateName = false;
-
-      rows.forEach(row => {
-        const cols = row.querySelectorAll('td');
-        if (cols.length >= 3) {
-          const rowClass = cols[0].innerText.trim();
-          const rowNo = cols[1].innerText.trim();
-          const rowName = cols[2].innerText.trim();
-
-          if (rowClass === className) {
-            if (rowNo === no) isDuplicateNo = true;
-            if (rowName === name) isDuplicateName = true;
-          }
-        }
-      });
-
-      if (isDuplicateNo) {
-        Swal.showValidationMessage(`เลขที่ ${no} ในชั้น ${className} มีในระบบแล้วครับ`);
-        return false;
-      }
-      if (isDuplicateName) {
-        Swal.showValidationMessage(`นักเรียนชื่อ "${name}" มีอยู่ในชั้น ${className} แล้วครับ`);
-        return false;
-      }
-
       return { no, name, className };
     }
   }).then((result) => {
     if (result.isConfirmed) {
       saveStudentData('addStudent', { student: result.value });
+    }
+  });
+}
+
+function openEditStudentModal(oldNo, name, oldClass) {
+  Swal.fire({
+    title: '✏️ แก้ไขข้อมูลนักเรียน',
+    html: `
+      <div class="text-start mb-2"><small class="fw-bold">ระดับชั้น:</small></div>
+      <select id="swal-edit-class" class="swal2-select w-100 m-0 mb-3">
+        <option value="${oldClass}">${oldClass}</option>
+      </select>
+
+      <div class="text-start mb-2"><small class="fw-bold">เลขที่:</small></div>
+      <input id="swal-edit-no" type="number" class="swal2-input w-100 m-0 mb-3" value="${oldNo}">
+
+      <div class="text-start mb-2"><small class="fw-bold">ชื่อ - นามสกุล:</small></div>
+      <input id="swal-edit-name" class="swal2-input w-100 m-0" value="${name}">
+    `,
+    focusConfirm: false,
+    showCancelButton: true,
+    confirmButtonText: 'อัปเดตข้อมูล',
+    cancelButtonText: 'ยกเลิก',
+    preConfirm: () => {
+      const className = document.getElementById('swal-edit-class').value;
+      const no = document.getElementById('swal-edit-no').value.trim();
+      const newName = document.getElementById('swal-edit-name').value.trim();
+
+      if (!no || !newName) {
+        Swal.showValidationMessage('กรุณากรอกเลขที่และชื่อ-นามสกุลให้ครบถ้วน');
+        return false;
+      }
+      return { oldNo: oldNo, oldClass: oldClass, no: no, name: newName, className: className };
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      saveStudentData('updateStudent', { student: result.value });
     }
   });
 }
@@ -381,10 +386,9 @@ function confirmDeleteStudent(no, className, name) {
   });
 }
 
-// ฟังก์ชันหลักในการบันทึก/เพิ่ม/ลบ ข้อมูลนักเรียน
 async function saveStudentData(action, payload) {
   Swal.fire({
-    title: 'กำลังบันทึกข้อมูล...',
+    title: 'กำลังดำเนินการ...',
     allowOutsideClick: false,
     didOpen: () => Swal.showLoading()
   });
@@ -401,7 +405,7 @@ async function saveStudentData(action, payload) {
       Swal.fire({
         icon: 'success',
         title: 'สำเร็จ!',
-        text: result.message || 'บันทึกข้อมูลเรียบร้อยแล้ว',
+        text: result.message || 'ทำรายการเรียบร้อยแล้ว',
         timer: 1500,
         showConfirmButton: false
       });
@@ -409,8 +413,8 @@ async function saveStudentData(action, payload) {
     } else {
       Swal.fire({
         icon: 'error',
-        title: 'ไม่สามารถบันทึกได้',
-        text: result.message
+        title: 'ไม่สามารถดำเนินการได้',
+        text: result.message || 'เกิดข้อผิดพลาด'
       });
     }
   } catch (error) {
@@ -422,137 +426,7 @@ async function saveStudentData(action, payload) {
   }
 }
 
-// --- 4. พิมพ์แบบฟอร์มรายชื่อนักเรียน ---
-function printStudentList() {
-  let selectedClassText = '';
-  const classSelect = document.getElementById('manageClassSelect') || 
-                      document.getElementById('classSelect') || 
-                      document.querySelector('select');
-
-  if (classSelect) {
-    selectedClassText = classSelect.options[classSelect.selectedIndex]?.text.trim() || classSelect.value.trim();
-  }
-
-  let displayClassName = selectedClassText;
-  if (selectedClassText.includes('ประถมศึกษาปีที่')) {
-    displayClassName = selectedClassText.replace('ประถมศึกษาปีที่', 'ป.').replace(/\s+/g, '');
-  } else if (selectedClassText.includes('อนุบาล')) {
-    displayClassName = selectedClassText.replace('อนุบาลปีที่', 'อ.').replace('อนุบาล', 'อ.').replace(/\s+/g, '');
-  }
-
-  if (!displayClassName || displayClassName.includes('เลือก') || displayClassName.includes('ทั้งหมด')) {
-    displayClassName = 'ป.5';
-  }
-
-  let classStudents = [];
-  const tableRows = document.querySelectorAll('#manageStudentTableBody tr, #studentTableBody tr');
-  
-  tableRows.forEach(row => {
-    const cols = row.querySelectorAll('td');
-    if (cols.length >= 3) {
-      const noText = cols[1].innerText.trim();
-      const nameText = cols[2].innerText.trim();
-      if (noText && nameText && !isNaN(noText)) {
-        classStudents.push({ no: noText, name: nameText });
-      }
-    } else if (cols.length >= 2) {
-      const noText = cols[0].innerText.trim();
-      const nameText = cols[1].innerText.trim();
-      if (noText && nameText && !isNaN(noText)) {
-        classStudents.push({ no: noText, name: nameText });
-      }
-    }
-  });
-
-  if (classStudents.length === 0) {
-    showCustomPopup('ไม่พบข้อมูลนักเรียน', `กรุณากดเลือกระดับชั้นให้ตารางแสดงรายชื่อนักเรียนก่อนสั่งพิมพ์ครับ`);
-    return;
-  }
-
-  classStudents.sort((a, b) => Number(a.no) - Number(b.no));
-
-  let rowsHtml = classStudents.map((s, index) => `
-    <tr>
-      <td style="text-align: center;">${s.no || (index + 1)}</td>
-      <td style="text-align: left; padding-left: 15px;">${s.name}</td>
-      <td style="text-align: center;">${displayClassName}</td>
-      <td></td>
-    </tr>
-  `).join('');
-
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html lang="th">
-    <head>
-      <meta charset="UTF-8">
-      <title>บัญชีรายชื่อนักเรียน ชั้น ${displayClassName}</title>
-      <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
-        body { font-family: 'Sarabun', sans-serif; font-size: 16pt; line-height: 1.6; margin: 0; padding: 20px; color: #000; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .title { font-weight: bold; font-size: 18pt; margin-bottom: 5px; }
-        .subtitle { font-size: 16pt; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #000; padding: 8px 5px; font-size: 15pt; }
-        th { background-color: #f2f2f2; font-weight: bold; text-align: center; }
-        @media print { @page { size: A4 portrait; margin: 2cm 1.5cm 2cm 2cm; } body { padding: 0; } }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <div class="title">บัญชีรายชื่อนักเรียน</div>
-        <div class="subtitle">โรงเรียนชุมชนบ้านกะมิยอ | ระดับชั้น ${displayClassName}</div>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 12%;">เลขที่</th>
-            <th style="width: 50%;">ชื่อ - นามสกุล</th>
-            <th style="width: 18%;">ระดับชั้น</th>
-            <th style="width: 20%;">หมายเหตุ</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rowsHtml}
-        </tbody>
-      </table>
-      <script>window.onload = function() { window.print(); }<\/script>
-    </body>
-    </html>
-  `);
-
-  printWindow.document.close();
-}
-
-function showCustomPopup(title, message) {
-  const existingModal = document.getElementById('custom-alert-modal');
-  if (existingModal) existingModal.remove();
-
-  const modalHtml = `
-    <div id="custom-alert-modal" style="
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center;
-      z-index: 99999;
-    ">
-      <div style="
-        background: #ffffff; padding: 25px 30px; border-radius: 12px; width: 90%; max-width: 420px;
-        text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-family: 'Sarabun', sans-serif;
-      ">
-        <div style="width: 50px; height: 50px; border-radius: 50%; background: #fff3cd; color: #856404; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 15px auto;">⚠️</div>
-        <h3 style="margin: 0 0 10px 0; color: #333; font-size: 20px; font-weight: bold;">${title}</h3>
-        <p style="margin: 0 0 20px 0; color: #666; font-size: 15px; line-height: 1.5;">${message}</p>
-        <button onclick="document.getElementById('custom-alert-modal').remove()" style="
-          background: #8a5a00; color: white; border: none; padding: 10px 25px; font-size: 16px;
-          border-radius: 6px; cursor: pointer; font-weight: bold;
-        ">ตกลง</button>
-      </div>
-    </div>
-  `;
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
-}
-
-// --- 5. การจัดการ Dashboard ---
+// --- 3. แดชบอร์ดสรุปผล ---
 function toggleDashPeriodInput() {
   const periodType = document.getElementById('dashPeriodType').value;
   const dateInput = document.getElementById('dashSelectedDate');
@@ -579,7 +453,7 @@ function updateDashboard() {
     title: 'กำลังโหลดข้อมูล...',
     text: 'โปรดรอสักครู่',
     allowOutsideClick: false,
-    didOpen: () => Swal.showLoading()
+    didOpen: () => { Swal.showLoading(); }
   });
 
   const fetchUrl = `${WEB_APP_URL}?action=getDashboard&type=${periodType}&date=${selectedDate}&month=${selectedMonth}&className=${encodeURIComponent(selectedClass)}`;
@@ -604,6 +478,7 @@ function updateDashboard() {
 }
 
 function renderDashboard(data) {
+  Swal.close();
   if (!data) return;
 
   if (document.getElementById('kpiTotal')) document.getElementById('kpiTotal').innerHTML = `${data.total || 0} <small>คน</small>`;
@@ -634,11 +509,17 @@ function renderDashboard(data) {
 
   const alertBody = document.getElementById('alertTableBody');
   const badge = document.getElementById('alertCountBadge');
+  
   if (!alertBody) return;
 
   if (!data.alerts || data.alerts.length === 0) {
     if (badge) badge.innerText = 'พบ 0 คน';
-    alertBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-success fw-bold">🎉 ไม่พบนกเรียนที่มาสายเกิน 4 ครั้งในเดือนนี้</td></tr>`;
+    alertBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="text-center py-4 text-success fw-bold">
+          🎉 ไม่พบนักเรียนที่มาสายเกิน 4 ครั้งในเดือนนี้
+        </td>
+      </tr>`;
     return;
   }
 
@@ -657,24 +538,9 @@ function renderDashboard(data) {
   alertBody.innerHTML = rows;
 }
 
-// --- 6. พิมพ์รายงานสรุปประจำเดือน (Report) ---
-function fetchClassList() {
-  const select = document.getElementById('printClassSelect');
-  if (!select) return;
-
-  fetch(`${WEB_APP_URL}?action=getClassList`)
-    .then(res => res.json())
-    .then(res => {
-      const classes = res.data || [];
-      if (classes.length > 0) {
-        select.innerHTML = '<option value="all">-- ทุกระดับชั้น --</option>';
-        classes.forEach(cls => {
-          select.innerHTML += `<option value="${cls}">${cls}</option>`;
-        });
-      }
-    })
-    .catch(err => console.error("Error fetching class list:", err));
-}
+// =========================================================
+// 4. ฟังก์ชันพิมพ์รายงานสถิติ และ รายงานเด็กมาสาย (Multi-Page Ready)
+// =========================================================
 
 function generateReport(type) {
   const monthVal = document.getElementById('printMonthSelect')?.value;
@@ -685,7 +551,12 @@ function generateReport(type) {
     return;
   }
 
-  Swal.fire({ title: 'กำลังเตรียมเอกสาร...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  Swal.fire({ 
+    title: 'กำลังเตรียมเอกสาร...', 
+    text: 'กรุณารอสักครู่ ระบบกำลังประมวลผลตารางประจำเดือน',
+    allowOutsideClick: false, 
+    didOpen: () => Swal.showLoading() 
+  });
 
   const fetchUrl = `${WEB_APP_URL}?action=getReportData&month=${monthVal}&className=${encodeURIComponent(selectedClass)}`;
 
@@ -715,68 +586,7 @@ function generateReport(type) {
     });
 }
 
-function renderLandscapeStatsReport(data) {
-  const printArea = document.getElementById('printArea');
-  if (!printArea) return;
-  printArea.innerHTML = '';
-
-  const [year, month] = data.month.split('-');
-  const thaiMonthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-  const monthTitle = `${thaiMonthNames[parseInt(month, 10) - 1]} ${parseInt(year, 10) + 543}`;
-
-  for (const cls in data.reportData) {
-    const classGroup = data.reportData[cls];
-    let html = `
-      <div class="page-landscape">
-        <div style="text-align: center; margin-bottom: 15px;">
-          <h3 style="margin: 0; font-weight: bold;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
-          <p style="margin: 5px 0;">ระดับชั้น: ${cls} &nbsp;&nbsp;&nbsp;&nbsp; ประจำเดือน: ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; โรงเรียนชุมชนบ้านกะมิยอ</p>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 220px;" rowspan="2">ชื่อ - นามสกุล</th>
-              <th colspan="31">วันที่</th>
-              <th colspan="3">สรุป</th>
-            </tr>
-            <tr>
-              ${Array.from({length: 31}, (_, i) => `<th style="width: 18px; font-size: 9pt;">${i + 1}</th>`).join('')}
-              <th style="width: 25px;">ร</th>
-              <th style="width: 25px;">ส</th>
-              <th style="width: 25px;">ข</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
-
-    classGroup.students.forEach((s, idx) => {
-      html += `
-        <tr>
-          <td class="text-start">${idx + 1}. ${s.name}</td>
-          ${Array.from({length: 31}, (_, i) => `<td style="font-size: 9pt;">${s.dailyStatus[i + 1] || '-'}</td>`).join('')}
-          <td style="font-weight: bold; color: green;">${s.presentCount || '-'}</td>
-          <td style="font-weight: bold; color: orange;">${s.lateCount || '-'}</td>
-          <td style="font-weight: bold; color: red;">${s.absentCount || '-'}</td>
-        </tr>
-      `;
-    });
-
-    html += `
-          </tbody>
-        </table>
-        <div class="signature-section" style="margin-top: 30px; display: flex; justify-content: space-between; text-align: center;">
-          <div><br>ลงชื่อ..........................................................<br>(..........................................................)<br>ตำแหน่ง ครูประจำชั้น โรงเรียนชุมชนบ้านกะมิยอ</div>
-          <div><br>ลงชื่อ..........................................................<br>(นายอับดุล เจะสือแม)<br>ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</div>
-          <div><br>ลงชื่อ..........................................................<br>(นางวันพิทยา มุสตาฟา)<br>ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</div>
-        </div>
-      </div>
-    `;
-    printArea.innerHTML += html;
-  }
-
-  setTimeout(() => window.print(), 500);
-}
-
+// --- 4.1 รายงานสรุปสถิติประจำเดือน (แนวนอน A4 Landscape) ---
 function renderLandscapeStatsReport(data) {
   const printArea = document.getElementById('printArea');
   if (!printArea) return;
@@ -789,114 +599,71 @@ function renderLandscapeStatsReport(data) {
   const thaiMonthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
   const monthTitle = `${thaiMonthNames[month - 1]} ${year + 543}`;
   
-  // คำนวณจำนวนวันในเดือนนั้นๆ (28, 29, 30, 31 วัน)
   const daysInMonth = new Date(year, month, 0).getDate();
-  const holidays = data.holidays || {};
 
   for (const cls in data.reportData) {
     const classGroup = data.reportData[cls];
-    const totalStudents = classGroup.students.length;
-
-    // ตรวจสอบวันเสาร์ (6), อาทิตย์ (0) และวันหยุดพิเศษ
-    const dayTypes = {}; // { dayNum: { isHoliday: true, name: 'วันเสาร์' } }
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateObj = new Date(year, month - 1, d);
-      const dayOfWeek = dateObj.getDay(); // 0 = อาทิตย์, 6 = เสาร์
-      const dateKey = `${yearStr}-${monthStr}-${String(d).padStart(2, '0')}`;
-
-      if (dayOfWeek === 6) {
-        dayTypes[d] = { isMerged: true, name: '--- วันเสาร์ ---' };
-      } else if (dayOfWeek === 0) {
-        dayTypes[d] = { isMerged: true, name: '--- วันอาทิตย์ ---' };
-      } else if (holidays[dateKey]) {
-        dayTypes[d] = { isMerged: true, name: `--- ${holidays[dateKey]} ---` };
-      } else {
-        dayTypes[d] = { isMerged: false };
-      }
-    }
 
     let html = `
       <div class="page-landscape">
         <style>
-          .vertical-text {
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
-            white-space: nowrap;
-            text-align: center;
-            vertical-align: middle;
-            font-size: 8.5pt;
-            color: #555;
-            letter-spacing: 1px;
-            padding: 5px 0;
-          }
           .table-report th, .table-report td {
             text-align: center;
             vertical-align: middle;
-            padding: 2px 1px;
+            padding: 4px 2px;
           }
         </style>
 
         <div style="text-align: center; margin-bottom: 15px;">
-          <h3 style="margin: 0; font-weight: bold; font-size: 16pt;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
-          <p style="margin: 5px 0; font-size: 13pt;">
+          <h3 style="margin: 0; font-weight: bold; font-size: 15pt;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
+          <p style="margin: 4px 0; font-size: 11pt;">
             <b>ระดับชั้น:</b> ${cls} &nbsp;&nbsp;&nbsp;&nbsp; 
             <b>ประจำเดือน:</b> ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; 
             <b>โรงเรียนชุมชนบ้านกะมิยอ</b>
           </p>
         </div>
 
-        <table class="table-report" style="width: 100%; border-collapse: collapse;">
+        <table class="table-report" style="width: 100%; border-collapse: collapse; font-size: 8.5pt;">
           <thead>
             <tr>
-              <th style="width: 200px;" rowspan="2">ชื่อ-นามสกุล</th>
+              <th style="width: 160px;" rowspan="2">ชื่อ - นามสกุล</th>
               <th colspan="${daysInMonth}">วันที่</th>
               <th colspan="3">สรุป</th>
             </tr>
             <tr>
     `;
 
-    // วนสร้างหัวตารางวันที่ 1 - 31
     for (let d = 1; d <= daysInMonth; d++) {
-      html += `<th style="width: 18px; font-size: 8.5pt;">${d}</th>`;
+      html += `<th style="width: 18px; font-size: 8pt;">${d}</th>`;
     }
 
     html += `
-              <th style="width: 22px; color: green;">ก</th>
-              <th style="width: 22px; color: orange;">ส</th>
-              <th style="width: 22px; color: red;">ข</th>
+              <th style="width: 24px; color: green;">ร</th>
+              <th style="width: 24px; color: orange;">ส</th>
+              <th style="width: 24px; color: red;">ข</th>
             </tr>
           </thead>
           <tbody>
     `;
 
-    // สร้างแถวรายชื่อนักเรียน
     classGroup.students.forEach((s, idx) => {
       html += `<tr>`;
-      html += `<td style="text-align: left; padding-left: 5px; font-size: 9.5pt;">${idx + 1}. ${s.name}</td>`;
+      html += `<td style="text-align: left; padding-left: 6px;">${idx + 1}. ${s.name}</td>`;
 
       for (let d = 1; d <= daysInMonth; d++) {
-        if (dayTypes[d].isMerged) {
-          // ยุบรวมเซลล์แนวตั้งสำหรับนักเรียนคนแรก (Row index 0)
-          if (idx === 0) {
-            html += `<td rowspan="${totalStudents}" class="vertical-text">${dayTypes[d].name}</td>`;
-          }
-          // คนอื่นๆ ข้ามเซลล์นี้เพราะถูกยุบไปแล้ว
-        } else {
-          const st = s.dailyStatus[d] || '-';
-          let styleColor = '';
-          if (st === 'ก') styleColor = 'color: green;';
-          if (st === 'ส') styleColor = 'color: orange; font-weight: bold;';
-          if (st === 'ข') styleColor = 'color: red; font-weight: bold;';
+        const st = s.dailyStatus[d] || '-';
+        let styleColor = '';
+        if (st === 'ร') styleColor = 'color: green;';
+        if (st === 'ส') styleColor = 'color: orange; font-weight: bold;';
+        if (st === 'ข') styleColor = 'color: red; font-weight: bold;';
 
-          html += `<td style="font-size: 9pt; ${styleColor}">${st}</td>`;
-        }
+        html += `<td style="${styleColor}">${st}</td>`;
       }
 
-      // คอลัมน์สรุป ก / ส / ข
       html += `
-        <td style="font-size: 9pt;">${s.presentCount || '-'}</td>
-        <td style="font-size: 9pt; color: orange; font-weight: bold;">${s.lateCount || '-'}</td>
-        <td style="font-size: 9pt; color: red; font-weight: bold;">${s.absentCount || '-'}</td>
+        <td style="color: green; font-weight: bold;">${s.presentCount || '-'}</td>
+        <td style="color: orange; font-weight: bold;">${s.lateCount || '-'}</td>
+        <td style="color: red; font-weight: bold;">${s.absentCount || '-'}</td>
       </tr>`;
     });
 
@@ -904,16 +671,15 @@ function renderLandscapeStatsReport(data) {
           </tbody>
         </table>
 
-        <!-- ลายเซ็นท้ายเอกสาร -->
-        <div class="signature-section" style="margin-top: 25px; display: flex; justify-content: space-around; text-align: center; font-size: 10.5pt;">
+        <div class="signature-section" style="margin-top: 30px; display: flex; justify-content: space-around; text-align: center; font-size: 10pt;">
           <div>
             <br>ลงชื่อ..........................................................<br>
             (..........................................................)<br>
-            ตำแหน่ง ครูประจำชั้น โรงเรียนชุมชนบ้านกะมิยอ
+            ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
           </div>
           <div>
             <br>ลงชื่อ..........................................................<br>
-            (นายอับดุล เจะสือแม)<br>
+            (นายอับดุล เจะสือแต)<br>
             ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
           </div>
           <div>
@@ -927,5 +693,95 @@ function renderLandscapeStatsReport(data) {
     printArea.innerHTML += html;
   }
 
+  setTimeout(() => window.print(), 500);
+}
+
+// --- 4.2 รายงานนักเรียนมาสาย 4 ครั้งขึ้นไป (แนวตั้ง A4 Portrait) ---
+function renderPortraitLateReport(data) {
+  const printArea = document.getElementById('printArea');
+  if (!printArea) return;
+  printArea.innerHTML = '';
+
+  const [yearStr, monthStr] = data.month.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+  const monthTitle = `${thaiMonths[month - 1]} ${year + 543}`;
+
+  let allLateStudents = [];
+  for (const cls in data.reportData) {
+    const classGroup = data.reportData[cls];
+    classGroup.students.forEach(s => {
+      if (s.lateCount >= 4) {
+        allLateStudents.push({
+          className: cls,
+          name: s.name,
+          lateCount: s.lateCount,
+          lateDates: s.lateDates.join(', ')
+        });
+      }
+    });
+  }
+
+  let html = `
+    <div class="page-portrait">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h3 style="margin: 0; font-weight: bold; font-size: 16pt;">รายงานสรุปรายชื่อนักเรียนมาสาย / ไม่เข้าร่วมกิจกรรม (4 ครั้งขึ้นไป)</h3>
+        <p style="margin: 5px 0; font-size: 12pt;"><b>ประจำเดือน:</b> ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; <b>โรงเรียนชุมชนบ้านกะมิยอ</b></p>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
+        <thead>
+          <tr>
+            <th style="width: 8%; padding: 6px; text-align: center;">ลำดับ</th>
+            <th style="width: 18%; padding: 6px; text-align: center;">ระดับชั้น</th>
+            <th style="width: 30%; padding: 6px;">ชื่อ - นามสกุล</th>
+            <th style="width: 15%; padding: 6px; text-align: center;">จำนวนสาย</th>
+            <th style="width: 29%; padding: 6px;">วันที่มาสาย</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  if (allLateStudents.length === 0) {
+    html += `<tr><td colspan="5" style="padding: 15px; text-align: center; color: green; font-weight: bold;">🎉 ไม่พบนักเรียนที่มาสายตั้งแต่ 4 ครั้งขึ้นไปในเดือนนี้</td></tr>`;
+  } else {
+    allLateStudents.forEach((s, idx) => {
+      html += `
+        <tr>
+          <td style="text-align: center; padding: 5px;">${idx + 1}</td>
+          <td style="text-align: center; padding: 5px;">${s.className}</td>
+          <td style="text-align: left; padding: 5px 8px;">${s.name}</td>
+          <td style="text-align: center; padding: 5px; font-weight: bold; color: red;">${s.lateCount} ครั้ง</td>
+          <td style="text-align: left; padding: 5px 8px;">${s.lateDates || '-'}</td>
+        </tr>
+      `;
+    });
+  }
+
+  html += `
+        </tbody>
+      </table>
+
+      <div class="signature-section" style="margin-top: 35px; display: flex; justify-content: space-around; text-align: center; font-size: 10pt;">
+        <div>
+          <br>ลงชื่อ..........................................................<br>
+          (..........................................................)<br>
+          ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
+        </div>
+        <div>
+          <br>ลงชื่อ..........................................................<br>
+          (นายอับดุล เจะสือแต)<br>
+          ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+        </div>
+        <div>
+          <br>ลงชื่อ..........................................................<br>
+          (นางวันพิทยา มุสตาฟา)<br>
+          ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+        </div>
+      </div>
+    </div>
+  `;
+  printArea.innerHTML = html;
   setTimeout(() => window.print(), 500);
 }
