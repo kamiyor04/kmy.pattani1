@@ -319,21 +319,32 @@
 
       table.report-table {
         width: 100% !important;
-        border-collapse: collapse !important;
+        border-collapse: separate !important; /* แยกขอบการคำนวณเพื่อป้องกันเส้นขอบหายตอน rowspan */
+        border-spacing: 0 !important;
         table-layout: fixed !important;
         margin-bottom: 8px !important;
       }
 
-      /* บังคับตีเส้นขอบ 1px รอบทุกช่องรวมถึงช่องผสาน */
+      /* บังคับตีเส้นขอบ 1px รอบทุกช่อง */
       table.report-table th, 
       table.report-table td {
-        border: 1px solid #000000 !important;
+        border-right: 1px solid #000000 !important;
+        border-bottom: 1px solid #000000 !important;
         padding: 3px 1px !important;
         text-align: center !important;
         vertical-align: middle !important;
         font-family: 'Sarabun', sans-serif !important;
         box-sizing: border-box !important;
         word-wrap: break-word !important;
+      }
+
+      table.report-table tr:first-child th {
+        border-top: 1px solid #000000 !important;
+      }
+
+      table.report-table th:first-child, 
+      table.report-table td:first-child {
+        border-left: 1px solid #000000 !important;
       }
 
       /* หัวตารางวันในสัปดาห์แนวตั้ง */
@@ -349,7 +360,7 @@
         margin: 0 auto !important;
       }
 
-      /* คอลัมน์ผสานเซลล์วันเสาร์-อาทิตย์ พร้อมเส้นขอบชัดเจน */
+      /* คอลัมน์ผสานเซลล์วันเสาร์-อาทิตย์ พร้อมเส้นขอบคมชัด */
       .merged-weekend-cell {
         background-color: #f5f5f5 !important;
         writing-mode: vertical-lr !important;
@@ -360,7 +371,8 @@
         font-weight: bold !important;
         letter-spacing: 1px !important;
         white-space: nowrap !important;
-        border: 1px solid #000000 !important;
+        border-right: 1px solid #000000 !important;
+        border-bottom: 1px solid #000000 !important;
       }
 
       .signature-section {
@@ -375,7 +387,6 @@
       }
     }
 
-    /* สำหรับการแสดงผลบนจอภาพก่อนสั่งพิมพ์ */
     .vertical-header {
       writing-mode: vertical-lr;
       transform: rotate(180deg);
@@ -394,7 +405,6 @@
       vertical-align: middle;
       font-size: 8.5pt;
       font-weight: bold;
-      border: 1px solid #000000;
     }
   </style>
 </head>
@@ -1472,7 +1482,7 @@
         });
     }
 
-    // --- 4.1 รายงานสรุปสถิติประจำเดือน (ผสานเซลล์เสาร์-อาทิตย์ พร้อมเส้นขอบคมชัด และลงชื่อหน้าสุดท้าย) ---
+    // --- 4.1 รายงานสรุปสถิติประจำเดือน ---
     function renderLandscapeStatsReport(data) {
       const printArea = document.getElementById('printArea');
       if (!printArea) return;
@@ -1559,7 +1569,7 @@
 
             for (let d = 1; d <= daysInMonth; d++) {
               if (dayTypes[d].isWeekend) {
-                // ผสานเซลล์วันเสาร์-อาทิตย์ สำหรับเฉพาะหน้ากระดาษนั้นๆ พร้อมคลาสตีเส้นขอบ
+                // ผสานเซลล์เฉพาะแถวแรกสุดของหน้านั้นๆ
                 if (idx === 0) {
                   html += `<td rowspan="${studentCountOnPage}" class="merged-weekend-cell">${dayTypes[d].label}</td>`;
                 }
@@ -1586,7 +1596,7 @@
               </table>
           `;
 
-          // แสดงส่วนลงชื่อเฉพาะ "หน้าสุดท้ายของชั้นนั้นๆ" เท่านั้น (หากน้อยกว่า 20 คน จะแสดงหน้าแรกและหน้าเดียว)
+          // แสดงส่วนลงชื่อเฉพาะหน้าสุดท้ายของชั้นเรียนนั้นๆ
           if (isLastPage) {
             html += `
               <div class="signature-section">
@@ -1597,7 +1607,7 @@
                 </div>
                 <div>
                   ลงชื่อ..........................................................<br>
-                  (นายอับดุล เจัดสือแต)<br>
+                  (นายอับดุล เจะสือแต)<br>
                   ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
                 </div>
                 <div>
