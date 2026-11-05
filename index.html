@@ -1751,68 +1751,66 @@
     };
 
     async function saveHoliday() {
-      const date = document.getElementById('holidayDate').value;
-      const desc = document.getElementById('holidayDesc').value.trim();
+  const date = document.getElementById('holidayDate').value;
+  const desc = document.getElementById('holidayDesc').value.trim();
 
-      if (!date || !desc) {
-        Swal.fire('แจ้งเตือน', 'กรุณาเลือกวันที่และกรอกรายละเอียดวันหยุดครับ', 'warning');
-        return;
-      }
+  if (!date || !desc) {
+    Swal.fire('แจ้งเตือน', 'กรุณาเลือกวันที่และกรอกรายละเอียดวันหยุดครับ', 'warning');
+    return;
+  }
 
-      Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-      try {
-        const response = await fetch(WEB_APP_URL, {
-          method: 'POST',
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: 'saveHoliday', date: date, description: desc })
-        });
-        const res = await response.json();
+  try {
+    const response = await fetch(WEB_APP_URL, {
+      method: 'POST',
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      // 📌 ตรงนี้ต้องเปลี่ยน action เป็น "addHoliday" และชื่อตัวแปรให้ตรงกับ Apps Script ค่ะ
+      body: JSON.stringify({ action: 'addHoliday', dateStr: date, nameStr: desc })
+    });
+    const res = await response.json();
 
-        if (res.status === "success") {
-          Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ!', timer: 1500, showConfirmButton: false });
-          document.getElementById('holidayDesc').value = '';
-          fetchHolidays();
-        } else {
-          Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
-        }
-      } catch (error) {
-        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
-      }
+    if (res.message && res.message.includes("เรียบร้อย") || res.status === "success") {
+      Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ!', timer: 1500, showConfirmButton: false });
+      document.getElementById('holidayDesc').value = '';
+      fetchHolidays();
+    } else {
+      Swal.fire('เกิดข้อผิดพลาด', res.message || 'ไม่สามารถบันทึกได้', 'error');
     }
+  } catch (error) {
+    Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
+  }
+}
 
     async function deleteHoliday(date) {
-      const result = await Swal.fire({
-        title: 'ยืนยันการลบ?',
-        text: `ต้องการลบวันหยุดวันที่ ${date} ออกจากระบบหรือไม่?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        confirmButtonText: 'ใช่, ลบเลย',
-        cancelButtonText: 'ยกเลิก'
+  const result = await Swal.fire({
+    title: 'ยืนยันการลบ?',
+    text: `ต้องการลบวันหยุดวันที่ ${date} ออกจากระบบหรือไม่?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    confirmButtonText: 'ใช่, ลบเลย',
+    cancelButtonText: 'ยกเลิก'
+  });
+
+  if (result.isConfirmed) {
+    Swal.fire({ title: 'กำลังลบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+      const response = await fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        // 📌 ตรงนี้ใช้ action เป็น "deleteHoliday" และส่ง dateStr ให้ตรงกับ Apps Script ค่ะ
+        body: JSON.stringify({ action: 'deleteHoliday', dateStr: date })
       });
+      const res = await response.json();
 
-      if (result.isConfirmed) {
-        Swal.fire({ title: 'กำลังลบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-        try {
-          const response = await fetch(WEB_APP_URL, {
-            method: 'POST',
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action: 'deleteHoliday', date: date })
-          });
-          const res = await response.json();
-
-          if (res.status === "success") {
-            Swal.fire({ icon: 'success', title: 'ลบสำเร็จ!', timer: 1500, showConfirmButton: false });
-            fetchHolidays();
-          } else {
-            Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
-          }
-        } catch (error) {
-          Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
-        }
-      }
+      Swal.fire({ icon: 'success', title: 'ลบสำเร็จ!', timer: 1500, showConfirmButton: false });
+      fetchHolidays();
+    } catch (error) {
+      Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
     }
+  }
+}
   </script>
 </body>
 </html>
