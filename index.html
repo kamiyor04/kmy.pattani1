@@ -329,7 +329,6 @@
         border-left: 1px solid #000000 !important;
       }
 
-      /* บังคับตีเส้นขอบ 1px รอบทุกเซลล์ */
       table.report-table th, 
       table.report-table td {
         border-right: 1px solid #000000 !important;
@@ -342,7 +341,6 @@
         word-wrap: break-word !important;
       }
 
-      /* หัวตารางวันในสัปดาห์แนวตั้ง */
       .vertical-header {
         writing-mode: vertical-lr !important;
         transform: rotate(180deg) !important;
@@ -355,7 +353,6 @@
         margin: 0 auto !important;
       }
 
-      /* บังคับตีเส้นขอบให้ช่องที่ผสานเซลล์ (rowspan) ครบทุกด้านชัดเจน */
       .merged-weekend-cell {
         background-color: #f5f5f5 !important;
         writing-mode: vertical-lr !important;
@@ -592,13 +589,8 @@
         <h2 style="margin: 0; color: #333; font-size: 1.5rem; font-weight: bold;">📊 แดชบอร์ดสรุปผลการมาเรียน</h2>
         
         <div class="filter-controls" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-          <select id="dashPeriodType" onchange="toggleDashPeriodInput()" class="form-select form-select-sm" style="width: auto;">
-            <option value="daily">📅 เลือกดูตามวันที่</option>
-            <option value="monthly" selected>🗓️ เลือกดูตามรายเดือน</option>
-          </select>
-
-          <input type="date" id="dashSelectedDate" class="form-control form-control-sm" style="width: auto; display: none;" onchange="updateDashboard()">
-          <input type="month" id="dashSelectedMonth" class="form-control form-control-sm" style="width: auto;" onchange="updateDashboard()">
+          <!-- ตัดช่องเลือกประเภทออก ให้ดูเป็นรายวันอย่างเดียว และคงช่องเลือกวันที่ไว้ -->
+          <input type="date" id="dashSelectedDate" class="form-control form-control-sm" style="width: auto;" onchange="updateDashboard()">
 
           <select id="dashClassSelect" onchange="updateDashboard()" class="form-select form-select-sm" style="width: auto;">
             <option value="all">🏫 ทุกระดับชั้น (ภาพรวม)</option>
@@ -654,7 +646,7 @@
       <div class="card shadow-sm border-0 mb-4 rounded-4">
         <div class="card-header bg-white py-3">
           <h5 class="card-title m-0 fw-bold text-primary">
-            🏫 สรุปการมาเรียนแยกตามระดับชั้น
+            🏫 สรุปการมาเรียนแยกตามระดับชั้น (รายวัน)
           </h5>
         </div>
         <div class="card-body p-0">
@@ -791,9 +783,6 @@
 
       const monthInput = document.getElementById('printMonthSelect');
       if (monthInput) monthInput.value = `${yyyy}-${mm}`;
-
-      const dashMonthInput = document.getElementById('dashSelectedMonth');
-      if (dashMonthInput) dashMonthInput.value = `${yyyy}-${mm}`;
 
       const dashDateInput = document.getElementById('dashSelectedDate');
       if (dashDateInput) dashDateInput.value = `${yyyy}-${mm}-${dd}`;
@@ -1322,27 +1311,9 @@
       printWindow.document.close();
     }
 
-    // --- 3. แดชบอร์ดสรุปผล ---
-    function toggleDashPeriodInput() {
-      const periodType = document.getElementById('dashPeriodType').value;
-      const dateInput = document.getElementById('dashSelectedDate');
-      const monthInput = document.getElementById('dashSelectedMonth');
-
-      if (periodType === 'daily') {
-        dateInput.style.display = 'inline-block';
-        monthInput.style.display = 'none';
-      } else {
-        dateInput.style.display = 'none';
-        monthInput.style.display = 'inline-block';
-      }
-      
-      updateDashboard();
-    }
-
+    // --- 3. แดชบอร์ดสรุปผล (บังคับใช้ประเภทรายวัน) ---
     function updateDashboard() {
-      const periodType = document.getElementById('dashPeriodType') ? document.getElementById('dashPeriodType').value : 'monthly';
       const selectedDate = document.getElementById('dashSelectedDate') ? document.getElementById('dashSelectedDate').value : '';
-      const selectedMonth = document.getElementById('dashSelectedMonth') ? document.getElementById('dashSelectedMonth').value : '';
       const selectedClass = document.getElementById('dashClassSelect') ? document.getElementById('dashClassSelect').value : 'all';
 
       Swal.fire({
@@ -1352,7 +1323,8 @@
         didOpen: () => { Swal.showLoading(); }
       });
 
-      const fetchUrl = `${WEB_APP_URL}?action=getDashboard&type=${periodType}&date=${selectedDate}&month=${selectedMonth}&className=${encodeURIComponent(selectedClass)}`;
+      // ส่ง type='daily' บังคับดึงข้อมูลรายวันตามวันที่เลือก
+      const fetchUrl = `${WEB_APP_URL}?action=getDashboard&type=daily&date=${selectedDate}&className=${encodeURIComponent(selectedClass)}`;
 
       fetch(fetchUrl)
         .then(response => {
@@ -1567,7 +1539,6 @@
 
             for (let d = 1; d <= daysInMonth; d++) {
               if (dayTypes[d].isWeekend) {
-                // ผสานเซลล์เฉพาะแถวแรกสุดของหน้ากระดาษ พร้อมคลาสบังคับตีเส้นขอบครบทุกด้าน
                 if (idx === 0) {
                   html += `<td rowspan="${studentCountOnPage}" class="merged-weekend-cell">${dayTypes[d].label}</td>`;
                 }
@@ -1594,7 +1565,6 @@
               </table>
           `;
 
-          // แสดงส่วนลงชื่อเฉพาะหน้าสุดท้ายของชั้นเรียนนั้นๆ
           if (isLastPage) {
             html += `
               <div class="signature-section">
