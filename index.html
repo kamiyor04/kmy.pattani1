@@ -329,7 +329,7 @@
         border-left: 1px solid #000000 !important;
       }
 
-      /* บังคับตีเส้นขอบ 1px รอบทุกเซลล์รวมถึงเส้นล่างสุดของตาราง */
+      /* บังคับตีเส้นขอบ 1px รอบทุกเซลล์ */
       table.report-table th, 
       table.report-table td {
         border-right: 1px solid #000000 !important;
@@ -355,7 +355,7 @@
         margin: 0 auto !important;
       }
 
-      /* คอลัมน์ผสานเซลล์วันเสาร์-อาทิตย์ พร้อมตีเส้นครบทุกด้านรวมถึงเส้นล่าง */
+      /* บังคับตีเส้นขอบให้ช่องที่ผสานเซลล์ (rowspan) ครบทุกด้านชัดเจน */
       .merged-weekend-cell {
         background-color: #f5f5f5 !important;
         writing-mode: vertical-lr !important;
@@ -366,6 +366,8 @@
         font-weight: bold !important;
         letter-spacing: 1px !important;
         white-space: nowrap !important;
+        border-top: 1px solid #000000 !important;
+        border-left: 1px solid #000000 !important;
         border-right: 1px solid #000000 !important;
         border-bottom: 1px solid #000000 !important;
       }
@@ -400,6 +402,7 @@
       vertical-align: middle;
       font-size: 8.5pt;
       font-weight: bold;
+      border: 1px solid #000000;
     }
   </style>
 </head>
@@ -1564,7 +1567,7 @@
 
             for (let d = 1; d <= daysInMonth; d++) {
               if (dayTypes[d].isWeekend) {
-                // ผสานเซลล์เฉพาะแถวแรกสุดของหน้ากระดาษ
+                // ผสานเซลล์เฉพาะแถวแรกสุดของหน้ากระดาษ พร้อมคลาสบังคับตีเส้นขอบครบทุกด้าน
                 if (idx === 0) {
                   html += `<td rowspan="${studentCountOnPage}" class="merged-weekend-cell">${dayTypes[d].label}</td>`;
                 }
