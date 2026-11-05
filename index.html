@@ -246,15 +246,20 @@
     }
 
     @media print {
+  /* บังคับให้หน้าเว็บเป็นแนวนอนและซ่อนส่วนอื่นๆ */
+  @page {
+    size: A4 landscape !important;
+    margin: 8mm 10mm 8mm 10mm;
+  }
+
   html, body {
-    width: 100% !important;
-    height: auto !important;
+    width: 297mm !important;
+    height: 210mm !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
     font-size: 10pt !important;
-    overflow: visible !important;
   }
 
   body * {
@@ -278,45 +283,31 @@
     padding: 0 !important;
   }
 
-  /* บังคับหน้ากระดาษรายงานสถิติเป็นแนวนอน (Landscape) */
   .page-landscape {
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     display: block !important;
-    box-sizing: border-box;
     page-break-after: always;
     break-after: page;
     margin: 0 !important;
   }
 
-  /* บังคับหน้ากระดาษรายงานเด็กมาสายเป็นแนวตั้ง (Portrait) */
   .page-portrait {
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     display: block !important;
-    box-sizing: border-box;
     page-break-after: always;
     break-after: page;
     margin: 0 !important;
-  }
-
-  .page-landscape:last-child, .page-portrait:last-child {
-    page-break-after: auto;
-    break-after: auto;
   }
 
   table {
     width: 100% !important;
     border-collapse: collapse !important;
-    page-break-inside: auto !important;
   }
 
   thead {
-    display: table-header-group !important; /* ซ้ำหัวตารางอัตโนมัติเมื่อขึ้นหน้าใหม่ */
-  }
-
-  tbody {
-    display: table-row-group !important;
+    display: table-header-group !important;
   }
 
   tr {
@@ -326,8 +317,6 @@
 
   th, td {
     border: 1px solid #000000 !important;
-    word-wrap: break-word !important;
-    white-space: normal !important;
   }
 
   .signature-section {
@@ -335,29 +324,8 @@
     display: flex !important;
     justify-content: space-around !important;
     text-align: center !important;
-    font-size: 10pt !important;
     page-break-inside: avoid !important;
-    break-inside: avoid !important;
   }
-}
-
-/* ตั้งค่าขนาดหน้ากระดาษจริง */
-@page landscape {
-  size: A4 landscape;
-  margin: 8mm 10mm 8mm 10mm;
-}
-
-@page portrait {
-  size: A4 portrait;
-  margin: 10mm 12mm 10mm 12mm;
-}
-
-.page-landscape {
-  page: landscape;
-}
-
-.page-portrait {
-  page: portrait;
 }
   </style>
 </head>
