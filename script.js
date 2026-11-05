@@ -587,7 +587,7 @@ function generateReport(type) {
     });
 }
 
-// 4.1 รายงานสถิติแนวนอน (Multi-Page รองรับขึ้นหน้าใหม่อัตโนมัติ)
+// --- 4.1 รายงานสรุปสถิติประจำเดือน (แนวนอน A4 Landscape พร้อมหัวรายงานและแนวตั้ง) ---
 function renderLandscapeStatsReport(data) {
   const printArea = document.getElementById('printArea');
   if (!printArea) return;
@@ -614,11 +614,11 @@ function renderLandscapeStatsReport(data) {
       const dateKey = `${yearStr}-${monthStr}-${String(d).padStart(2, '0')}`;
 
       if (dayOfWeek === 6) {
-        dayTypes[d] = { isMerged: true, name: '--- วันเสาร์ ---' };
+        dayTypes[d] = { isMerged: true, name: 'วันเสาร์' };
       } else if (dayOfWeek === 0) {
-        dayTypes[d] = { isMerged: true, name: '--- วันอาทิตย์ ---' };
+        dayTypes[d] = { isMerged: true, name: 'วันอาทิตย์' };
       } else if (holidays[dateKey]) {
-        dayTypes[d] = { isMerged: true, name: `--- ${holidays[dateKey]} ---` };
+        dayTypes[d] = { isMerged: true, name: holidays[dateKey] };
       } else {
         dayTypes[d] = { isMerged: false };
       }
@@ -626,46 +626,51 @@ function renderLandscapeStatsReport(data) {
 
     let html = `
       <div class="page-landscape">
-        <div style="text-align: center; margin-bottom: 12px;">
-          <h3 style="margin: 0 0 6px 0; font-weight: bold; font-size: 15pt;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
-          <p style="margin: 0; font-size: 12pt;">
-            <b>ระดับชั้น:</b> ${cls} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-            <b>ประจำเดือน:</b> ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-            <b>โรงเรียนชุมชนบ้านกะมิยอ</b>
-          </p>
-        </div>
+        <div class="report-container">
+          <div style="text-align: center; margin-bottom: 15px; font-family: 'Sarabun', sans-serif;">
+            <h3 style="margin: 0 0 5px 0; font-weight: bold; font-size: 16pt;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
+            <p style="margin: 0; font-size: 13pt;">
+              <b>ระดับชั้น:</b> ${cls} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              <b>ประจำเดือน:</b> ${monthTitle}
+            </p>
+            <p style="margin: 3px 0 0 0; font-size: 13pt;">
+              <b>โรงเรียนชุมชนบ้านกะมิยอ</b>
+            </p>
+          </div>
 
-        <table class="table-report" style="width: 100%; border-collapse: collapse; font-size: 9pt;">
-          <thead>
-            <tr>
-              <th style="width: 180px;" rowspan="2">ชื่อ-นามสกุล</th>
-              <th colspan="${daysInMonth}">วันที่</th>
-              <th colspan="3">สรุป</th>
-            </tr>
-            <tr>
+          <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+            <thead>
+              <tr>
+                <th style="width: 45px; text-align: center; vertical-align: middle;" rowspan="2">ที่</th>
+                <th style="width: 180px; text-align: left; vertical-align: middle; padding-left: 8px;" rowspan="2">ชื่อ - นามสกุล</th>
+                <th colspan="${daysInMonth}" style="text-align: center; vertical-align: middle;">วันที่ในเดือน ${thaiMonthNames[month - 1]}</th>
+                <th colspan="3" style="text-align: center; vertical-align: middle;">สรุปผล (ครั้ง)</th>
+              </tr>
+              <tr>
     `;
 
     for (let d = 1; d <= daysInMonth; d++) {
-      html += `<th style="width: 18px; font-size: 8pt;">${d}</th>`;
+      html += `<th style="width: 22px; text-align: center; vertical-align: middle;"><div class="vertical-header">${d}</div></th>`;
     }
 
     html += `
-              <th style="width: 22px; color: green;">ร</th>
-              <th style="width: 22px; color: orange;">ส</th>
-              <th style="width: 22px; color: red;">ข</th>
-            </tr>
-          </thead>
-          <tbody>
+                <th style="width: 25px; color: green; text-align: center; vertical-align: middle; font-weight: bold;">ร</th>
+                <th style="width: 25px; color: orange; text-align: center; vertical-align: middle; font-weight: bold;">ส</th>
+                <th style="width: 25px; color: red; text-align: center; vertical-align: middle; font-weight: bold;">ข</th>
+              </tr>
+            </thead>
+            <tbody>
     `;
 
     classGroup.students.forEach((s, idx) => {
       html += `<tr>`;
-      html += `<td style="text-align: left; padding-left: 5px;">${idx + 1}. ${s.name}</td>`;
+      html += `<td style="text-align: center; vertical-align: middle;">${idx + 1}</td>`;
+      html += `<td style="text-align: left; vertical-align: middle; padding-left: 8px;">${s.name}</td>`;
 
       for (let d = 1; d <= daysInMonth; d++) {
         if (dayTypes[d].isMerged) {
           if (idx === 0) {
-            html += `<td rowspan="${totalStudents}" class="vertical-text">${dayTypes[d].name}</td>`;
+            html += `<td rowspan="${totalStudents}" style="text-align: center; vertical-align: middle; background-color: #f9f9f9; font-size: 8pt; writing-mode: vertical-lr; transform: rotate(180deg);">${dayTypes[d].name}</td>`;
           }
         } else {
           const st = s.dailyStatus[d] || '-';
@@ -674,36 +679,37 @@ function renderLandscapeStatsReport(data) {
           if (st === 'ส') styleColor = 'color: orange; font-weight: bold;';
           if (st === 'ข') styleColor = 'color: red; font-weight: bold;';
 
-          html += `<td style="${styleColor}">${st}</td>`;
+          html += `<td style="text-align: center; vertical-align: middle; ${styleColor}">${st}</td>`;
         }
       }
 
       html += `
-        <td style="color: green; font-weight: bold;">${s.presentCount || '-'}</td>
-        <td style="color: orange; font-weight: bold;">${s.lateCount || '-'}</td>
-        <td style="color: red; font-weight: bold;">${s.absentCount || '-'}</td>
+        <td style="color: green; font-weight: bold; text-align: center; vertical-align: middle;">${s.presentCount || 0}</td>
+        <td style="color: orange; font-weight: bold; text-align: center; vertical-align: middle;">${s.lateCount || 0}</td>
+        <td style="color: red; font-weight: bold; text-align: center; vertical-align: middle;">${s.absentCount || 0}</td>
       </tr>`;
     });
 
     html += `
-          </tbody>
-        </table>
+            </tbody>
+          </table>
 
-        <div class="signature-section" style="margin-top: 30px; display: flex; justify-content: space-around; text-align: center; font-size: 10pt;">
-          <div>
-            <br>ลงชื่อ..........................................................<br>
-            (..........................................................)<br>
-            ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
-          </div>
-          <div>
-            <br>ลงชื่อ..........................................................<br>
-            (นายอับดุล เจะสือแต)<br>
-            ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
-          </div>
-          <div>
-            <br>ลงชื่อ..........................................................<br>
-            (นางวันพิทยา มุสตาฟา)<br>
-            ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+          <div class="signature-section" style="margin-top: 35px; display: flex; justify-content: space-around; text-align: center; font-size: 10pt; font-family: 'Sarabun', sans-serif;">
+            <div>
+              ลงชื่อ..........................................................<br>
+              (..........................................................)<br>
+              ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
+            </div>
+            <div>
+              ลงชื่อ..........................................................<br>
+              (นายอับดุล เจะสือแต)<br>
+              ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+            </div>
+            <div>
+              ลงชื่อ..........................................................<br>
+              (นางวันพิทยา มุสตาฟา)<br>
+              ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+            </div>
           </div>
         </div>
       </div>

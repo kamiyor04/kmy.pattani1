@@ -245,8 +245,7 @@
       color: #555;
     }
 
-    @media print {
-  /* บังคับให้หน้าเว็บเป็นแนวนอนและซ่อนส่วนอื่นๆ */
+  @media print {
   @page {
     size: A4 landscape !important;
     margin: 8mm 10mm 8mm 10mm;
@@ -285,20 +284,18 @@
 
   .page-landscape {
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
     display: block !important;
     page-break-after: always;
     break-after: page;
     margin: 0 !important;
+    box-sizing: border-box;
   }
 
-  .page-portrait {
-    width: 100% !important;
-    height: 100% !important;
-    display: block !important;
-    page-break-after: always;
-    break-after: page;
-    margin: 0 !important;
+  /* บล็อกหัวรายงานและตารางให้อยู่หน้าเดียวกัน ป้องกันการถูกตัดแยก */
+  .report-container {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   table {
@@ -307,7 +304,7 @@
   }
 
   thead {
-    display: table-header-group !important;
+    display: table-header-group !important; /* ซ้ำหัวตารางเมื่อขึ้นหน้าใหม่ */
   }
 
   tr {
@@ -317,15 +314,45 @@
 
   th, td {
     border: 1px solid #000000 !important;
+    padding: 4px 2px !important;
+    text-align: center;
+    vertical-align: middle;
+    font-family: 'Sarabun', sans-serif;
+  }
+
+  /* จัดหัวตารางให้เป็นแนวตั้งสำหรับวันในสัปดาห์ */
+  .vertical-header {
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    text-align: center;
+    vertical-align: middle;
+    height: 75px;
+    font-size: 8pt;
+    font-weight: bold;
+    padding: 4px 0;
+    white-space: nowrap;
   }
 
   .signature-section {
-    margin-top: 30px !important;
+    margin-top: 25px !important;
     display: flex !important;
     justify-content: space-around !important;
     text-align: center !important;
+    font-size: 10pt !important;
     page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
+}
+
+/* สไตล์สำหรับหน้าจอปกติ (Screen View) */
+.vertical-header {
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+  text-align: center;
+  vertical-align: middle;
+  height: 70px;
+  font-size: 8.5pt;
+  font-weight: bold;
 }
   </style>
 </head>
