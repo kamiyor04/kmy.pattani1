@@ -246,122 +246,116 @@
     }
 
     /* =========================================================
-   CSS ควบคุมการพิมพ์รายงาน (Print Layout Multi-Page)
-   ========================================================= */
-@media print {
-  /* 1. กำหนดโครงสร้างหน้ากระดาษพื้นฐาน */
-  html, body {
-    width: 100% !important;
-    height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    font-size: 10pt !important;
-    overflow: visible !important;
-  }
+       CSS สำหรับการพิมพ์รายงาน (Print Layout Optimized)
+       ========================================================= */
+    @media print {
+      /* 1. ตั้งค่าพื้นฐานหน้ากระดาษสำหรับการพิมพ์ */
+      html, body {
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 10pt !important;
+        overflow: visible !important;
+      }
 
-  /* 2. ซ่อนองค์ประกอบส่วนติดต่อผู้ใช้ที่ไม่เกี่ยวข้อง */
-  body * {
-    visibility: hidden;
-  }
+      /* 2. ซ่อนองค์ประกอบที่ไม่เกี่ยวกับการพิมพ์ */
+      body * {
+        visibility: hidden;
+      }
 
-  .no-print, header, nav, .offcanvas, .btn, .card, .mobile-header, #sidebarMenu {
-    display: none !important;
-  }
+      .no-print, header, nav, .offcanvas, .btn, .card, .mobile-header, #sidebarMenu {
+        display: none !important;
+      }
 
-  /* 3. แสดงเฉพาะพื้นที่รายงานพิมพ์ */
-  #printArea, #printArea * {
-    visibility: visible !important;
-  }
+      /* 3. แสดงเฉพาะพื้นที่รายงานพิมพ์ #printArea */
+      #printArea, #printArea * {
+        visibility: visible !important;
+      }
 
-  #printArea {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
+      #printArea {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
 
-  /* 4. โครงสร้างรายงานแนวนอน (A4 Landscape) */
-  .page-landscape {
-    width: 100% !important;
-    height: auto !important;
-    display: block !important;
-    box-sizing: border-box;
-    page-break-after: auto;
-    break-after: auto;
-    margin-bottom: 20px;
-  }
+      /* 4. กำหนดหน้ากระดาษรายงานแต่ละชุดให้ขึ้นหน้าใหม่ตามธรรมชาติ */
+      .page-landscape, .page-portrait {
+        width: 100% !important;
+        height: auto !important;
+        display: block !important;
+        box-sizing: border-box;
+        page-break-after: always;
+        break-after: page;
+        margin: 0 !important;
+      }
 
-  /* 5. โครงสร้างรายงานแนวตั้ง (A4 Portrait) */
-  .page-portrait {
-    width: 100% !important;
-    height: auto !important;
-    display: block !important;
-    box-sizing: border-box;
-    page-break-after: auto;
-    break-after: auto;
-    margin-bottom: 20px;
-  }
+      .page-landscape:last-child, .page-portrait:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
 
-  /* 6. การจัดการตารางหลายหน้าและการซ้ำหัวตาราง (Repeating Headers) */
-  table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    page-break-inside: auto !important;
-  }
+      /* 5. จัดระเบียบตารางและหัวข้อซ้ำอัตโนมัติ */
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        page-break-inside: auto !important;
+      }
 
-  thead {
-    display: table-header-group !important; /* บังคับให้หัวตารางแสดงซ้ำทุกหน้าเมื่อขึ้นหน้าใหม่ */
-  }
+      thead {
+        display: table-header-group !important; /* แสดงหัวตารางซ้ำอัตโนมัติเมื่อขึ้นหน้าใหม่ */
+      }
 
-  tbody {
-    display: table-row-group !important;
-  }
+      tbody {
+        display: table-row-group !important;
+      }
 
-  tr {
-    page-break-inside: avoid !important; /* ห้ามตัดขาดกลางแถวนักเรียน */
-    break-inside: avoid !important;
-  }
+      tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important; /* ป้องกันการตัดแถวนักเรียนขาดครึ่งหน้ากระดาษ */
+      }
 
-  th, td {
-    border: 1px solid #000000 !important;
-    word-wrap: break-word !important;
-    white-space: normal !important;
-  }
+      th, td {
+        border: 1px solid #000000 !important;
+        word-wrap: break-word !important;
+        white-space: normal !important;
+      }
 
-  /* 7. บล็อกลงชื่อท้ายเอกสารให้คงสภาพไม่แยกบรรทัดข้ามหน้า */
-  .signature-section {
-    margin-top: 25px !important;
-    display: flex !important;
-    justify-content: space-around !important;
-    text-align: center !important;
-    font-size: 10pt !important;
-    page-break-inside: avoid !important; /* ป้องกันบล็อกลงชื่อแยกหน้ากระดาษ */
-    break-inside: avoid !important;
-  }
-}
+      /* 6. บล็อกส่วนลงชื่อไม่ให้ถูกตัดขาดข้ามหน้า */
+      .signature-section {
+        margin-top: 30px !important;
+        display: flex !important;
+        justify-content: space-around !important;
+        text-align: center !important;
+        font-size: 10pt !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+    }
 
-/* ตั้งค่าแนวและระยะขอบกระดาษจริง */
-@page landscape-setting {
-  size: A4 landscape;
-  margin: 10mm 12mm 10mm 12mm;
-}
+    /* กำหนดขนาดและขอบกระดาษจริง */
+    @page landscape {
+      size: A4 landscape;
+      margin: 8mm 10mm 8mm 10mm;
+    }
 
-@page portrait-setting {
-  size: A4 portrait;
-  margin: 12mm 15mm 12mm 15mm;
-}
+    @page portrait {
+      size: A4 portrait;
+      margin: 10mm 12mm 10mm 12mm;
+    }
 
-.page-landscape {
-  page: landscape-setting;
-}
+    .page-landscape {
+      page: landscape;
+    }
 
-.page-portrait {
-  page: portrait-setting;
-}
+    .page-portrait {
+      page: portrait;
+    }
   </style>
 </head>
 <body>
@@ -1372,7 +1366,7 @@
         alertBody.innerHTML = `
           <tr>
             <td colspan="5" class="text-center py-4 text-success fw-bold">
-              🎉 ไม่พบนกเรียนที่มาสายเกิน 4 ครั้งในเดือนนี้
+              🎉 ไม่พบนักเรียนที่มาสายเกิน 4 ครั้งในเดือนนี้
             </td>
           </tr>`;
         return;
@@ -1410,7 +1404,6 @@
         didOpen: () => Swal.showLoading() 
       });
 
-      // ดึงข้อมูลผ่าน action=getReportData
       const fetchUrl = `${WEB_APP_URL}?action=getReportData&month=${monthVal}&className=${encodeURIComponent(selectedClass)}`;
 
       fetch(fetchUrl)
@@ -1439,7 +1432,7 @@
         });
     }
 
-function renderLandscapeStatsReport(data) {
+    function renderLandscapeStatsReport(data) {
       const printArea = document.getElementById('printArea');
       if (!printArea) return;
       printArea.innerHTML = '';
@@ -1477,8 +1470,7 @@ function renderLandscapeStatsReport(data) {
 
         let html = `
           <div class="page-landscape">
-            <!-- ส่วนหัวข้อรายงาน ใส่คลาส report-header เพื่อไม่ให้แยกกับตาราง -->
-            <div class="report-header" style="text-align: center;">
+            <div class="report-header" style="text-align: center; margin-bottom: 12px;">
               <h3 style="margin: 0 0 6px 0; font-weight: bold; font-size: 15pt;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
               <p style="margin: 0; font-size: 12pt;">
                 <b>ระดับชั้น:</b> ${cls} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
@@ -1487,8 +1479,7 @@ function renderLandscapeStatsReport(data) {
               </p>
             </div>
 
-            <!-- ตารางรายงานต่อจากหัวข้อทันที -->
-            <table class="table-report">
+            <table class="table-report" style="width: 100%; border-collapse: collapse; font-size: 9pt;">
               <thead>
                 <tr>
                   <th style="width: 180px;" rowspan="2">ชื่อ-นามสกุล</th>
@@ -1503,7 +1494,7 @@ function renderLandscapeStatsReport(data) {
         }
 
         html += `
-                  <th style="width: 22px; color: green;">ก</th>
+                  <th style="width: 22px; color: green;">ร</th>
                   <th style="width: 22px; color: orange;">ส</th>
                   <th style="width: 22px; color: red;">ข</th>
                 </tr>
@@ -1523,7 +1514,7 @@ function renderLandscapeStatsReport(data) {
             } else {
               const st = s.dailyStatus[d] || '-';
               let styleColor = '';
-              if (st === 'ก') styleColor = 'color: green;';
+              if (st === 'ร') styleColor = 'color: green;';
               if (st === 'ส') styleColor = 'color: orange; font-weight: bold;';
               if (st === 'ข') styleColor = 'color: red; font-weight: bold;';
 
@@ -1532,7 +1523,7 @@ function renderLandscapeStatsReport(data) {
           }
 
           html += `
-            <td>${s.presentCount || '-'}</td>
+            <td style="color: green; font-weight: bold;">${s.presentCount || '-'}</td>
             <td style="color: orange; font-weight: bold;">${s.lateCount || '-'}</td>
             <td style="color: red; font-weight: bold;">${s.absentCount || '-'}</td>
           </tr>`;
@@ -1544,13 +1535,13 @@ function renderLandscapeStatsReport(data) {
 
             <div class="signature-section">
               <div>
-                <br>ลงชื่อ..........................................................ครูประจำชั้น<br>
+                <br>ลงชื่อ..........................................................<br>
                 (..........................................................)<br>
                 ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
               </div>
               <div>
                 <br>ลงชื่อ..........................................................<br>
-                (นายอับดุล เจะสือแม)<br>
+                (นายอับดุล เจะสือแต)<br>
                 ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
               </div>
               <div>
@@ -1567,7 +1558,6 @@ function renderLandscapeStatsReport(data) {
       setTimeout(() => window.print(), 500);
     }
 
-    // เรนเดอร์รายงานเด็กมาสาย >= 4 ครั้ง (แนวตั้ง A4)
     function renderPortraitLateReport(data) {
       const printArea = document.getElementById('printArea');
       if (!printArea) return;
@@ -1584,7 +1574,7 @@ function renderLandscapeStatsReport(data) {
         const lateStudents = classGroup.students.filter(s => s.lateCount >= 4);
 
         let html = `
-          <div class="page-portrait" style="padding: 10px;">
+          <div class="page-portrait">
             <div style="text-align: center; margin-bottom: 20px;">
               <h3 style="margin: 0; font-weight: bold; font-size: 16pt;">รายงานสรุปรายชื่อนักเรียนมาสาย / ไม่เข้าร่วมกิจกรรม (4 ครั้งขึ้นไป)</h3>
               <p style="margin: 5px 0; font-size: 13pt;"><b>ระดับชั้น:</b> ${cls} &nbsp;&nbsp;&nbsp;&nbsp; <b>ประจำเดือน:</b> ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; <b>โรงเรียนชุมชนบ้านกะมิยอ</b></p>
@@ -1593,25 +1583,27 @@ function renderLandscapeStatsReport(data) {
             <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
               <thead>
                 <tr>
-                  <th style="width: 8%; border: 1px solid #000; padding: 5px;">ลำดับ</th>
-                  <th style="width: 35%; border: 1px solid #000; padding: 5px;">ชื่อ - นามสกุล</th>
-                  <th style="width: 17%; border: 1px solid #000; padding: 5px;">จำนวนครั้งที่สาย</th>
-                  <th style="border: 1px solid #000; padding: 5px;">วันที่มาสาย (ในเดือนนี้)</th>
+                  <th style="width: 8%; padding: 6px; text-align: center;">ลำดับ</th>
+                  <th style="width: 18%; padding: 6px; text-align: center;">ระดับชั้น</th>
+                  <th style="width: 30%; padding: 6px;">ชื่อ - นามสกุล</th>
+                  <th style="width: 15%; padding: 6px; text-align: center;">จำนวนสาย</th>
+                  <th style="width: 29%; padding: 6px;">วันที่มาสาย</th>
                 </tr>
               </thead>
               <tbody>
         `;
 
         if (lateStudents.length === 0) {
-          html += `<tr><td colspan="4" style="padding: 15px; text-align: center; border: 1px solid #000;">🎉 ไม่พบนกเรียนที่มาสายตั้งแต่ 4 ครั้งขึ้นไปในเดือนนี้</td></tr>`;
+          html += `<tr><td colspan="5" style="padding: 15px; text-align: center; color: green; font-weight: bold;">🎉 ไม่พบนักเรียนที่มาสายตั้งแต่ 4 ครั้งขึ้นไปในเดือนนี้</td></tr>`;
         } else {
           lateStudents.forEach((s, idx) => {
             html += `
               <tr>
-                <td style="text-align: center; border: 1px solid #000; padding: 5px;">${idx + 1}</td>
-                <td class="text-start" style="border: 1px solid #000; padding: 5px 8px;">${s.name}</td>
-                <td style="font-weight: bold; color: red; text-align: center; border: 1px solid #000; padding: 5px;">${s.lateCount} ครั้ง</td>
-                <td class="text-start" style="border: 1px solid #000; padding: 5px 8px;">${s.lateDates ? s.lateDates.join(', ') : '-'}</td>
+                <td style="text-align: center; padding: 5px;">${idx + 1}</td>
+                <td style="text-align: center; padding: 5px;">${cls}</td>
+                <td style="text-align: left; padding: 5px 8px;">${s.name}</td>
+                <td style="text-align: center; padding: 5px; font-weight: bold; color: red;">${s.lateCount} ครั้ง</td>
+                <td style="text-align: left; padding: 5px 8px;">${s.lateDates ? s.lateDates.join(', ') : '-'}</td>
               </tr>
             `;
           });
@@ -1623,13 +1615,13 @@ function renderLandscapeStatsReport(data) {
 
             <div class="signature-section">
               <div>
-                <br>ลงชื่อ..........................................................ครูประจำชั้น<br>
+                <br>ลงชื่อ..........................................................<br>
                 (..........................................................)<br>
                 ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
               </div>
               <div>
                 <br>ลงชื่อ..........................................................<br>
-                (นายอับดุล เจะสือแม)<br>
+                (นายอับดุล เจะสือแต)<br>
                 ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
               </div>
               <div>
