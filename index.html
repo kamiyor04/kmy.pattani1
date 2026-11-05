@@ -245,115 +245,118 @@
       color: #555;
     }
 
-  @media print {
-  @page {
-    size: A4 landscape !important;
-    margin: 8mm 10mm 8mm 10mm;
-  }
+    /* =========================================================
+       CSS สำหรับการพิมพ์รายงาน (Print Media Queries)
+       ========================================================= */
+    @media print {
+      @page {
+        size: A4 landscape !important;
+        margin: 8mm 10mm 8mm 10mm;
+      }
 
-  html, body {
-    width: 297mm !important;
-    height: 210mm !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    font-size: 10pt !important;
-  }
+      html, body {
+        width: 297mm !important;
+        height: 210mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 10pt !important;
+      }
 
-  body * {
-    visibility: hidden;
-  }
+      body * {
+        visibility: hidden;
+      }
 
-  .no-print, header, nav, .offcanvas, .btn, .card, .mobile-header, #sidebarMenu {
-    display: none !important;
-  }
+      .no-print, header, nav, .offcanvas, .btn, .card, .mobile-header, #sidebarMenu {
+        display: none !important;
+      }
 
-  #printArea, #printArea * {
-    visibility: visible !important;
-  }
+      #printArea, #printArea * {
+        visibility: visible !important;
+      }
 
-  #printArea {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
+      #printArea {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
 
-  .page-landscape {
-    width: 100% !important;
-    height: auto !important;
-    display: block !important;
-    page-break-after: always;
-    break-after: page;
-    margin: 0 !important;
-    box-sizing: border-box;
-  }
+      .page-landscape {
+        width: 100% !important;
+        height: auto !important;
+        display: block !important;
+        page-break-after: always;
+        break-after: page;
+        margin: 0 !important;
+        box-sizing: border-box;
+      }
 
-  /* บล็อกหัวรายงานและตารางให้อยู่หน้าเดียวกัน ป้องกันการถูกตัดแยก */
-  .report-container {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
+      /* ป้องกันไม่ให้หัวรายงานและตารางแยกหน้าออกจากกัน */
+      .report-container {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
 
-  table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-  }
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
 
-  thead {
-    display: table-header-group !important; /* ซ้ำหัวตารางเมื่อขึ้นหน้าใหม่ */
-  }
+      thead {
+        display: table-header-group !important; /* แสดงหัวตารางซ้ำเมื่อขึ้นหน้าใหม่ */
+      }
 
-  tr {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
+      tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
 
-  th, td {
-    border: 1px solid #000000 !important;
-    padding: 4px 2px !important;
-    text-align: center;
-    vertical-align: middle;
-    font-family: 'Sarabun', sans-serif;
-  }
+      th, td {
+        border: 1px solid #000000 !important;
+        padding: 4px 2px !important;
+        text-align: center;
+        vertical-align: middle;
+        font-family: 'Sarabun', sans-serif;
+      }
 
-  /* จัดหัวตารางให้เป็นแนวตั้งสำหรับวันในสัปดาห์ */
-  .vertical-header {
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
-    text-align: center;
-    vertical-align: middle;
-    height: 75px;
-    font-size: 8pt;
-    font-weight: bold;
-    padding: 4px 0;
-    white-space: nowrap;
-  }
+      /* หัวตารางวันในสัปดาห์แนวตั้ง */
+      .vertical-header {
+        writing-mode: vertical-lr;
+        transform: rotate(180deg);
+        text-align: center;
+        vertical-align: middle;
+        height: 75px;
+        font-size: 8pt;
+        font-weight: bold;
+        padding: 4px 0;
+        white-space: nowrap;
+      }
 
-  .signature-section {
-    margin-top: 25px !important;
-    display: flex !important;
-    justify-content: space-around !important;
-    text-align: center !important;
-    font-size: 10pt !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-}
+      .signature-section {
+        margin-top: 25px !important;
+        display: flex !important;
+        justify-content: space-around !important;
+        text-align: center !important;
+        font-size: 10pt !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+    }
 
-/* สไตล์สำหรับหน้าจอปกติ (Screen View) */
-.vertical-header {
-  writing-mode: vertical-lr;
-  transform: rotate(180deg);
-  text-align: center;
-  vertical-align: middle;
-  height: 70px;
-  font-size: 8.5pt;
-  font-weight: bold;
-}
+    /* สไตล์สำหรับหน้าจอปกติ (Screen View) */
+    .vertical-header {
+      writing-mode: vertical-lr;
+      transform: rotate(180deg);
+      text-align: center;
+      vertical-align: middle;
+      height: 70px;
+      font-size: 8.5pt;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -1430,212 +1433,218 @@
         });
     }
 
-// --- 4.1 รายงานสรุปสถิติประจำเดือน (แนวนอน A4 Landscape) ---
-function renderLandscapeStatsReport(data) {
-  const printArea = document.getElementById('printArea');
-  if (!printArea) return;
-  printArea.innerHTML = '';
+    // --- 4.1 รายงานสรุปสถิติประจำเดือน (แนวนอน A4 Landscape พร้อมหัวรายงานราชการและวันแนวตั้ง) ---
+    function renderLandscapeStatsReport(data) {
+      const printArea = document.getElementById('printArea');
+      if (!printArea) return;
+      printArea.innerHTML = '';
 
-  const [yearStr, monthStr] = data.month.split('-');
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10);
+      const [yearStr, monthStr] = data.month.split('-');
+      const year = parseInt(yearStr, 10);
+      const month = parseInt(monthStr, 10);
 
-  const thaiMonthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-  const monthTitle = `${thaiMonthNames[month - 1]} ${year + 543}`;
-  
-  const daysInMonth = new Date(year, month, 0).getDate();
-  const holidays = data.holidays || {};
+      const thaiMonthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+      const monthTitle = `${thaiMonthNames[month - 1]} ${year + 543}`;
+      
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const holidays = data.holidays || {};
 
-  for (const cls in data.reportData) {
-    const classGroup = data.reportData[cls];
-    const totalStudents = classGroup.students.length;
+      for (const cls in data.reportData) {
+        const classGroup = data.reportData[cls];
+        const totalStudents = classGroup.students.length;
 
-    const dayTypes = {};
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateObj = new Date(year, month - 1, d);
-      const dayOfWeek = dateObj.getDay();
-      const dateKey = `${yearStr}-${monthStr}-${String(d).padStart(2, '0')}`;
+        const dayTypes = {};
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateObj = new Date(year, month - 1, d);
+          const dayOfWeek = dateObj.getDay();
+          const dateKey = `${yearStr}-${monthStr}-${String(d).padStart(2, '0')}`;
 
-      if (dayOfWeek === 6) {
-        dayTypes[d] = { isMerged: true, name: '--- วันเสาร์ ---' };
-      } else if (dayOfWeek === 0) {
-        dayTypes[d] = { isMerged: true, name: '--- วันอาทิตย์ ---' };
-      } else if (holidays[dateKey]) {
-        dayTypes[d] = { isMerged: true, name: `--- ${holidays[dateKey]} ---` };
-      } else {
-        dayTypes[d] = { isMerged: false };
-      }
-    }
-
-    let html = `
-      <div class="page-landscape">
-        <div style="text-align: center; margin-bottom: 12px;">
-          <h3 style="margin: 0 0 6px 0; font-weight: bold; font-size: 15pt;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
-          <p style="margin: 0; font-size: 12pt;">
-            <b>ระดับชั้น:</b> ${cls} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-            <b>ประจำเดือน:</b> ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-            <b>โรงเรียนชุมชนบ้านกะมิยอ</b>
-          </p>
-        </div>
-
-        <table class="table-report" style="width: 100%; border-collapse: collapse; font-size: 9pt;">
-          <thead>
-            <tr>
-              <th style="width: 180px;" rowspan="2">ชื่อ-นามสกุล</th>
-              <th colspan="${daysInMonth}">วันที่</th>
-              <th colspan="3">สรุป</th>
-            </tr>
-            <tr>
-    `;
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      html += `<th style="width: 18px; font-size: 8pt;">${d}</th>`;
-    }
-
-    html += `
-              <th style="width: 22px; color: green;">ร</th>
-              <th style="width: 22px; color: orange;">ส</th>
-              <th style="width: 22px; color: red;">ข</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
-
-    classGroup.students.forEach((s, idx) => {
-      html += `<tr>`;
-      html += `<td style="text-align: left; padding-left: 5px;">${idx + 1}. ${s.name}</td>`;
-
-      for (let d = 1; d <= daysInMonth; d++) {
-        if (dayTypes[d].isMerged) {
-          if (idx === 0) {
-            html += `<td rowspan="${totalStudents}" class="vertical-text">${dayTypes[d].name}</td>`;
+          if (dayOfWeek === 6) {
+            dayTypes[d] = { isMerged: true, name: 'วันเสาร์' };
+          } else if (dayOfWeek === 0) {
+            dayTypes[d] = { isMerged: true, name: 'วันอาทิตย์' };
+          } else if (holidays[dateKey]) {
+            dayTypes[d] = { isMerged: true, name: holidays[dateKey] };
+          } else {
+            dayTypes[d] = { isMerged: false };
           }
-        } else {
-          const st = s.dailyStatus[d] || '-';
-          let styleColor = '';
-          if (st === 'ร') styleColor = 'color: green;';
-          if (st === 'ส') styleColor = 'color: orange; font-weight: bold;';
-          if (st === 'ข') styleColor = 'color: red; font-weight: bold;';
-
-          html += `<td style="${styleColor}">${st}</td>`;
         }
+
+        let html = `
+          <div class="page-landscape">
+            <div class="report-container">
+              <div style="text-align: center; margin-bottom: 12px; font-family: 'Sarabun', sans-serif;">
+                <h3 style="margin: 0 0 5px 0; font-weight: bold; font-size: 16pt;">รายงานสรุปสถิติการเข้าร่วมกิจกรรมหน้าเสาธงของนักเรียน</h3>
+                <p style="margin: 0; font-size: 13pt;">
+                  <b>ระดับชั้น:</b> ${cls} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                  <b>ประจำเดือน:</b> ${monthTitle}
+                </p>
+                <p style="margin: 3px 0 0 0; font-size: 13pt;">
+                  <b>โรงเรียนชุมชนบ้านกะมิยอ</b>
+                </p>
+              </div>
+
+              <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+                <thead>
+                  <tr>
+                    <th style="width: 45px; text-align: center; vertical-align: middle;" rowspan="2">ที่</th>
+                    <th style="width: 180px; text-align: left; vertical-align: middle; padding-left: 8px;" rowspan="2">ชื่อ - นามสกุล</th>
+                    <th colspan="${daysInMonth}" style="text-align: center; vertical-align: middle;">วันที่ในเดือน ${thaiMonthNames[month - 1]}</th>
+                    <th colspan="3" style="text-align: center; vertical-align: middle;">สรุปผล (ครั้ง)</th>
+                  </tr>
+                  <tr>
+        `;
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          html += `<th style="width: 22px; text-align: center; vertical-align: middle;"><div class="vertical-header">${d}</div></th>`;
+        }
+
+        html += `
+                    <th style="width: 25px; color: green; text-align: center; vertical-align: middle; font-weight: bold;">ร</th>
+                    <th style="width: 25px; color: orange; text-align: center; vertical-align: middle; font-weight: bold;">ส</th>
+                    <th style="width: 25px; color: red; text-align: center; vertical-align: middle; font-weight: bold;">ข</th>
+                  </tr>
+                </thead>
+                <tbody>
+        `;
+
+        classGroup.students.forEach((s, idx) => {
+          html += `<tr>`;
+          html += `<td style="text-align: center; vertical-align: middle;">${idx + 1}</td>`;
+          html += `<td style="text-align: left; vertical-align: middle; padding-left: 8px;">${s.name}</td>`;
+
+          for (let d = 1; d <= daysInMonth; d++) {
+            if (dayTypes[d].isMerged) {
+              if (idx === 0) {
+                html += `<td rowspan="${totalStudents}" style="text-align: center; vertical-align: middle; background-color: #f9f9f9; font-size: 8pt; writing-mode: vertical-lr; transform: rotate(180deg);">${dayTypes[d].name}</td>`;
+              }
+            } else {
+              const st = s.dailyStatus[d] || '-';
+              let styleColor = '';
+              if (st === 'ร') styleColor = 'color: green;';
+              if (st === 'ส') styleColor = 'color: orange; font-weight: bold;';
+              if (st === 'ข') styleColor = 'color: red; font-weight: bold;';
+
+              html += `<td style="text-align: center; vertical-align: middle; ${styleColor}">${st}</td>`;
+            }
+          }
+
+          html += `
+            <td style="color: green; font-weight: bold; text-align: center; vertical-align: middle;">${s.presentCount || 0}</td>
+            <td style="color: orange; font-weight: bold; text-align: center; vertical-align: middle;">${s.lateCount || 0}</td>
+            <td style="color: red; font-weight: bold; text-align: center; vertical-align: middle;">${s.absentCount || 0}</td>
+          </tr>`;
+        });
+
+        html += `
+                </tbody>
+              </table>
+
+              <div class="signature-section" style="margin-top: 30px; display: flex; justify-content: space-around; text-align: center; font-size: 10pt; font-family: 'Sarabun', sans-serif;">
+                <div>
+                  ลงชื่อ..........................................................<br>
+                  (..........................................................)<br>
+                  ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
+                </div>
+                <div>
+                  ลงชื่อ..........................................................<br>
+                  (นายอับดุล เจะสือแต)<br>
+                  ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+                </div>
+                <div>
+                  ลงชื่อ..........................................................<br>
+                  (นางวันพิทยา มุสตาฟา)<br>
+                  ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        printArea.innerHTML += html;
       }
 
-      html += `
-        <td style="color: green; font-weight: bold;">${s.presentCount || '-'}</td>
-        <td style="color: orange; font-weight: bold;">${s.lateCount || '-'}</td>
-        <td style="color: red; font-weight: bold;">${s.absentCount || '-'}</td>
-      </tr>`;
-    });
-
-    html += `
-          </tbody>
-        </table>
-
-        <div class="signature-section" style="margin-top: 30px; display: flex; justify-content: space-around; text-align: center; font-size: 10pt;">
-          <div>
-            <br>ลงชื่อ..........................................................<br>
-            (..........................................................)<br>
-            ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
-          </div>
-          <div>
-            <br>ลงชื่อ..........................................................<br>
-            (นายอับดุล เจะสือแต)<br>
-            ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
-          </div>
-          <div>
-            <br>ลงชื่อ..........................................................<br>
-            (นางวันพิทยา มุสตาฟา)<br>
-            ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
-          </div>
-        </div>
-      </div>
-    `;
-    printArea.innerHTML += html;
-  }
-
-  setTimeout(() => window.print(), 500);
-}
-
-// --- 4.2 รายงานเด็กมาสาย 4 ครั้งขึ้นไป (แนวตั้ง A4 Portrait) ---
-function renderPortraitLateReport(data) {
-  const printArea = document.getElementById('printArea');
-  if (!printArea) return;
-  printArea.innerHTML = '';
-
-  const [yearStr, monthStr] = data.month.split('-');
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10);
-  const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-  const monthTitle = `${thaiMonths[month - 1]} ${year + 543}`;
-
-  for (const cls in data.reportData) {
-    const classGroup = data.reportData[cls];
-    const lateStudents = classGroup.students.filter(s => s.lateCount >= 4);
-
-    let html = `
-      <div class="page-portrait">
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h3 style="margin: 0; font-weight: bold; font-size: 16pt;">รายงานสรุปรายชื่อนักเรียนมาสาย / ไม่เข้าร่วมกิจกรรม (4 ครั้งขึ้นไป)</h3>
-          <p style="margin: 5px 0; font-size: 13pt;"><b>ระดับชั้น:</b> ${cls} &nbsp;&nbsp;&nbsp;&nbsp; <b>ประจำเดือน:</b> ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; <b>โรงเรียนชุมชนบ้านกะมิยอ</b></p>
-        </div>
-
-        <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
-          <thead>
-            <tr>
-              <th style="width: 8%; padding: 6px; text-align: center;">ลำดับ</th>
-              <th style="width: 18%; padding: 6px; text-align: center;">ระดับชั้น</th>
-              <th style="width: 30%; padding: 6px;">ชื่อ - นามสกุล</th>
-              <th style="width: 15%; padding: 6px; text-align: center;">จำนวนสาย</th>
-              <th style="width: 29%; padding: 6px;">วันที่มาสาย</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
-
-    if (lateStudents.length === 0) {
-      html += `<tr><td colspan="5" style="padding: 15px; text-align: center; color: green; font-weight: bold;">🎉 ไม่พบนักเรียนที่มาสายตั้งแต่ 4 ครั้งขึ้นไปในเดือนนี้</td></tr>`;
-    } else {
-      lateStudents.forEach((s, idx) => {
-        html += `
-          <tr>
-            <td style="text-align: center; padding: 5px;">${idx + 1}</td>
-            <td style="text-align: center; padding: 5px;">${cls}</td>
-            <td style="text-align: left; padding: 5px 8px;">${s.name}</td>
-            <td style="text-align: center; padding: 5px; font-weight: bold; color: red;">${s.lateCount} ครั้ง</td>
-            <td style="text-align: left; padding: 5px 8px;">${s.lateDates ? s.lateDates.join(', ') : '-'}</td>
-          </tr>
-        `;
-      });
+      setTimeout(() => window.print(), 500);
     }
 
-    html += `
-          </tbody>
-        </table>
+    // --- 4.2 รายงานเด็กมาสาย 4 ครั้งขึ้นไป (แนวตั้ง A4 Portrait) ---
+    function renderPortraitLateReport(data) {
+      const printArea = document.getElementById('printArea');
+      if (!printArea) return;
+      printArea.innerHTML = '';
 
-        <div class="signature-section" style="margin-top: 35px; display: flex; justify-content: space-around; text-align: center; font-size: 10pt;">
-          <div>
-            <br>ลงชื่อ..........................................................<br>
-            (..........................................................)<br>
-            ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
+      const [yearStr, monthStr] = data.month.split('-');
+      const year = parseInt(yearStr, 10);
+      const month = parseInt(monthStr, 10);
+      const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+      const monthTitle = `${thaiMonths[month - 1]} ${year + 543}`;
+
+      for (const cls in data.reportData) {
+        const classGroup = data.reportData[cls];
+        const lateStudents = classGroup.students.filter(s => s.lateCount >= 4);
+
+        let html = `
+          <div class="page-portrait">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <h3 style="margin: 0; font-weight: bold; font-size: 16pt;">รายงานสรุปรายชื่อนักเรียนมาสาย / ไม่เข้าร่วมกิจกรรม (4 ครั้งขึ้นไป)</h3>
+              <p style="margin: 5px 0; font-size: 13pt;"><b>ระดับชั้น:</b> ${cls} &nbsp;&nbsp;&nbsp;&nbsp; <b>ประจำเดือน:</b> ${monthTitle} &nbsp;&nbsp;&nbsp;&nbsp; <b>โรงเรียนชุมชนบ้านกะมิยอ</b></p>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
+              <thead>
+                <tr>
+                  <th style="width: 8%; padding: 6px; text-align: center;">ลำดับ</th>
+                  <th style="width: 18%; padding: 6px; text-align: center;">ระดับชั้น</th>
+                  <th style="width: 30%; padding: 6px;">ชื่อ - นามสกุล</th>
+                  <th style="width: 15%; padding: 6px; text-align: center;">จำนวนสาย</th>
+                  <th style="width: 29%; padding: 6px;">วันที่มาสาย</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        if (lateStudents.length === 0) {
+          html += `<tr><td colspan="5" style="padding: 15px; text-align: center; color: green; font-weight: bold;">🎉 ไม่พบนักเรียนที่มาสายตั้งแต่ 4 ครั้งขึ้นไปในเดือนนี้</td></tr>`;
+        } else {
+          lateStudents.forEach((s, idx) => {
+            html += `
+              <tr>
+                <td style="text-align: center; padding: 5px;">${idx + 1}</td>
+                <td style="text-align: center; padding: 5px;">${cls}</td>
+                <td style="text-align: left; padding: 5px 8px;">${s.name}</td>
+                <td style="text-align: center; padding: 5px; font-weight: bold; color: red;">${s.lateCount} ครั้ง</td>
+                <td style="text-align: left; padding: 5px 8px;">${s.lateDates ? s.lateDates.join(', ') : '-'}</td>
+              </tr>
+            `;
+          });
+        }
+
+        html += `
+              </tbody>
+            </table>
+
+            <div class="signature-section" style="margin-top: 35px; display: flex; justify-content: space-around; text-align: center; font-size: 10pt;">
+              <div>
+                <br>ลงชื่อ..........................................................<br>
+                (..........................................................)<br>
+                ตำแหน่ง ครูโรงเรียนชุมชนบ้านกะมิยอ
+              </div>
+              <div>
+                <br>ลงชื่อ..........................................................<br>
+                (นายอับดุล เจะสือแต)<br>
+                ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+              </div>
+              <div>
+                <br>ลงชื่อ..........................................................<br>
+                (นางวันพิทยา มุสตาฟา)<br>
+                ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
+              </div>
+            </div>
           </div>
-          <div>
-            <br>ลงชื่อ..........................................................<br>
-            (นายอับดุล เจะสือแต)<br>
-            ตำแหน่ง รองผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
-          </div>
-          <div>
-            <br>ลงชื่อ..........................................................<br>
-            (นางวันพิทยา มุสตาฟา)<br>
-            ตำแหน่ง ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ
-          </div>
-        </div>
-      </div>
-    `;
-    printArea.innerHTML += html;
-  }
-  setTimeout(() => window.print(), 500);
-}
+        `;
+        printArea.innerHTML += html;
+      }
+      setTimeout(() => window.print(), 500);
+    }
   </script>
 </body>
 </html>
