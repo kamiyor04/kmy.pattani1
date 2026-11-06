@@ -1765,11 +1765,12 @@
     const response = await fetch(WEB_APP_URL, {
       method: 'POST',
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      // 📌 ตรงนี้ต้องเปลี่ยน action เป็น "addHoliday" และชื่อตัวแปรให้ตรงกับ Apps Script ค่ะ
+      // 📌 ต้องใช้ action: 'addHoliday' ให้ตรงกับใน Code.gs
       body: JSON.stringify({ action: 'addHoliday', dateStr: date, nameStr: desc })
     });
     const res = await response.json();
 
+    // เช็กผลลัพธ์ที่ส่งกลับมาจาก Apps Script
     if (res.message && res.message.includes("เรียบร้อย") || res.status === "success") {
       Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ!', timer: 1500, showConfirmButton: false });
       document.getElementById('holidayDesc').value = '';
