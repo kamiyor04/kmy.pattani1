@@ -799,3 +799,177 @@ function renderPortraitLateReport(data) {
   }
   setTimeout(() => window.print(), 500);
 }
+// --- 5. ตารางปฏิบัติงานมาสาย (Duty Schedule) ---
+    function fetchDutySchedule() {
+      const monthVal = document.getElementById('dutyMonthSelect').value;
+      const tbody = document.getElementById('dutyTableBody');
+
+      if (!monthVal) return;
+
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4"><div class="spinner-border text-primary"></div> กำลังโหลดตารางเวร...</td></tr>`;
+
+      const script = document.createElement('script');
+      script.src = `${WEB_APP_URL}?action=getDutyLogs&targetMonth=${monthVal}&callback=renderDutyTable`;
+      document.body.appendChild(script);
+    }
+
+    window.renderDutyTable = function(response) {
+      const tbody = document.getElementById('dutyTableBody');
+      if (!response || response.status === "error") {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูลตารางเวร</td></tr>`;
+        return;
+      }
+
+      const daysData = response.data || [];
+      if (daysData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">ไม่พบข้อมูลในเดือนนี้</td></tr>`;
+        return;
+      }
+
+      let html = '';
+      daysData.forEach((day, index) => {
+        const dateObj = new Date(day.date);
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dateStr = dateObj.toLocaleDateString('th-TH', options);
+        const isWeekend = day.isWeekend;
+        const rowBg = isWeekend ? 'style="background-color: #f8f9fa; color: #adb5bd;"' : '';
+
+        html += `
+          <tr ${rowBg}>
+            <td class="text-center fw-semibold">${day.date}</td>
+            <td>${dateStr}</td>
+            <td>
+              <input type="text" class="form-control form-control-sm duty-input" data-date="${day.date}" value="${day.teacherName || ''}" ${isWeekend ? 'disabled' : ''} placeholder="ระบุชื่อคุณครูเวร">
+            </td>
+            <td class="text-center">
+              ${isWeekend ? '<span class="badge bg-secondary">วันหยุด</span>' : '<span class="badge bg-success">เปิดทำการ</span>'}
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    };
+
+    async function saveDutySchedule() {
+      const monthVal = document.getElementById('dutyMonthSelect').value;
+      const inputs = document.querySelectorAll('.duty-input');
+      let dutyData = [];
+
+      inputs.forEach(input => {
+        dutyData.push({
+          date: input.getAttribute('data-date'),
+          teacherName: input.value.trim()
+        });
+      });
+
+      Swal.fire({ title: 'กำลังบันทึกตารางเวร...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+      try {
+        const response = await fetch(WEB_APP_URL, {
+          method: 'POST',
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: 'saveDuty', targetMonth: monthVal, dutyData: dutyData })
+        });
+        const res = await response.json();
+
+        if (res.status === "success" || res.message) {
+          Swal.fire({ icon: 'success', title: 'บันทึกตารางเวรสำเร็จ!', timer: 1500, showConfirmButton: false });
+          fetchDutySchedule();
+        } else {
+          Swal.fire('เกิดข้อผิดพลาด', res.message || 'ไม่สามารถบันทึกได้', 'error');
+        }
+      } catch (error) {
+        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
+      }
+    }
+
+    function printDutySchedule() {
+      const monthVal = document.getElementById('dutyMonthSelect').value;
+      if (!monthVal) {
+        Swal.fire('กรุณาเลือกเดือน', '', 'warning');
+        return;
+      }
+
+      Swal.fire({ title: 'กำลังเตรียมเอกสาร...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+      const script = document.createElement('script');
+      script.src = `${WEB_APP_URL}?action=getDutyLogs&targetMonth=${monthVal}&callback=renderPrintDuty`;
+      document.body.appendChild(script);
+    }
+
+    window.renderPrintDuty = function(response) {
+      Swal.close();
+      if (!response || response.status === "error") {
+        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลสำหรับพิมพ์ได้', 'error');
+        return;
+      }
+
+      const daysData = response.data || [];
+      const [yyyy, mm] = document.getElementById('dutyMonthSelect').value.split('-');
+      const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+      const monthTitle = `${thaiMonths[parseInt(mm, 10) - 1]} ${parseInt(yyyy, 10) + 543}`;
+
+      let rowsHtml = '';
+      daysData.forEach((day, index) => {
+        const dateObj = new Date(day.date);
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dateStr = dateObj.toLocaleDateString('th-TH', options);
+        
+        rowsHtml += `
+          <tr>
+            <td style="text-align: center;">${index + 1}</td>
+            <td style="text-align: center;">${day.date} (${dateStr.split(' ')[0]})</td>
+            <td style="padding-left: 15px;">${day.teacherName || '-'}</td>
+            <td style="text-align: center;"></td>
+          </tr>
+        `;
+      });
+
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="th">
+        <head>
+          <meta charset="UTF-8">
+          <title>ตารางปฏิบัติงานเวรมาสาย ประจำเดือน ${monthTitle}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+            body { font-family: 'Sarabun', sans-serif; font-size: 14pt; line-height: 1.6; margin: 0; padding: 20px; color: #000; }
+            .header { text-align: center; margin-bottom: 20px; }
+            .title { font-weight: bold; font-size: 16pt; margin-bottom: 5px; }
+            .subtitle { font-size: 14pt; margin-bottom: 15px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th, td { border: 1px solid #000; padding: 6px 8px; font-size: 13pt; }
+            th { background-color: #f2f2f2; font-weight: bold; text-align: center; }
+            .signature { margin-top: 40px; display: flex; justify-content: space-around; text-align: center; font-size: 13pt; }
+            @media print { @page { size: A4 portrait; margin: 2cm; } body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">ตารางปฏิบัติงานเวรมาสาย / ต้อนรับนักเรียนหน้าเสาธง</div>
+            <div class="subtitle">โรงเรียนชุมชนบ้านกะมิยอ | ประจำเดือน: ${monthTitle}</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 10%;">ครั้งที่</th>
+                <th style="width: 30%;">วันที่ / วัน</th>
+                <th style="width: 40%;">ชื่อคุณครูเวรประจำวัน</th>
+                <th style="width: 20%;">ลายมือชื่อ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+          <div class="signature">
+            <div>ลงชื่อ..........................................................<br>(..........................................................)<br>ผู้จัดทำตารางเวร</div>
+            <div>ลงชื่อ..........................................................<br>(นางวันพิทยา มุสตาฟา)<br>ผู้อำนวยการโรงเรียนชุมชนบ้านกะมิยอ</div>
+          </div>
+          <script>window.onload = function() { window.print(); }<\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    };
